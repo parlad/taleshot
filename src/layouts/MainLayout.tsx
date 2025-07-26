@@ -217,7 +217,7 @@ export function MainLayout() {
 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-1.5 text-white hover:bg-white/10 rounded-lg"
+              className="md:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
             >
               {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>

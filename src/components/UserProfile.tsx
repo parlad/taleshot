@@ -90,12 +90,12 @@ export function UserProfile() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-white text-xs font-medium"
+        className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-white text-sm font-medium border border-white/20"
       >
         <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
           <span className="text-xs font-medium">{getInitials()}</span>
         </div>
-        <span className="hidden sm:inline">Profile</span>
+        <span>Profile</span>
       </button>
 
       {showDropdown && (
