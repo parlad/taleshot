@@ -25,6 +25,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Set up auth state change listener
 supabase.auth.onAuthStateChange(async (event, session) => {
   console.log('Auth state changed:', event, session?.user?.id);
+  
   if (event === 'SIGNED_IN' && session?.user) {
     try {
       // Ensure profile exists when user signs in
