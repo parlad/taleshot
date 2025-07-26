@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Camera, Menu, X, Plus, SlidersHorizontal, Tag } from 'lucide-react';
+import { Camera, Menu, X, Plus, SlidersHorizontal, Tag, User } from 'lucide-react';
 import { PhotoGallery } from '../components/PhotoGallery';
 import { UserSearch } from '../components/UserSearch';
-import { UserProfile } from '../components/UserProfile';
 import { createClient } from '@supabase/supabase-js';
 import type { ViewMode, Category } from '../types';
 
@@ -212,7 +211,19 @@ export function MainLayout() {
                 <span className="font-medium">{viewMode === 'flip' ? 'Slide' : 'Flip'}</span>
               </button>
 
-              <UserProfile />
+              <button
+                onClick={async () => {
+                  try {
+                    await supabase.auth.signOut();
+                  } catch (error) {
+                    console.error('Error signing out:', error);
+                  }
+                }}
+                className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-xs"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
             </div>
 
             <button
@@ -302,7 +313,19 @@ export function MainLayout() {
               </div>
 
               <div className="pt-2 border-t border-white/10">
-                <UserProfile />
+                <button
+                  onClick={async () => {
+                    try {
+                      await supabase.auth.signOut();
+                    } catch (error) {
+                      console.error('Error signing out:', error);
+                    }
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-sm"
+                >
+                  <User className="w-4 h-4" />
+                  Sign Out
+                </button>
               </div>
             </div>
           )}
