@@ -82,7 +82,7 @@ export function PhotoCard({
           </div>
           <div className="flex items-center gap-2 text-gray-600 mb-2">
             <Calendar className="w-4 h-4" />
-            <span className="text-sm">{photo.date_taken || photo.dateTaken}</span>
+            <span className="text-sm">{photo.date_taken}</span>
           </div>
           <p className="text-gray-700 text-sm">{photo.reason}</p>
           {photo.categories && photo.categories.length > 0 && (
@@ -228,7 +228,7 @@ export function PhotoCard({
                 
                 <div className="flex items-center gap-1.5 text-gray-600 mb-2">
                   <Calendar className="w-3.5 h-3.5" />
-                  <span className="text-xs">{photo.date_taken || photo.dateTaken}</span>
+                  <span className="text-xs">{photo.date_taken}</span>
                 </div>
                 
                 <div className="flex-grow">

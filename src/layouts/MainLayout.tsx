@@ -35,7 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       return;
     }
 
-    console.log('Fetched categories:', data);
+    console.log('Fetched categories for dropdown:', data);
     setCategories(data || []);
   };
 

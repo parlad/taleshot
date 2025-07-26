@@ -254,7 +254,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           .insert({
             user_id: user.id,
             title: details.title,
-            date_taken: details.dateTaken,
+            date_taken: details.date_taken,
             reason: details.reason,
             image_url: publicUrl,
             is_public: details.is_public || false
@@ -269,10 +269,13 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
 
         // Add categories if any were selected
         if (details.categories && details.categories.length > 0) {
+          console.log('Adding categories to photo:', details.categories);
           const { data: categoryData } = await supabase
             .from('categories')
             .select('id, name')
             .in('name', details.categories);
+
+          console.log('Found category data:', categoryData);
 
           if (categoryData && categoryData.length > 0) {
             const categoryAssociations = categoryData.map(category => ({
@@ -280,12 +283,16 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
               category_id: category.id
             }));
 
+            console.log('Inserting category associations:', categoryAssociations);
+
             const { error: categoryError } = await supabase
               .from('photo_categories')
               .insert(categoryAssociations);
 
             if (categoryError) {
               console.error('Error inserting categories:', categoryError);
+            } else {
+              console.log('Successfully added categories to photo');
             }
           }
         }

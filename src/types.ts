@@ -3,7 +3,6 @@ export interface Photo {
   imageUrl?: string;
   image_url?: string;
   title: string;
-  dateTaken?: string;
   date_taken?: string;
   reason: string;
   categories?: string[];

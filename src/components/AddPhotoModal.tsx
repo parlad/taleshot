@@ -5,7 +5,7 @@ import type { Photo, Category } from '../types';
 interface AddPhotoModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAdd: (photo: Omit<Photo, 'id' | 'imageUrl'>) => void;
+  onAdd: (photo: Omit<Photo, 'id' | 'imageUrl' | 'image_url'>) => void;
   fileCount: number;
   selectedFiles: File[];
   categories: Category[];
@@ -14,7 +14,7 @@ interface AddPhotoModalProps {
 export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles, categories }: AddPhotoModalProps) {
   const [details, setDetails] = useState({
     title: '',
-    dateTaken: new Date().toISOString().split('T')[0],
+    date_taken: new Date().toISOString().split('T')[0],
     reason: '',
     is_public: false,
     categories: [] as string[]
@@ -23,7 +23,7 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const formattedDate = new Date(details.dateTaken).toLocaleDateString('en-US', {
+    const formattedDate = new Date(details.date_taken).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric'
@@ -31,7 +31,7 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
     
     onAdd({
       title: details.title,
-      dateTaken: formattedDate,
+      date_taken: formattedDate,
       reason: details.reason,
       is_public: details.is_public,
       categories: details.categories
@@ -39,7 +39,7 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
 
     setDetails({
       title: '',
-      dateTaken: new Date().toISOString().split('T')[0],
+      date_taken: new Date().toISOString().split('T')[0],
       reason: '',
       is_public: false,
       categories: []
@@ -98,8 +98,8 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
               
               <input
                 type="date"
-                value={details.dateTaken}
-                onChange={e => setDetails(prev => ({ ...prev, dateTaken: e.target.value }))}
+                value={details.date_taken}
+                onChange={e => setDetails(prev => ({ ...prev, date_taken: e.target.value }))}
                 className="input-field"
                 required
                 max={new Date().toISOString().split('T')[0]}
