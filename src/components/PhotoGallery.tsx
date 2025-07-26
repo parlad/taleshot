@@ -8,14 +8,8 @@ import { supabase } from '../utils/supabase';
 
 type ViewMode = 'flip' | 'slide';
 
-interface PhotoGalleryProps {
-  selectedCategory: string;
-  viewMode: ViewMode;
-}
-
-export function PhotoGallery({ selectedCategory, viewMode }: PhotoGalleryProps) {
+export function PhotoGallery() {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -75,16 +69,6 @@ export function PhotoGallery({ selectedCategory, viewMode }: PhotoGalleryProps) 
       setCategories(categoriesData);
     }
   }, [categoriesData]);
-
-  useEffect(() => {
-    if (selectedCategory === 'all') {
-      setFilteredPhotos(photos);
-    } else {
-      setFilteredPhotos(photos.filter(photo => 
-        photo.categories?.includes(selectedCategory)
-      ));
-    }
-  }, [selectedCategory, photos]);
 
   const handleFlip = (id: string) => {
     setFlippedIds(prev => {
@@ -371,11 +355,11 @@ export function PhotoGallery({ selectedCategory, viewMode }: PhotoGalleryProps) 
         accept="image/*"
       />
 
-      {filteredPhotos.length === 0 ? (
+      {photos.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-          {filteredPhotos.map(photo => (
+          {photos.map(photo => (
             <PhotoCard
               key={photo.id}
               photo={photo}
@@ -383,7 +367,7 @@ export function PhotoGallery({ selectedCategory, viewMode }: PhotoGalleryProps) 
               onFlip={() => handleFlip(photo.id)}
               onDelete={handleDeletePhoto}
               onUpdate={handleUpdatePhoto}
-              viewMode={viewMode}
+              viewMode="flip"
             />
           ))}
         </div>

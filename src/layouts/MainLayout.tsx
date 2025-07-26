@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, Search, Grid, Layers, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Grid, Layers, LogOut, ChevronDown } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 type ViewMode = 'flip' | 'slide';
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  showSearch?: boolean;
+  onSearchToggle?: () => void;
+  onSearchChange?: (query: string) => void;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
-  const location = useLocation();
+export function MainLayout({ children, showSearch, onSearchToggle, onSearchChange }: MainLayoutProps) {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
@@ -54,32 +55,33 @@ export function MainLayout({ children }: MainLayoutProps) {
 
             {/* Navigation */}
             <nav className="flex items-center gap-6">
-              <Link
-                to="/"
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  location.pathname === '/' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                <Home className="w-4 h-4" />
-                <span className="font-medium">Home</span>
-              </Link>
+              {/* Search Bar */}
+              <div className="flex-1 max-w-md mx-8">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search users..."
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    onChange={(e) => onSearchChange?.(e.target.value)}
+                  />
+                </div>
+              </div>
 
-              <Link
-                to="/search"
+              <button
+                onClick={() => onSearchToggle?.()}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  location.pathname === '/search' 
+                  showSearch 
                     ? 'bg-blue-100 text-blue-700' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
                 <Search className="w-4 h-4" />
-                <span className="font-medium">Search</span>
-              </Link>
+                <span className="font-medium">Search Users</span>
+              </button>
 
               {/* Category Dropdown */}
-              {location.pathname === '/' && (
+              {!showSearch && (
                 <div className="relative">
                   <button
                     onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
@@ -114,7 +116,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               )}
 
               {/* View Mode Dropdown */}
-              {location.pathname === '/' && (
+              {!showSearch && (
                 <div className="relative">
                   <button
                     onClick={() => setShowViewDropdown(!showViewDropdown)}
