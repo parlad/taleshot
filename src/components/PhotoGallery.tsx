@@ -59,37 +59,21 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   }, [photosData]);
 
   useEffect(() => {
-    console.log('=== CATEGORY FILTERING ===');
-    console.log('Selected category:', selectedCategory);
-    console.log('Total photos:', photos.length);
-
     if (selectedCategory === 'all') {
-      console.log('Showing all photos');
       setFilteredPhotos(photos);
     } else {
-      console.log('Filtering by category:', selectedCategory);
-      
       const filtered = photos.filter(photo => {
         const photoCategories = photo.categories || [];
-        console.log(`Photo "${photo.title}" has categories:`, photoCategories);
         
-        const hasCategory = photoCategories.some(category => {
-          if (!category) return false;
-          const categoryLower = category.toLowerCase().trim();
-          const selectedLower = selectedCategory.toLowerCase().trim();
-          const matches = categoryLower === selectedLower;
-          console.log(`  - Comparing "${category}" (${categoryLower}) with "${selectedCategory}" (${selectedLower}): ${matches}`);
-          return matches;
-        });
-        
-        console.log(`Photo "${photo.title}" matches filter: ${hasCategory}`);
-        return hasCategory;
+        // Check if photo has the selected category (case-insensitive)
+        return photoCategories.some(category => 
+          category && category.toLowerCase() === selectedCategory.toLowerCase()
+        );
       });
       
-      console.log(`Filtered result: ${filtered.length} photos out of ${photos.length}`);
+      console.log(`Category "${selectedCategory}": showing ${filtered.length} out of ${photos.length} photos`);
       setFilteredPhotos(filtered);
     }
-    console.log('=== END FILTERING ===');
   }, [photos, selectedCategory]);
 
   const handleFlip = (id: string) => {
