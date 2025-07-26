@@ -414,6 +414,5 @@ export function PhotoGallery({ selectedCategory, viewMode }: PhotoGalleryProps) 
         categories={categories}
       />
     </div>
-    </div>
   );
 }
