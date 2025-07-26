@@ -61,17 +61,6 @@ export function MainLayout({ children }: MainLayoutProps) {
             {/* Navigation */}
             <div className="flex items-center gap-6">
               <Link
-                to="/"
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  isHomePage
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                }`}
-              >
-                Home
-              </Link>
-
-              <Link
                 to="/search"
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
                   !isHomePage
