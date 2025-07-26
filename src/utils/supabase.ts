@@ -48,5 +48,9 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     console.log('User signed out, clearing local storage');
     localStorage.clear();
     sessionStorage.clear();
+    // Force page reload to ensure clean state
+    setTimeout(() => {
+      window.location.href = '/';
+    }, 100);
   }
 });

@@ -48,9 +48,17 @@ export function useSupabaseAuth() {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('Auth state change event:', _event, 'Session:', !!session);
       if (mounted) {
         setUser(session?.user ?? null);
         setLoading(false);
+        
+        // If user is signed out, ensure we clear everything
+        if (_event === 'SIGNED_OUT' || !session) {
+          setUser(null);
+          localStorage.clear();
+          sessionStorage.clear();
+        }
       }
     });
 

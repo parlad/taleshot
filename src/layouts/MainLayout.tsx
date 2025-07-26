@@ -214,11 +214,20 @@ export function MainLayout() {
               <button
                 onClick={async () => {
                   try {
-                    await supabase.auth.signOut();
-                    window.location.reload();
+                    const { error } = await supabase.auth.signOut();
+                    if (error) {
+                      console.error('Logout error:', error);
+                    }
+                    // Force redirect to login by clearing everything and reloading
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/';
                   } catch (error) {
                     console.error('Error signing out:', error);
-                    window.location.reload();
+                    // Even if logout fails, clear storage and redirect
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.href = '/';
                   }
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-xs"
@@ -318,11 +327,20 @@ export function MainLayout() {
                 <button
                   onClick={async () => {
                     try {
-                      await supabase.auth.signOut();
-                      window.location.reload();
+                      const { error } = await supabase.auth.signOut();
+                      if (error) {
+                        console.error('Logout error:', error);
+                      }
+                      // Force redirect to login by clearing everything and reloading
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      window.location.href = '/';
                     } catch (error) {
                       console.error('Error signing out:', error);
-                      window.location.reload();
+                      // Even if logout fails, clear storage and redirect
+                      localStorage.clear();
+                      sessionStorage.clear();
+                      window.location.href = '/';
                     }
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-sm"
