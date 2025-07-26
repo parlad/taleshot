@@ -59,22 +59,43 @@ export function UserProfile() {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   if (loading) {
-    return null;
+    return (
+      <div className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 rounded-lg text-white text-xs">
+        <div className="w-5 h-5 bg-white/20 rounded-full animate-pulse" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <button
+        onClick={handleSignOut}
+        className="flex items-center gap-2 px-2.5 py-1.5 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-xs"
+      >
+        <LogOut className="w-3.5 h-3.5" />
+        <span>Sign Out</span>
+      </button>
+    );
   }
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-white text-xs"
+        className="flex items-center gap-2 px-2.5 py-1.5 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-white text-xs font-medium"
       >
         <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
           <span className="text-xs font-medium">{getInitials()}</span>
         </div>
+        <span className="hidden sm:inline">Profile</span>
       </button>
 
       {showDropdown && (
