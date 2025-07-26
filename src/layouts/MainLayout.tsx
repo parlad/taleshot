@@ -105,11 +105,12 @@ export function MainLayout({ children }: MainLayoutProps) {
                         <button
                           key={category.id}
                           onClick={() => {
-                            setSelectedCategory(category.name);
+                            console.log('Selected category:', category.name);
+                            setSelectedCategory(category.name.toLowerCase());
                             setShowCategoryDropdown(false);
                           }}
                           className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                            selectedCategory.toLowerCase() === category.name.toLowerCase() 
+                            selectedCategory === category.name.toLowerCase() 
                               ? 'bg-blue-50 text-blue-700' 
                               : 'text-gray-700'
                           }`}
