@@ -1,8 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import type { User } from '@supabase/supabase-js';
-import { PhotoGallery } from './PhotoGallery';
 import { Auth } from './components/Auth';
+import { MainLayout } from './layouts/MainLayout';
+import { HomePage } from './pages/HomePage';
+import { SearchPage } from './pages/SearchPage';
+import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 
 const supabase = createClient(
   import.meta.env.VITE_SUPABASE_URL,
@@ -10,24 +14,7 @@ const supabase = createClient(
 );
 
 export default function App() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+  const { user, loading } = useSupabaseAuth();
 
   if (loading) {
     return (
@@ -41,5 +28,14 @@ export default function App() {
     return <Auth />;
   }
 
-  return <PhotoGallery />;
+  return (
+    <Router>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+        </Routes>
+      </MainLayout>
+    </Router>
+  );
 }

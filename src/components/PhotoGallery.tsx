@@ -6,7 +6,14 @@ import { AddPhotoModal } from './AddPhotoModal';
 import { useSupabaseQuery } from '../hooks/useSupabaseQuery';
 import { supabase } from '../utils/supabase';
 
-export function PhotoGallery({ selectedCategory, viewMode }: { selectedCategory: string, viewMode: ViewMode }) {
+type ViewMode = 'flip' | 'slide';
+
+interface PhotoGalleryProps {
+  selectedCategory: string;
+  viewMode: ViewMode;
+}
+
+export function PhotoGallery({ selectedCategory, viewMode }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
@@ -391,6 +398,7 @@ export function PhotoGallery({ selectedCategory, viewMode }: { selectedCategory:
         <Plus className="w-8 h-8" />
       </button>
 
+      {/* Add Photo Modal */}
       <AddPhotoModal
         isOpen={isModalOpen}
         onClose={() => {
@@ -405,6 +413,7 @@ export function PhotoGallery({ selectedCategory, viewMode }: { selectedCategory:
         selectedFiles={selectedFiles}
         categories={categories}
       />
+    </div>
     </div>
   );
 }

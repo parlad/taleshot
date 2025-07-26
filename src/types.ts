@@ -37,6 +37,8 @@ export interface User {
 export interface SearchResult {
   user_id: string;
   user_email: string;
+  first_name?: string;
+  last_name?: string;
   photo_count: number;
   sample_photos: {
     id: string;
