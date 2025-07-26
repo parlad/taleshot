@@ -60,10 +60,14 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
     if (selectedCategory === 'all') {
       setFilteredPhotos(photos);
     } else {
-      const filtered = photos.filter(photo => 
-        photo.categories?.some(cat => 
-          cat.toLowerCase() === selectedCategory.toLowerCase()
-        )
+      const filtered = photos.filter(photo => {
+        if (!photo.categories || photo.categories.length === 0) {
+          return false;
+        }
+        return photo.categories.some(cat => 
+          cat && cat.toLowerCase() === selectedCategory.toLowerCase()
+        );
+      }
       );
       setFilteredPhotos(filtered);
     }
