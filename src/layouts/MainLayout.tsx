@@ -83,7 +83,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     <span>
                       {selectedCategory === 'all' 
                         ? 'All Photos' 
-                        : categories.find(c => c.name.toLowerCase() === selectedCategory)?.name || 'All Photos'
+                        : categories.find(c => c.name === selectedCategory)?.name || 'All Photos'
                       }
                     </span>
                     <ChevronDown className="w-4 h-4" />
