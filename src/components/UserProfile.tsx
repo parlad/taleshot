@@ -90,7 +90,7 @@ export function UserProfile() {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
-        className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-white text-sm font-medium border border-white/20"
+        className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 transition-colors rounded-lg text-white text-sm font-medium border border-white/20 relative z-10"
       >
         <div className="w-5 h-5 bg-white/20 rounded-full flex items-center justify-center">
           <span className="text-xs font-medium">{getInitials()}</span>
@@ -99,7 +99,7 @@ export function UserProfile() {
       </button>
 
       {showDropdown && (
-        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-[100]">
           <div className="p-4 border-b">
             {isEditing ? (
               <form onSubmit={handleUpdateProfile} className="space-y-3">
