@@ -213,22 +213,11 @@ export function MainLayout() {
 
               <button
                 onClick={async () => {
-                  try {
-                    const { error } = await supabase.auth.signOut();
-                    if (error) {
-                      console.error('Logout error:', error);
-                    }
-                    // Force redirect to login by clearing everything and reloading
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    window.location.href = '/';
-                  } catch (error) {
-                    console.error('Error signing out:', error);
-                    // Even if logout fails, clear storage and redirect
-                    localStorage.clear();
-                    sessionStorage.clear();
-                    window.location.href = '/';
-                  }
+                  // Simple logout - just clear everything and reload
+                  await supabase.auth.signOut();
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  window.location.reload();
                 }}
                 className="flex items-center gap-2 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-xs"
               >
@@ -326,22 +315,11 @@ export function MainLayout() {
               <div className="pt-2 border-t border-white/10">
                 <button
                   onClick={async () => {
-                    try {
-                      const { error } = await supabase.auth.signOut();
-                      if (error) {
-                        console.error('Logout error:', error);
-                      }
-                      // Force redirect to login by clearing everything and reloading
-                      localStorage.clear();
-                      sessionStorage.clear();
-                      window.location.href = '/';
-                    } catch (error) {
-                      console.error('Error signing out:', error);
-                      // Even if logout fails, clear storage and redirect
-                      localStorage.clear();
-                      sessionStorage.clear();
-                      window.location.href = '/';
-                    }
+                    // Simple logout - just clear everything and reload
+                    await supabase.auth.signOut();
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    window.location.reload();
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 bg-red-500/20 hover:bg-red-500/30 transition-colors rounded-lg text-red-100 text-sm"
                 >
