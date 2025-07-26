@@ -214,7 +214,10 @@ export function MainLayout() {
               <button
                 onClick={async () => {
                   try {
+                    console.log('Attempting to sign out...');
                     await supabase.auth.signOut();
+                    console.log('Sign out successful');
+                    window.location.reload();
                   } catch (error) {
                     console.error('Error signing out:', error);
                   }
@@ -316,7 +319,10 @@ export function MainLayout() {
                 <button
                   onClick={async () => {
                     try {
+                      console.log('Mobile sign out clicked...');
                       await supabase.auth.signOut();
+                      console.log('Mobile sign out successful');
+                      window.location.reload();
                     } catch (error) {
                       console.error('Error signing out:', error);
                     }

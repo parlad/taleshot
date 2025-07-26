@@ -24,6 +24,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Set up auth state change listener
 supabase.auth.onAuthStateChange(async (event, session) => {
+  console.log('Auth state changed:', event, session?.user?.id);
   if (event === 'SIGNED_IN' && session?.user) {
     try {
       // Ensure profile exists when user signs in
@@ -40,5 +41,11 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     } catch (error) {
       console.error('Error in auth state change handler:', error);
     }
+  }
+  
+  if (event === 'SIGNED_OUT') {
+    console.log('User signed out, clearing local storage');
+    localStorage.clear();
+    sessionStorage.clear();
   }
 });
