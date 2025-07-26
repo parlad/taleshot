@@ -27,7 +27,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     const { data, error } = await supabase
       .from('categories')
       .select('*')
-      .eq('user_id', user.id)
+      .or(`user_id.eq.${user.id},user_id.is.null`)
       .order('name');
 
     if (error) {
@@ -35,6 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       return;
     }
 
+    console.log('Fetched categories:', data);
     setCategories(data || []);
   };
 

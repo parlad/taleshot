@@ -34,6 +34,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           *,
           photo_categories (
             categories (
+              id,
               name
             )
           )
@@ -52,43 +53,43 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           ?.map(pc => pc.categories?.name)
           .filter(Boolean) || []
       }));
+      console.log('Transformed photos with categories:', transformedPhotos);
       setPhotos(transformedPhotos);
     }
   }, [photosData]);
 
   useEffect(() => {
-    console.log('Filtering photos:', { selectedCategory, totalPhotos: photos.length });
-    photos.forEach(photo => {
-      console.log('Photo:', photo.title, 'Categories:', photo.categories);
-    });
-    
+    console.log('=== CATEGORY FILTERING ===');
+    console.log('Selected category:', selectedCategory);
+    console.log('Total photos:', photos.length);
+
     if (selectedCategory === 'all') {
+      console.log('Showing all photos');
       setFilteredPhotos(photos);
     } else {
+      console.log('Filtering by category:', selectedCategory);
+      
       const filtered = photos.filter(photo => {
-        console.log('Checking photo:', photo.title, 'Categories:', photo.categories, 'Selected:', selectedCategory);
+        const photoCategories = photo.categories || [];
+        console.log(`Photo "${photo.title}" has categories:`, photoCategories);
         
-        // Check if photo has categories
-        if (!photo.categories || photo.categories.length === 0) {
-          console.log('Photo has no categories');
-          return false;
-        }
-        
-        // Check if any category matches (case insensitive)
-        const hasMatchingCategory = photo.categories.some(cat => {
-          const match = cat && cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
-          console.log('Comparing:', cat, 'with', selectedCategory, 'Match:', match);
-          return match;
+        const hasCategory = photoCategories.some(category => {
+          if (!category) return false;
+          const categoryLower = category.toLowerCase().trim();
+          const selectedLower = selectedCategory.toLowerCase().trim();
+          const matches = categoryLower === selectedLower;
+          console.log(`  - Comparing "${category}" (${categoryLower}) with "${selectedCategory}" (${selectedLower}): ${matches}`);
+          return matches;
         });
         
-        console.log('Photo matches filter:', hasMatchingCategory);
-        return hasMatchingCategory;
-      }
-      );
+        console.log(`Photo "${photo.title}" matches filter: ${hasCategory}`);
+        return hasCategory;
+      });
       
-      console.log('Filtered photos:', filtered.length, 'out of', photos.length);
+      console.log(`Filtered result: ${filtered.length} photos out of ${photos.length}`);
       setFilteredPhotos(filtered);
     }
+    console.log('=== END FILTERING ===');
   }, [photos, selectedCategory]);
 
   const handleFlip = (id: string) => {
