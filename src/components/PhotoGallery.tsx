@@ -57,18 +57,36 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   }, [photosData]);
 
   useEffect(() => {
+    console.log('Filtering photos:', { selectedCategory, totalPhotos: photos.length });
+    photos.forEach(photo => {
+      console.log('Photo:', photo.title, 'Categories:', photo.categories);
+    });
+    
     if (selectedCategory === 'all') {
       setFilteredPhotos(photos);
     } else {
       const filtered = photos.filter(photo => {
+        console.log('Checking photo:', photo.title, 'Categories:', photo.categories, 'Selected:', selectedCategory);
+        
+        // Check if photo has categories
         if (!photo.categories || photo.categories.length === 0) {
+          console.log('Photo has no categories');
           return false;
         }
-        return photo.categories.some(cat => 
-          cat && cat.toLowerCase() === selectedCategory.toLowerCase()
-        );
+        
+        // Check if any category matches (case insensitive)
+        const hasMatchingCategory = photo.categories.some(cat => {
+          const match = cat && cat.toLowerCase().trim() === selectedCategory.toLowerCase().trim();
+          console.log('Comparing:', cat, 'with', selectedCategory, 'Match:', match);
+          return match;
+        });
+        
+        console.log('Photo matches filter:', hasMatchingCategory);
+        return hasMatchingCategory;
       }
       );
+      
+      console.log('Filtered photos:', filtered.length, 'out of', photos.length);
       setFilteredPhotos(filtered);
     }
   }, [photos, selectedCategory]);
