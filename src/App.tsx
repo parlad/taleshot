@@ -1,7 +1,10 @@
 import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { Auth } from './components/Auth';
-import { PhotoGallery } from './PhotoGallery';
+import { MainLayout } from './layouts/MainLayout';
+import { HomePage } from './pages/HomePage';
+import { SearchPage } from './pages/SearchPage';
 
 export default function App() {
   const { user, loading } = useSupabaseAuth();
@@ -18,5 +21,14 @@ export default function App() {
     return <Auth />;
   }
 
-  return <PhotoGallery />;
+  return (
+    <Router>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/search" element={<SearchPage />} />
+        </Routes>
+      </MainLayout>
+    </Router>
+  );
 }

@@ -11,16 +11,16 @@ type ViewMode = 'flip' | 'slide';
 interface PhotoGalleryProps {
   selectedCategory?: string;
   viewMode?: ViewMode;
+  categories?: Category[];
 }
 
-export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: PhotoGalleryProps) {
+export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', categories = [] }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: photosData, error: photosError, isLoading: isLoadingPhotos } = useSupabaseQuery(
@@ -44,20 +44,6 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: Ph
     []
   );
 
-  const { data: categoriesData, error: categoriesError, isLoading: isLoadingCategories } = useSupabaseQuery(
-    async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      return supabase
-        .from('categories')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name');
-    },
-    []
-  );
-
   useEffect(() => {
     if (photosData) {
       const transformedPhotos = photosData.map(photo => ({
@@ -69,12 +55,6 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: Ph
       setPhotos(transformedPhotos);
     }
   }, [photosData]);
-
-  useEffect(() => {
-    if (categoriesData) {
-      setCategories(categoriesData);
-    }
-  }, [categoriesData]);
 
   useEffect(() => {
     if (selectedCategory === 'all') {
@@ -270,7 +250,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: Ph
             date_taken: details.dateTaken,
             reason: details.reason,
             image_url: publicUrl,
-            is_public: details.is_public
+            is_public: details.is_public || false
           })
           .select()
           .single();
@@ -396,7 +376,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: Ph
   );
 
   return (
-    <div className="max-w-6xl mx-auto relative min-h-[calc(100vh-16rem)]">
+    <div className="relative min-h-[calc(100vh-16rem)] pb-20">
       <input
         type="file"
         ref={fileInputRef}
@@ -409,7 +389,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: Ph
       {filteredPhotos.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredPhotos.map(photo => (
             <PhotoCard
               key={photo.id}
@@ -424,10 +404,11 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: Ph
         </div>
       )}
 
+      {/* Add Photo Button - Fixed at bottom right, above footer */}
       <button
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="fixed bottom-8 right-8 w-16 h-16 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 z-50"
+        className="fixed bottom-24 right-8 w-16 h-16 flex items-center justify-center bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-full hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1 z-40"
         title="Add Photos"
       >
         <Plus className="w-8 h-8" />

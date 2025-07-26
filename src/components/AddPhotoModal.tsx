@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Eye, EyeOff } from 'lucide-react';
 import type { Photo, Category } from '../types';
 
 interface AddPhotoModalProps {
@@ -11,11 +11,13 @@ interface AddPhotoModalProps {
   categories: Category[];
 }
 
-export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles }: AddPhotoModalProps) {
+export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles, categories }: AddPhotoModalProps) {
   const [details, setDetails] = useState({
     title: '',
     dateTaken: new Date().toISOString().split('T')[0],
-    reason: ''
+    reason: '',
+    is_public: false,
+    categories: [] as string[]
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -30,24 +32,37 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
     onAdd({
       title: details.title,
       dateTaken: formattedDate,
-      reason: details.reason
+      reason: details.reason,
+      is_public: details.is_public,
+      categories: details.categories
     });
 
     setDetails({
       title: '',
       dateTaken: new Date().toISOString().split('T')[0],
-      reason: ''
+      reason: '',
+      is_public: false,
+      categories: []
     });
+  };
+
+  const handleCategoryToggle = (categoryName: string) => {
+    setDetails(prev => ({
+      ...prev,
+      categories: prev.categories.includes(categoryName)
+        ? prev.categories.filter(c => c !== categoryName)
+        : [...prev.categories, categoryName]
+    }));
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg w-full max-w-6xl mx-4 relative">
+      <div className="bg-white rounded-lg w-full max-w-6xl mx-4 relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700"
+          className="absolute right-4 top-4 text-gray-500 hover:text-gray-700 z-10"
         >
           <X className="w-6 h-6" />
         </button>
@@ -97,6 +112,59 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
                 className="input-field min-h-[100px]"
                 required
               />
+
+              {/* Privacy Setting */}
+              <div className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg">
+                <div className="flex items-center gap-2">
+                  {details.is_public ? (
+                    <Eye className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <EyeOff className="w-5 h-5 text-gray-400" />
+                  )}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={details.is_public}
+                      onChange={e => setDetails(prev => ({ ...prev, is_public: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="font-medium">
+                      {details.is_public ? 'Public' : 'Private'}
+                    </span>
+                  </label>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {details.is_public 
+                    ? 'Others can discover and view these photos'
+                    : 'Only you can see these photos'
+                  }
+                </p>
+              </div>
+
+              {/* Categories */}
+              {categories.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Categories (optional)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map(category => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleCategoryToggle(category.name)}
+                        className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                          details.categories.includes(category.name)
+                            ? 'bg-blue-500 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {category.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-4 mt-6">
