@@ -8,8 +8,14 @@ import { supabase } from '../utils/supabase';
 
 type ViewMode = 'flip' | 'slide';
 
-export function PhotoGallery() {
+interface PhotoGalleryProps {
+  selectedCategory?: string;
+  viewMode?: ViewMode;
+}
+
+export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip' }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
+  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -70,6 +76,19 @@ export function PhotoGallery() {
     }
   }, [categoriesData]);
 
+  useEffect(() => {
+    if (selectedCategory === 'all') {
+      setFilteredPhotos(photos);
+    } else {
+      const filtered = photos.filter(photo => 
+        photo.categories?.some(cat => 
+          cat.toLowerCase() === selectedCategory.toLowerCase()
+        )
+      );
+      setFilteredPhotos(filtered);
+    }
+  }, [photos, selectedCategory]);
+
   const handleFlip = (id: string) => {
     setFlippedIds(prev => {
       const next = new Set(prev);
@@ -86,6 +105,38 @@ export function PhotoGallery() {
     const files = Array.from(event.target.files || []);
     setSelectedFiles(files);
     setIsModalOpen(true);
+  };
+
+  const fetchPhotos = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: photos, error } = await supabase
+      .from('photos')
+      .select(`
+        *,
+        photo_categories (
+          categories (
+            name
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching photos:', error);
+      return;
+    }
+
+    const transformedPhotos = photos?.map(photo => ({
+      ...photo,
+      categories: photo.photo_categories
+        ?.map(pc => pc.categories?.name)
+        .filter(Boolean) || []
+    })) || [];
+
+    setPhotos(transformedPhotos);
   };
 
   const handleUpdatePhoto = async (updatedPhoto: Photo) => {
@@ -355,11 +406,11 @@ export function PhotoGallery() {
         accept="image/*"
       />
 
-      {photos.length === 0 ? (
+      {filteredPhotos.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-20">
-          {photos.map(photo => (
+          {filteredPhotos.map(photo => (
             <PhotoCard
               key={photo.id}
               photo={photo}
@@ -367,7 +418,7 @@ export function PhotoGallery() {
               onFlip={() => handleFlip(photo.id)}
               onDelete={handleDeletePhoto}
               onUpdate={handleUpdatePhoto}
-              viewMode="flip"
+              viewMode={viewMode}
             />
           ))}
         </div>
