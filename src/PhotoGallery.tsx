@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Plus, LogOut, Image } from 'lucide-react';
-import type { Photo, Category } from '../types';
-import { PhotoCard } from './PhotoCard';
-import { AddPhotoModal } from './AddPhotoModal';
+import type { Photo, Category } from './types';
+import { PhotoCard } from './components/PhotoCard';
+import { AddPhotoModal } from './components/AddPhotoModal';
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
@@ -102,7 +102,6 @@ export function PhotoGallery() {
           .insert({
             user_id: user.id,
             title: details.title,
-            description: details.description,
             date_taken: details.dateTaken,
             reason: details.reason,
             image_url: publicUrl
@@ -114,7 +113,6 @@ export function PhotoGallery() {
         }
       }
 
-      // Refresh photos after upload
       await fetchPhotos();
       
       setSelectedFiles([]);
@@ -134,7 +132,6 @@ export function PhotoGallery() {
     if (!photo) return;
 
     try {
-      // Delete from photos table
       const { error: deleteError } = await supabase
         .from('photos')
         .delete()
@@ -142,7 +139,6 @@ export function PhotoGallery() {
 
       if (deleteError) throw deleteError;
 
-      // Extract filename from URL and delete from storage
       const fileName = photo.image_url?.split('/').pop();
       if (fileName) {
         const { error: storageError } = await supabase.storage
@@ -152,7 +148,6 @@ export function PhotoGallery() {
         if (storageError) throw storageError;
       }
 
-      // Update local state
       setPhotos(prev => prev.filter(p => p.id !== id));
     } catch (error) {
       console.error('Error deleting photo:', error);
@@ -161,89 +156,94 @@ export function PhotoGallery() {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    window.location.reload();
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleFileSelect}
-          className="hidden"
-          multiple
-          accept="image/*"
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className={`w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg ${
-            isUploading ? 'opacity-50 cursor-not-allowed' : ''
-          }`}
-          title="Add Photos"
-          disabled={isUploading}
-        >
-          <Plus className="w-6 h-6" />
-        </button>
-
-        <button
-          onClick={handleSignOut}
-          className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900"
-        >
-          <LogOut className="w-5 h-5" />
-          <span>Sign Out</span>
-        </button>
-      </div>
-
-      {photos.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 px-4">
-          <div className="bg-gray-50 p-6 rounded-full mb-6">
-            <Image className="w-12 h-12 text-gray-400" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No memories yet</h2>
-          <p className="text-gray-600 text-center mb-8 max-w-md">
-            Start capturing your precious moments by clicking the plus button above.
-            Each photo tells a story - what's yours?
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mb-8">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            className="hidden"
+            multiple
+            accept="image/*"
+          />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className={`w-12 h-12 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-lg ${
+              isUploading ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            title="Add Photos"
+            disabled={isUploading}
           >
-            <Plus className="w-5 h-5" />
-            <span>Add Your First Memory</span>
+            <Plus className="w-6 h-6" />
+          </button>
+
+          <button
+            onClick={handleSignOut}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900"
+          >
+            <LogOut className="w-5 h-5" />
+            <span>Sign Out</span>
           </button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {photos.map(photo => (
-            <PhotoCard
-              key={photo.id}
-              photo={{
-                ...photo,
-                imageUrl: photo.image_url,
-                dateTaken: photo.date_taken
-              }}
-              isFlipped={flippedIds.has(photo.id)}
-              onFlip={() => handleFlip(photo.id)}
-              onDelete={handleDeletePhoto}
-            />
-          ))}
-        </div>
-      )}
 
-      <AddPhotoModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedFiles([]);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        }}
-        onAdd={handleAddPhotos}
-        fileCount={selectedFiles.length}
-        selectedFiles={selectedFiles}
-        categories={categories}
-      />
+        {photos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="bg-gray-50 p-6 rounded-full mb-6">
+              <Image className="w-12 h-12 text-gray-400" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No memories yet</h2>
+            <p className="text-gray-600 text-center mb-8 max-w-md">
+              Start capturing your precious moments by clicking the plus button above.
+              Each photo tells a story - what's yours?
+            </p>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add Your First Memory</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {photos.map(photo => (
+              <PhotoCard
+                key={photo.id}
+                photo={{
+                  ...photo,
+                  imageUrl: photo.image_url,
+                  dateTaken: photo.date_taken
+                }}
+                isFlipped={flippedIds.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDeletePhoto}
+                onUpdate={() => {}}
+                viewMode="flip"
+              />
+            ))}
+          </div>
+        )}
+
+        <AddPhotoModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedFiles([]);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = '';
+            }
+          }}
+          onAdd={handleAddPhotos}
+          fileCount={selectedFiles.length}
+          selectedFiles={selectedFiles}
+          categories={categories}
+        />
+      </div>
     </div>
   );
 }

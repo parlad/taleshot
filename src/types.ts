@@ -18,8 +18,8 @@ export interface PhotoCardProps {
   isFlipped: boolean;
   onFlip: () => void;
   onDelete: (id: string) => void;
-  onUpdate: (updatedPhoto: Photo) => void;
-  viewMode: ViewMode;
+  onUpdate?: (updatedPhoto: Photo) => void;
+  viewMode?: ViewMode;
   isPublicView?: boolean;
 }
 
