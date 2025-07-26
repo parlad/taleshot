@@ -33,17 +33,3 @@ export interface User {
   id: string;
   email: string;
 }
-
-export interface SearchResult {
-  user_id: string;
-  user_email: string;
-  first_name?: string;
-  last_name?: string;
-  photo_count: number;
-  sample_photos: {
-    id: string;
-    title: string;
-    image_url: string;
-    date_taken: string;
-  }[];
-}
