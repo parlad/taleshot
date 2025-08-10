@@ -182,9 +182,9 @@ export function PhotoCard({
                     </button>
                   </div>
                 )}
+              </div>
+            )}
 
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center gap-1">
             <div className="flex-1 flex flex-col">
               {isEditing ? (
                 <div className="space-y-3 flex-1">
@@ -244,6 +244,8 @@ export function PhotoCard({
                     </div>
                   )}
                 </div>
+              )}
+            </div>
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
               <div className="flex items-center gap-1">
                 {photo.is_public ? (
@@ -259,8 +261,6 @@ export function PhotoCard({
                 )}
               </div>
             </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
