@@ -32,25 +32,17 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      let photosData;
-      let error;
-
-      if (selectedCategory === 'all') {
-        console.log('📸 Fetching all photos...');
-        const result = await supabase.rpc('get_user_photos_with_tags', {
-          user_uuid: user.id
-        });
-        photosData = result.data;
-        error = result.error;
-      } else {
-        console.log('🏷️ Fetching photos with tag:', selectedCategory);
-        const result = await supabase.rpc('get_photos_by_tag', {
-          user_uuid: user.id,
-          tag_name: selectedCategory
-        });
-        photosData = result.data;
-        error = result.error;
-      }
+      // Fetch all photos with their tags using a simple query
+      const { data: photosData, error } = await supabase
+        .from('photos')
+        .select(`
+          *,
+          photo_tags (
+            tag_name
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching photos:', error);
@@ -58,10 +50,20 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         return;
       }
 
-      const transformedPhotos = (photosData || []).map(photo => ({
+      // Transform the data to include categories
+      let transformedPhotos = (photosData || []).map(photo => ({
         ...photo,
-        categories: photo.tags || []
+        categories: photo.photo_tags?.map(tag => tag.tag_name) || []
       }));
+
+      // Filter photos by category if not 'all'
+      if (selectedCategory !== 'all') {
+        transformedPhotos = transformedPhotos.filter(photo => 
+          photo.categories.some(category => 
+            category.toLowerCase() === selectedCategory.toLowerCase()
+          )
+        );
+      }
 
       console.log(`✅ Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
       console.log('Photos:', transformedPhotos.map(p => ({ title: p.title, categories: p.categories })));
