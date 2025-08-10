@@ -180,11 +180,6 @@ export function PhotoCard({
                     >
                       <X className="w-4 h-4" />
                     </button>
-      
-                  </div>
-      // Refresh photos to get updated data
-                    ))}
-      await fetchPhotos();
                   </div>
                 )}
 
@@ -203,7 +198,7 @@ export function PhotoCard({
                     )}
                   </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
