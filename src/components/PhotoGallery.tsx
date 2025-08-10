@@ -261,8 +261,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
             date_taken: details.date_taken,
             reason: details.reason,
             image_url: publicUrl,
-            is_public: details.is_public || false,
-            tags: details.categories || []
+            is_public: details.is_public || false
           })
           .select()
           .single();
@@ -272,7 +271,23 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           continue;
         }
         
-        console.log('✅ Successfully added photo with tags:', photo.tags);
+        // Insert tags into photo_tags table
+        if (details.categories && details.categories.length > 0) {
+          const tagInserts = details.categories.map(tag => ({
+            photo_id: photo.id,
+            tag_name: tag
+          }));
+
+          const { error: tagsError } = await supabase
+            .from('photo_tags')
+            .insert(tagInserts);
+
+          if (tagsError) {
+            console.error('Error inserting tags:', tagsError);
+          } else {
+            console.log('✅ Successfully added photo with tags:', details.categories);
+          }
+        }
       }
 
       await fetchPhotos();
