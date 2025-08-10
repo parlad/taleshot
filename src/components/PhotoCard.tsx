@@ -185,19 +185,80 @@ export function PhotoCard({
 
                 <div className="flex items-center justify-between mt-2">
                   <div className="flex items-center gap-1">
-                    {photo.is_public ? (
-                      <>
-                        <Eye className="w-3 h-3 text-green-600" />
-                        <span className="text-xs text-green-600">Public</span>
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-3 h-3 text-gray-400" />
-                        <span className="text-xs text-gray-400">Private</span>
-                      </>
-                    )}
+            <div className="flex-1 flex flex-col">
+              {isEditing ? (
+                <div className="space-y-3 flex-1">
+                  <input
+                    type="text"
+                    value={editData.title}
+                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Title"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <input
+                    type="text"
+                    value={editData.date_taken}
+                    onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Date"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <textarea
+                    value={editData.reason}
+                    onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
+                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none flex-1"
+                    placeholder="What makes this memory special?"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={editData.is_public}
+                      onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                    <span className="text-xs text-gray-600">Make public</span>
                   </div>
                 </div>
+              ) : (
+                <div className="flex-1 flex flex-col">
+                  <h3 className="font-semibold text-gray-900 mb-2 text-sm">{photo.title}</h3>
+                  <div className="flex items-center gap-2 text-gray-600 mb-2">
+                    <Calendar className="w-3 h-3" />
+                    <span className="text-xs">{photo.date_taken}</span>
+                  </div>
+                  <p className="text-gray-700 text-xs flex-1 overflow-y-auto">{photo.reason}</p>
+                  
+                  {photo.categories && photo.categories.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {photo.categories.map((category, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                        >
+                          {category}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+              <div className="flex items-center gap-1">
+                {photo.is_public ? (
+                  <>
+                    <Eye className="w-3 h-3 text-green-600" />
+                    <span className="text-xs text-green-600">Public</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-3 h-3 text-gray-400" />
+                    <span className="text-xs text-gray-400">Private</span>
+                  </>
+                )}
+              </div>
+            </div>
               </div>
             )}
           </div>
