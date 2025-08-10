@@ -26,7 +26,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   // Fetch photos based on selected category
   const fetchPhotos = async () => {
     setIsLoadingPhotos(true);
-    console.log('🔄 Fetching photos for category:', selectedCategory, 'Type:', typeof selectedCategory);
+    console.log('🔄 PhotoGallery: Fetching photos for category:', selectedCategory);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -36,14 +36,14 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
       let error;
 
       if (selectedCategory === 'all') {
-        console.log('📸 Fetching ALL photos with tags...');
+        console.log('📸 PhotoGallery: Fetching ALL photos with tags...');
         const result = await supabase.rpc('get_user_photos_with_tags', {
           user_uuid: user.id
         });
         photosData = result.data;
         error = result.error;
       } else {
-        console.log(`🏷️ Fetching photos with tag: "${selectedCategory}" (case-insensitive)`);
+        console.log(`🏷️ PhotoGallery: Fetching photos with tag: "${selectedCategory}"`);
         const result = await supabase.rpc('get_photos_by_tag', {
           user_uuid: user.id,
           tag_name: selectedCategory
@@ -53,7 +53,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
       }
 
       if (error) {
-        console.error('❌ Error fetching photos:', error);
+        console.error('❌ PhotoGallery: Error fetching photos:', error);
         setPhotos([]);
         return;
       }
@@ -64,15 +64,15 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         categories: photo.tags || []
       }));
 
-      console.log(`✅ Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
-      console.log('📋 Photos with categories:', transformedPhotos.map(p => ({ 
+      console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
+      console.log('📋 PhotoGallery: Photos with categories:', transformedPhotos.map(p => ({ 
         title: p.title, 
         categories: p.categories 
       })));
       
       setPhotos(transformedPhotos);
     } catch (error) {
-      console.error('❌ Error in fetchPhotos:', error);
+      console.error('❌ PhotoGallery: Error in fetchPhotos:', error);
       setPhotos([]);
     } finally {
       setIsLoadingPhotos(false);
@@ -84,6 +84,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   }, []);
 
   useEffect(() => {
+    console.log('🔄 PhotoGallery: selectedCategory changed to:', selectedCategory);
     fetchPhotos();
   }, [selectedCategory]);
 

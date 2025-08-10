@@ -24,7 +24,6 @@ export function MainLayout({ children }: MainLayoutProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    console.log('🏷️ Fetching categories for dropdown...');
 
     const { data, error } = await supabase
       .from('categories')
@@ -37,8 +36,13 @@ export function MainLayout({ children }: MainLayoutProps) {
       return;
     }
 
-    console.log('📂 Fetched categories for dropdown:', data?.map(c => c.name));
     setCategories(data || []);
+  };
+
+  const handleCategoryChange = (categoryName: string) => {
+    console.log('🔄 Category changed to:', categoryName);
+    setSelectedCategory(categoryName);
+    setShowCategoryDropdown(false);
   };
 
   const handleSignOut = async () => {
@@ -95,8 +99,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                     <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                       <button
                         onClick={() => {
-                          setSelectedCategory('all');
-                          setShowCategoryDropdown(false);
+                          handleCategoryChange('all');
                         }}
                         className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
                           selectedCategory === 'all' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
@@ -108,8 +111,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                         <button
                           key={category.id}
                           onClick={() => {
-                            setSelectedCategory(category.name);
-                            setShowCategoryDropdown(false);
+                            handleCategoryChange(category.name);
                           }}
                           className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
                             selectedCategory.toLowerCase() === category.name.toLowerCase() 
@@ -181,13 +183,11 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          {React.isValidElement(children) && children.type === React.Fragment 
-            ? children
-            : React.cloneElement(children as React.ReactElement, {
-                selectedCategory,
-                viewMode,
-                categories
-              })}
+          {React.cloneElement(children as React.ReactElement, {
+            selectedCategory,
+            viewMode,
+            categories
+          })}
         </div>
       </main>
 
