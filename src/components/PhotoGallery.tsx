@@ -3,7 +3,6 @@ import { Plus, Image, Camera, Heart, Users, Gift } from 'lucide-react';
 import type { Photo, Category } from '../types';
 import { PhotoCard } from './PhotoCard';
 import { AddPhotoModal } from './AddPhotoModal';
-import { useSupabaseQuery } from '../hooks/useSupabaseQuery';
 import { supabase } from '../utils/supabase';
 
 type ViewMode = 'flip' | 'slide';
@@ -16,7 +15,6 @@ interface PhotoGalleryProps {
 
 export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', categories = [] }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -25,52 +23,65 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
 
-  // Fetch photos with categories
+  // Fetch photos based on selected category
   const fetchPhotos = async () => {
     setIsLoadingPhotos(true);
+    console.log('🔄 Fetching photos for category:', selectedCategory);
+    
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: photosData, error } = await supabase
-        .from('photos')
-        .select(`
-          *,
-          photo_categories (
-            categories (
-              id,
-              name
-            )
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      let photosData;
+      let error;
+
+      if (selectedCategory === 'all') {
+        console.log('📸 Fetching all photos...');
+        const result = await supabase.rpc('get_user_photos_with_tags', {
+          user_uuid: user.id
+        });
+        photosData = result.data;
+        error = result.error;
+      } else {
+        console.log('🏷️ Fetching photos with tag:', selectedCategory);
+        const result = await supabase.rpc('get_photos_by_tag', {
+          user_uuid: user.id,
+          tag_name: selectedCategory
+        });
+        photosData = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error('Error fetching photos:', error);
+        setPhotos([]);
         return;
       }
 
-      const transformedPhotos = photosData?.map(photo => ({
+      const transformedPhotos = (photosData || []).map(photo => ({
         ...photo,
-        categories: photo.photo_categories
-          ?.map(pc => pc.categories?.name)
-          .filter(Boolean) || []
-      })) || [];
+        categories: photo.tags || []
+      }));
 
-      console.log('📸 Fetched photos with categories:', transformedPhotos);
+      console.log(`✅ Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
+      console.log('Photos:', transformedPhotos.map(p => ({ title: p.title, categories: p.categories })));
+      
       setPhotos(transformedPhotos);
     } catch (error) {
       console.error('Error in fetchPhotos:', error);
+      setPhotos([]);
     } finally {
       setIsLoadingPhotos(false);
     }
   };
 
   useEffect(() => {
-    fetchPhotos();
     fetchCategories();
   }, []);
+
+  useEffect(() => {
+    fetchPhotos();
+  }, [selectedCategory]);
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -95,38 +106,6 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
       console.error('Error in fetchCategories:', error);
     }
   };
-
-  useEffect(() => {
-    console.log('🔍 Filtering photos...');
-    console.log('Selected category:', selectedCategory);
-    console.log('All photos:', photos.length);
-    
-    if (selectedCategory === 'all') {
-      console.log('✅ Showing all photos');
-      setFilteredPhotos(photos);
-    } else {
-      const filtered = photos.filter(photo => {
-        const photoCategories = photo.categories || [];
-        console.log(`📷 Photo "${photo.title}" categories:`, photoCategories);
-        
-        // Check if photo has the selected category (exact match, case insensitive)
-        const hasCategory = photoCategories.some(category => {
-          if (!category) return false;
-          const match = category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
-          console.log(`  🔍 Comparing "${category}" with "${selectedCategory}": ${match}`);
-          return match;
-        }
-        );
-        
-        console.log(`  ✅ Photo "${photo.title}" has category "${selectedCategory}": ${hasCategory}`);
-        return hasCategory;
-      });
-      
-      console.log(`✅ Category "${selectedCategory}": showing ${filtered.length} out of ${photos.length} photos`);
-      console.log('Filtered photos:', filtered.map(p => ({ title: p.title, categories: p.categories })));
-      setFilteredPhotos(filtered);
-    }
-  }, [photos, selectedCategory]);
 
   const handleFlip = (id: string) => {
     setFlippedIds(prev => {
@@ -287,33 +266,22 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           continue;
         }
 
-        // Add categories if any were selected
+        // Add tags if any were selected
         if (details.categories && details.categories.length > 0) {
-          console.log('Adding categories to photo:', details.categories);
-          const { data: categoryData } = await supabase
-            .from('categories')
-            .select('id, name')
-            .in('name', details.categories);
+          console.log('Adding tags to photo:', details.categories);
+          const tagInserts = details.categories.map(tag => ({
+            photo_id: photo.id,
+            tag_name: tag
+          }));
 
-          console.log('Found category data:', categoryData);
+          const { error: tagError } = await supabase
+            .from('photo_tags')
+            .insert(tagInserts);
 
-          if (categoryData && categoryData.length > 0) {
-            const categoryAssociations = categoryData.map(category => ({
-              photo_id: photo.id,
-              category_id: category.id
-            }));
-
-            console.log('Inserting category associations:', categoryAssociations);
-
-            const { error: categoryError } = await supabase
-              .from('photo_categories')
-              .insert(categoryAssociations);
-
-            if (categoryError) {
-              console.error('Error inserting categories:', categoryError);
-            } else {
-              console.log('Successfully added categories to photo');
-            }
+          if (tagError) {
+            console.error('Error inserting tags:', tagError);
+          } else {
+            console.log('Successfully added tags to photo');
           }
         }
       }
@@ -353,8 +321,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         if (storageError) throw storageError;
       }
 
-      setPhotos(prev => prev.filter(p => p.id !== id));
-      setFilteredPhotos(prev => prev.filter(p => p.id !== id));
+      await fetchPhotos(); // Refresh the photos after deletion
     } catch (error) {
       console.error('Error deleting photo:', error);
     }
@@ -386,11 +353,11 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           </div>
 
           <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text mb-4">
-            {photos.length === 0 ? 'Start Your Memory Collection' : 'No Memories Found'}
+            {selectedCategory === 'all' ? 'Start Your Memory Collection' : 'No Memories Found'}
           </h2>
           
           <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
-            {photos.length === 0 
+            {selectedCategory === 'all'
               ? "Every photo tells a unique story. Begin your journey of capturing and preserving life's precious moments."
               : `No memories found in the "${selectedCategory}" category. Try selecting a different category or add new photos to this collection.`}
           </p>
@@ -401,7 +368,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           >
             <Plus className="w-5 h-5" />
             <span className="font-semibold">
-              {photos.length === 0 ? 'Add Your First Memory' : 'Add New Photos'}
+              {selectedCategory === 'all' ? 'Add Your First Memory' : 'Add New Photos'}
             </span>
           </button>
         </div>
@@ -420,11 +387,11 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         accept="image/*"
       />
 
-      {filteredPhotos.length === 0 ? (
+      {photos.length === 0 ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPhotos.map(photo => (
+          {photos.map(photo => (
             <PhotoCard
               key={photo.id}
               photo={photo}

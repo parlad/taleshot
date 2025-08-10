@@ -142,7 +142,7 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
               </div>
 
               {/* Categories */}
-              {categories && categories.length > 0 && (
+              {categories.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Categories (optional)
@@ -166,6 +166,18 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
                       </button>
                     ))}
                   </div>
+                  {details.categories.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 mb-1">Selected categories:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {details.categories.map(category => (
+                          <span key={category} className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">
+                            {category}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
