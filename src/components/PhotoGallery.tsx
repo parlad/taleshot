@@ -22,13 +22,16 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
 
-  const { data: photosData, error: photosError, isLoading: isLoadingPhotos } = useSupabaseQuery(
-    async () => {
+  // Fetch photos with categories
+  const fetchPhotos = async () => {
+    setIsLoadingPhotos(true);
+    try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user) return;
 
-      return supabase
+      const { data: photosData, error } = await supabase
         .from('photos')
         .select(`
           *,
@@ -41,37 +44,56 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         `)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
-    },
-    []
-  );
 
-  useEffect(() => {
-    if (photosData) {
-      const transformedPhotos = photosData.map(photo => ({
+      if (error) {
+        console.error('Error fetching photos:', error);
+        return;
+      }
+
+      const transformedPhotos = photosData?.map(photo => ({
         ...photo,
         categories: photo.photo_categories
           ?.map(pc => pc.categories?.name)
           .filter(Boolean) || []
-      }));
-      console.log('Transformed photos with categories:', transformedPhotos);
+      })) || [];
+
+      console.log('📸 Fetched photos with categories:', transformedPhotos);
       setPhotos(transformedPhotos);
+    } catch (error) {
+      console.error('Error in fetchPhotos:', error);
+    } finally {
+      setIsLoadingPhotos(false);
     }
-  }, [photosData]);
+  };
 
   useEffect(() => {
+    fetchPhotos();
+  }, []);
+
+  useEffect(() => {
+    console.log('🔍 Filtering photos...');
+    console.log('Selected category:', selectedCategory);
+    console.log('All photos:', photos.length);
+    
     if (selectedCategory === 'all') {
+      console.log('✅ Showing all photos');
       setFilteredPhotos(photos);
     } else {
       const filtered = photos.filter(photo => {
         const photoCategories = photo.categories || [];
+        console.log(`Photo "${photo.title}" categories:`, photoCategories);
         
-        // Check if photo has the selected category (case-insensitive)
-        return photoCategories.some(category => 
-          category && category.toLowerCase() === selectedCategory.toLowerCase()
+        // Check if photo has the selected category
+        const hasCategory = photoCategories.some(category => 
+          category && category.trim().toLowerCase() === selectedCategory.trim().toLowerCase()
         );
+        
+        console.log(`Photo "${photo.title}" has category "${selectedCategory}":`, hasCategory);
+        return hasCategory;
       });
       
-      console.log(`Category "${selectedCategory}": showing ${filtered.length} out of ${photos.length} photos`);
+      console.log(`✅ Category "${selectedCategory}": showing ${filtered.length} out of ${photos.length} photos`);
+      console.log('Filtered photos:', filtered.map(p => ({ title: p.title, categories: p.categories })));
       setFilteredPhotos(filtered);
     }
   }, [photos, selectedCategory]);
@@ -92,38 +114,6 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
     const files = Array.from(event.target.files || []);
     setSelectedFiles(files);
     setIsModalOpen(true);
-  };
-
-  const fetchPhotos = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data: photos, error } = await supabase
-      .from('photos')
-      .select(`
-        *,
-        photo_categories (
-          categories (
-            name
-          )
-        )
-      `)
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching photos:', error);
-      return;
-    }
-
-    const transformedPhotos = photos?.map(photo => ({
-      ...photo,
-      categories: photo.photo_categories
-        ?.map(pc => pc.categories?.name)
-        .filter(Boolean) || []
-    })) || [];
-
-    setPhotos(transformedPhotos);
   };
 
   const handleUpdatePhoto = async (updatedPhoto: Photo) => {
