@@ -34,7 +34,8 @@ export function PhotoCard({
         date_taken: editData.date_taken,
         reason: editData.reason,
         is_public: editData.is_public,
-        categories: editData.categories
+        categories: editData.categories,
+        tags: editData.categories
       });
     }
     setIsEditing(false);
@@ -179,73 +180,11 @@ export function PhotoCard({
                     >
                       <X className="w-4 h-4" />
                     </button>
+      
                   </div>
-                )}
-              </div>
-            )}
-
-            {isEditing ? (
-              <div className="flex-grow space-y-2">
-                <input
-                  type="text"
-                  value={editData.title}
-                  onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full text-sm font-bold border border-gray-300 rounded px-2 py-1"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                
-                <input
-                  type="date"
-                  value={editData.date_taken}
-                  onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
-                  className="w-full text-xs border border-gray-300 rounded px-2 py-1"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                
-                <textarea
-                  value={editData.reason}
-                  onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-                  className="w-full text-xs border border-gray-300 rounded px-2 py-1 flex-grow resize-none"
-                  onClick={(e) => e.stopPropagation()}
-                />
-
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id={`public-${photo.id}`}
-                    checked={editData.is_public}
-                    onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                  <label htmlFor={`public-${photo.id}`} className="text-xs text-gray-600">
-                    Make public
-                  </label>
-                </div>
-              </div>
-            ) : (
-              <>
-                <h3 className="text-base font-bold mb-2">{photo.title}</h3>
-                
-                <div className="flex items-center gap-1.5 text-gray-600 mb-2">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span className="text-xs">{photo.date_taken}</span>
-                </div>
-                
-                <div className="flex-grow">
-                  <h4 className="font-medium text-xs mb-1">Memory</h4>
-                  <p className="text-gray-700 text-xs">{photo.reason}</p>
-                </div>
-
-                {photo.categories && photo.categories.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {photo.categories.map((category, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                      >
-                        {category}
-                      </span>
+      // Refresh photos to get updated data
                     ))}
+      await fetchPhotos();
                   </div>
                 )}
 

@@ -223,7 +223,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
 
   const handleAddPhotos = async (details: Omit<Photo, 'id' | 'imageUrl'>) => {
     setIsUploading(true);
-    console.log('📤 Adding photos with categories:', details.categories);
+    console.log('📤 Adding photos with tags:', details.categories);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -261,7 +261,8 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
             date_taken: details.date_taken,
             reason: details.reason,
             image_url: publicUrl,
-            is_public: details.is_public || false
+            is_public: details.is_public || false,
+            tags: details.categories || []
           })
           .select()
           .single();
@@ -270,25 +271,8 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           console.error('Error inserting photo:', insertError);
           continue;
         }
-
-        // Add tags if any were selected
-        if (details.categories && details.categories.length > 0) {
-          console.log('🏷️ Adding tags to photo:', details.categories);
-          const tagInserts = details.categories.map(tag => ({
-            photo_id: photo.id,
-            tag_name: tag
-          }));
-
-          const { error: tagError } = await supabase
-            .from('photo_tags')
-            .insert(tagInserts);
-
-          if (tagError) {
-            console.error('Error inserting tags:', tagError);
-          } else {
-            console.log('✅ Successfully added tags to photo');
-          }
-        }
+        
+        console.log('✅ Successfully added photo with tags:', photo.tags);
       }
 
       await fetchPhotos();
