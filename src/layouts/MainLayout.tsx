@@ -24,6 +24,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    console.log('🏷️ Fetching categories for dropdown...');
+
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -35,7 +37,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       return;
     }
 
-    console.log('📂 Fetched categories for dropdown:', data);
+    console.log('📂 Fetched categories for dropdown:', data?.map(c => c.name));
     setCategories(data || []);
   };
 

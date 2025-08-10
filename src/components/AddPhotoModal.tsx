@@ -142,11 +142,14 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
               </div>
 
               {/* Categories */}
-              {categories.length > 0 && (
+              {categories && categories.length > 0 && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Categories (optional)
                   </label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Select categories that describe this memory
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {categories.map(category => (
                       <button
@@ -156,7 +159,7 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
                         className={`px-3 py-1 rounded-full text-sm transition-colors ${
                           details.categories.includes(category.name)
                             ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            : 'bg-gray-100 text-gray-700 hover:bg-blue-100'
                         }`}
                       >
                         {category.name}

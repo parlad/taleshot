@@ -23,6 +23,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
 
   // Fetch photos with categories
   const fetchPhotos = async () => {
@@ -68,7 +69,32 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
 
   useEffect(() => {
     fetchPhotos();
+    fetchCategories();
   }, []);
+
+  // Fetch categories
+  const fetchCategories = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: categoriesData, error } = await supabase
+        .from('categories')
+        .select('*')
+        .or(`user_id.eq.${user.id},user_id.is.null`)
+        .order('name');
+
+      if (error) {
+        console.error('Error fetching categories:', error);
+        return;
+      }
+
+      console.log('📂 Fetched categories:', categoriesData);
+      setAllCategories(categoriesData || []);
+    } catch (error) {
+      console.error('Error in fetchCategories:', error);
+    }
+  };
 
   useEffect(() => {
     console.log('🔍 Filtering photos...');
@@ -81,14 +107,18 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
     } else {
       const filtered = photos.filter(photo => {
         const photoCategories = photo.categories || [];
-        console.log(`Photo "${photo.title}" categories:`, photoCategories);
+        console.log(`📷 Photo "${photo.title}" categories:`, photoCategories);
         
-        // Check if photo has the selected category
-        const hasCategory = photoCategories.some(category => 
-          category && category.trim().toLowerCase() === selectedCategory.trim().toLowerCase()
+        // Check if photo has the selected category (exact match, case insensitive)
+        const hasCategory = photoCategories.some(category => {
+          if (!category) return false;
+          const match = category.trim().toLowerCase() === selectedCategory.trim().toLowerCase();
+          console.log(`  🔍 Comparing "${category}" with "${selectedCategory}": ${match}`);
+          return match;
+        }
         );
         
-        console.log(`Photo "${photo.title}" has category "${selectedCategory}":`, hasCategory);
+        console.log(`  ✅ Photo "${photo.title}" has category "${selectedCategory}": ${hasCategory}`);
         return hasCategory;
       });
       
@@ -431,7 +461,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         onAdd={handleAddPhotos}
         fileCount={selectedFiles.length}
         selectedFiles={selectedFiles}
-        categories={categories}
+        categories={allCategories}
       />
     </div>
   );
