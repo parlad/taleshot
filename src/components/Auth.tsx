@@ -1,18 +1,6 @@
 import React, { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../utils/supabase';
 import { Eye, EyeOff } from 'lucide-react';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY,
-  {
-    auth: {
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: true
-    }
-  }
-);
 
 export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
