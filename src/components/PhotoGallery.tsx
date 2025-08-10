@@ -26,7 +26,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   // Fetch photos based on selected category
   const fetchPhotos = async () => {
     setIsLoadingPhotos(true);
-    console.log('🔄 Fetching photos for category:', selectedCategory);
+    console.log('🔄 Fetching photos for category:', selectedCategory, 'Type:', typeof selectedCategory);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -43,7 +43,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         photosData = result.data;
         error = result.error;
       } else {
-        console.log(`🏷️ Fetching photos with tag: "${selectedCategory}"`);
+        console.log(`🏷️ Fetching photos with tag: "${selectedCategory}" (case-insensitive)`);
         const result = await supabase.rpc('get_photos_by_tag', {
           user_uuid: user.id,
           tag_name: selectedCategory

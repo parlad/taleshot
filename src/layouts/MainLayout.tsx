@@ -181,11 +181,13 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          {React.cloneElement(children as React.ReactElement, {
-            selectedCategory,
-            viewMode,
-            categories
-          })}
+          {React.isValidElement(children) && children.type === React.Fragment 
+            ? children
+            : React.cloneElement(children as React.ReactElement, {
+                selectedCategory,
+                viewMode,
+                categories
+              })}
         </div>
       </main>
 

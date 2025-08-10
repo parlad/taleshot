@@ -8,12 +8,12 @@ interface HomePageProps {
   categories?: Category[];
 }
 
-export function HomePage({ selectedCategory = 'all', viewMode = 'flip', categories = [] }: HomePageProps) {
+export function HomePage({ selectedCategory, viewMode, categories }: HomePageProps) {
   return (
     <PhotoGallery 
-      selectedCategory={selectedCategory} 
-      viewMode={viewMode}
-      categories={categories}
+      selectedCategory={selectedCategory || 'all'} 
+      viewMode={viewMode || 'flip'}
+      categories={categories || []}
     />
   );
 }
