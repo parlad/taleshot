@@ -9,11 +9,12 @@ type ViewMode = 'flip' | 'slide';
 
 interface PhotoGalleryProps {
   selectedCategory?: string;
+  selectedTag?: string;
   viewMode?: ViewMode;
   categories?: Category[];
 }
 
-export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', categories = [] }: PhotoGalleryProps) {
+export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', viewMode = 'flip', categories = [] }: PhotoGalleryProps) {
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [flippedIds, setFlippedIds] = useState<Set<string>>(new Set());
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,10 +24,15 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   const [isLoadingPhotos, setIsLoadingPhotos] = useState(true);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
 
-  // Fetch photos based on selected category
+  // Fetch photos based on selected category or tag
   const fetchPhotos = async () => {
     setIsLoadingPhotos(true);
-    console.log('🔄 PhotoGallery: Fetching photos for category:', selectedCategory);
+    
+    // Determine which filter to use - tag takes priority over category
+    const activeFilter = selectedTag !== 'all' ? selectedTag : selectedCategory;
+    const filterType = selectedTag !== 'all' ? 'tag' : 'category';
+    
+    console.log(`🔄 PhotoGallery: Fetching photos for ${filterType}:`, activeFilter);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -35,18 +41,18 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
       let photosData;
       let error;
 
-      if (selectedCategory === 'all') {
-        console.log('📸 PhotoGallery: Fetching ALL photos with tags...');
+      if (activeFilter === 'all') {
+        console.log('📸 PhotoGallery: Fetching ALL photos...');
         const result = await supabase.rpc('get_user_photos_with_tags', {
           user_uuid: user.id
         });
         photosData = result.data;
         error = result.error;
       } else {
-        console.log(`🏷️ PhotoGallery: Fetching photos with tag: "${selectedCategory}"`);
+        console.log(`🏷️ PhotoGallery: Fetching photos with ${filterType}: "${activeFilter}"`);
         const result = await supabase.rpc('get_photos_by_tag', {
           user_uuid: user.id,
-          tag_name: selectedCategory
+          tag_name: activeFilter
         });
         photosData = result.data;
         error = result.error;
@@ -64,7 +70,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
         categories: photo.tags || []
       }));
 
-      console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
+      console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for ${filterType} "${activeFilter}"`);
       console.log('📋 PhotoGallery: Photos with categories:', transformedPhotos.map(p => ({ 
         title: p.title, 
         categories: p.categories 
@@ -84,9 +90,9 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
   }, []);
 
   useEffect(() => {
-    console.log('🔄 PhotoGallery: selectedCategory changed to:', selectedCategory);
+    console.log('🔄 PhotoGallery: Filter changed - Category:', selectedCategory, 'Tag:', selectedTag);
     fetchPhotos();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedTag]);
 
   // Fetch categories
   const fetchCategories = async () => {
@@ -358,13 +364,13 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           </div>
 
           <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text mb-4">
-            {selectedCategory === 'all' ? 'Start Your Memory Collection' : 'No Memories Found'}
+            {(selectedCategory === 'all' && selectedTag === 'all') ? 'Start Your Memory Collection' : 'No Memories Found'}
           </h2>
           
           <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
-            {selectedCategory === 'all'
+            {(selectedCategory === 'all' && selectedTag === 'all')
               ? "Every photo tells a unique story. Begin your journey of capturing and preserving life's precious moments."
-              : `No memories found in the "${selectedCategory}" category. Try selecting a different category or add new photos to this collection.`}
+              : `No memories found with the selected filter. Try selecting a different filter or add new photos.`}
           </p>
 
           <button
@@ -373,7 +379,7 @@ export function PhotoGallery({ selectedCategory = 'all', viewMode = 'flip', cate
           >
             <Plus className="w-5 h-5" />
             <span className="font-semibold">
-              {selectedCategory === 'all' ? 'Add Your First Memory' : 'Add New Photos'}
+              {(selectedCategory === 'all' && selectedTag === 'all') ? 'Add Your First Memory' : 'Add New Photos'}
             </span>
           </button>
         </div>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Camera, Search, LogOut, ChevronDown, Grid, LayoutGrid } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { TagFilter } from '../components/TagFilter';
 import type { Category } from '../types';
 
 interface MainLayoutProps {
@@ -11,6 +12,7 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedTag, setSelectedTag] = useState('all');
   const [viewMode, setViewMode] = useState<'flip' | 'slide'>('flip');
   const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showViewDropdown, setShowViewDropdown] = useState(false);
@@ -42,6 +44,25 @@ export function MainLayout({ children }: MainLayoutProps) {
   const handleCategoryChange = (categoryName: string) => {
     console.log('🔄 Category changed to:', categoryName);
     setSelectedCategory(categoryName);
+    setShowCategoryDropdown(false);
+  };
+
+  const handleTagChange = (tag: string) => {
+    console.log('🏷️ MainLayout: Tag changed to:', tag);
+    setSelectedTag(tag);
+    // Reset category filter when tag filter is used
+    if (tag !== 'all') {
+      setSelectedCategory('all');
+    }
+  };
+
+  const handleCategoryChange = (categoryName: string) => {
+    console.log('🔄 MainLayout: Category changed to:', categoryName);
+    setSelectedCategory(categoryName);
+    // Reset tag filter when category filter is used
+    if (categoryName !== 'all') {
+      setSelectedTag('all');
+    }
     setShowCategoryDropdown(false);
   };
 
@@ -127,6 +148,14 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </div>
               )}
 
+              {/* Tag Filter - Only show on home page */}
+              {isHomePage && (
+                <TagFilter 
+                  selectedTag={selectedTag}
+                  onTagChange={handleTagChange}
+                />
+              )}
+
               {/* View Mode Dropdown - Only show on home page */}
               {isHomePage && (
                 <div className="relative">
@@ -185,6 +214,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="max-w-6xl mx-auto px-4 py-8">
           {React.cloneElement(children as React.ReactElement, {
             selectedCategory,
+            selectedTag,
             viewMode,
             categories
           })}
