@@ -35,68 +35,115 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      let photosData;
-      let error;
-
       if (selectedTag !== 'all') {
         // Tag filter takes priority - show only photos with this specific tag
         console.log(`🏷️ PhotoGallery: Fetching photos with tag: "${selectedTag}"`);
         
-        // Use direct query with proper filtering
-        const { data: photosData, error } = await supabase
-          .from('photos')
-          .select(`
-            *,
-            photo_tags!inner(tag_name)
-          `)
-          .eq('user_id', user.id)
-          .eq('photo_tags.tag_name', selectedTag)
-          .order('created_at', { ascending: false });
+        // First get photo IDs that have this tag
+        const { data: taggedPhotoIds, error: tagError } = await supabase
+          .from('photo_tags')
+          .select('photo_id')
+          .eq('tag_name', selectedTag);
 
-        if (error) {
-          console.error('❌ PhotoGallery: Error fetching photos by tag:', error);
+        if (tagError) {
+          console.error('❌ PhotoGallery: Error fetching tagged photo IDs:', tagError);
           setPhotos([]);
           return;
         }
 
-        // Transform the data to include all tags for each photo
-        const transformedPhotos = photosData?.map(photo => ({
-          ...photo,
-          tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
-          categories: photo.photo_tags?.map(pt => pt.tag_name) || []
-        })) || [];
+        if (!taggedPhotoIds || taggedPhotoIds.length === 0) {
+          console.log(`📭 PhotoGallery: No photos found with tag "${selectedTag}"`);
+          setPhotos([]);
+          return;
+        }
 
-        console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for tag "${selectedTag}"`);
-        setPhotos(transformedPhotos);
+        const photoIds = taggedPhotoIds.map(item => item.photo_id);
+        console.log(`🔍 PhotoGallery: Found ${photoIds.length} photo IDs with tag "${selectedTag}":`, photoIds);
+
+        // Now get the actual photos
+        const { data: photosData, error } = await supabase
+          .from('photos')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('id', photoIds)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('❌ PhotoGallery: Error fetching photos:', error);
+          setPhotos([]);
+          return;
+        }
+
+        // Get all tags for each photo
+        const photosWithTags = [];
+        for (const photo of photosData || []) {
+          const { data: photoTags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+
+          photosWithTags.push({
+            ...photo,
+            tags: photoTags?.map(pt => pt.tag_name) || [],
+            categories: photoTags?.map(pt => pt.tag_name) || []
+          });
+        }
+
+        console.log(`✅ PhotoGallery: Fetched ${photosWithTags.length} photos for tag "${selectedTag}"`);
+        setPhotos(photosWithTags);
         
       } else if (selectedCategory !== 'all') {
-        // Category filter - show photos with this category as a tag
+        // Category filter - same logic as tag filter
         console.log(`📂 PhotoGallery: Fetching photos with category: "${selectedCategory}"`);
         
-        const { data: photosData, error } = await supabase
-          .from('photos')
-          .select(`
-            *,
-            photo_tags!inner(tag_name)
-          `)
-          .eq('user_id', user.id)
-          .eq('photo_tags.tag_name', selectedCategory)
-          .order('created_at', { ascending: false });
+        const { data: taggedPhotoIds, error: tagError } = await supabase
+          .from('photo_tags')
+          .select('photo_id')
+          .eq('tag_name', selectedCategory);
 
-        if (error) {
-          console.error('❌ PhotoGallery: Error fetching photos by category:', error);
+        if (tagError) {
+          console.error('❌ PhotoGallery: Error fetching category photo IDs:', tagError);
           setPhotos([]);
           return;
         }
 
-        const transformedPhotos = photosData?.map(photo => ({
-          ...photo,
-          tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
-          categories: photo.photo_tags?.map(pt => pt.tag_name) || []
-        })) || [];
+        if (!taggedPhotoIds || taggedPhotoIds.length === 0) {
+          console.log(`📭 PhotoGallery: No photos found with category "${selectedCategory}"`);
+          setPhotos([]);
+          return;
+        }
 
-        console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
-        setPhotos(transformedPhotos);
+        const photoIds = taggedPhotoIds.map(item => item.photo_id);
+
+        const { data: photosData, error } = await supabase
+          .from('photos')
+          .select('*')
+          .eq('user_id', user.id)
+          .in('id', photoIds)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('❌ PhotoGallery: Error fetching photos:', error);
+          setPhotos([]);
+          return;
+        }
+
+        const photosWithTags = [];
+        for (const photo of photosData || []) {
+          const { data: photoTags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+
+          photosWithTags.push({
+            ...photo,
+            tags: photoTags?.map(pt => pt.tag_name) || [],
+            categories: photoTags?.map(pt => pt.tag_name) || []
+          });
+        }
+
+        console.log(`✅ PhotoGallery: Fetched ${photosWithTags.length} photos for category "${selectedCategory}"`);
+        setPhotos(photosWithTags);
         
       } else {
         // No filter - show all photos
@@ -104,10 +151,7 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         
         const { data: photosData, error } = await supabase
           .from('photos')
-          .select(`
-            *,
-            photo_tags(tag_name)
-          `)
+          .select('*')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -117,14 +161,22 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           return;
         }
 
-        const transformedPhotos = photosData?.map(photo => ({
-          ...photo,
-          tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
-          categories: photo.photo_tags?.map(pt => pt.tag_name) || []
-        })) || [];
+        const photosWithTags = [];
+        for (const photo of photosData || []) {
+          const { data: photoTags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
 
-        console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos (all photos)`);
-        setPhotos(transformedPhotos);
+          photosWithTags.push({
+            ...photo,
+            tags: photoTags?.map(pt => pt.tag_name) || [],
+            categories: photoTags?.map(pt => pt.tag_name) || []
+          });
+        }
+
+        console.log(`✅ PhotoGallery: Fetched ${photosWithTags.length} photos (all photos)`);
+        setPhotos(photosWithTags);
       }
 
     } catch (error) {
