@@ -69,50 +69,45 @@ export function PhotoGallery() {
   };
 
   const filterPhotos = () => {
-    // If showing group photos, filter to show only photos from selected group
+    let filtered: Photo[] = [];
+
     if (showGroupPhotos && selectedGroupId) {
-      const groupPhotos = photos.filter(photo => photo.batch_id === selectedGroupId);
-      setFilteredPhotos(groupPhotos);
-      return;
+      // Show only photos from selected group
+      filtered = photos.filter(photo => photo.batch_id === selectedGroupId);
+    } else {
+      // Group photos by batch_id and create tiles
+      const batchGroups = new Map<string, Photo[]>();
+      const individualPhotos: Photo[] = [];
+      
+      photos.forEach(photo => {
+        if (photo.batch_id && photo.upload_type === 'group') {
+          if (!batchGroups.has(photo.batch_id)) {
+            batchGroups.set(photo.batch_id, []);
+          }
+          batchGroups.get(photo.batch_id)!.push(photo);
+        } else {
+          individualPhotos.push(photo);
+        }
+      });
+      
+      // Start with individual photos
+      filtered = [...individualPhotos];
+      
+      // Add one representative tile per batch group
+      batchGroups.forEach((groupPhotos, batchId) => {
+        if (groupPhotos.length > 0) {
+          // Use first photo as representative with gallery metadata
+          const representative: Photo = {
+            ...groupPhotos[0],
+            is_gallery_tile: true,
+            gallery_photos: groupPhotos
+          };
+          filtered.push(representative);
+        }
+      });
     }
 
-    // Group photos by batch_id (gallery groups) and create tiles
-    const galleryMap = new Map<string, Photo[]>();
-    const singlePhotos: Photo[] = [];
-    
-    photos.forEach(photo => {
-      if (photo.batch_id && photo.upload_type === 'group') {
-        if (!galleryMap.has(photo.batch_id)) {
-          galleryMap.set(photo.batch_id, []);
-        }
-        galleryMap.get(photo.batch_id)!.push(photo);
-      } else {
-        singlePhotos.push(photo);
-      }
-    });
-    
-    // Create photo tiles (single photos + gallery representatives)
-    let photoTiles: Photo[] = [...singlePhotos];
-    
-    // Add one representative photo per gallery (only if gallery has multiple photos)
-    galleryMap.forEach((galleryPhotos, galleryId) => {
-      if (galleryPhotos.length > 1) {
-        // Create a gallery tile with the first photo as representative
-        const representative = {
-          ...galleryPhotos[0],
-          gallery_photos: galleryPhotos,
-          is_gallery_tile: true
-        };
-        photoTiles.push(representative);
-      } else if (galleryPhotos.length === 1) {
-        // If only one photo in batch, treat as single photo
-        photoTiles.push(galleryPhotos[0]);
-      }
-    });
-    
     // Apply tag filtering
-    let filtered = photoTiles;
-
     if (selectedTag !== 'all') {
       filtered = filtered.filter(photo => 
         photo.tags?.includes(selectedTag) || 

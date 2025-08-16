@@ -79,14 +79,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   const handleExpand = () => {
     if (photo.is_gallery_tile && photo.batch_id) {
-      if (onGroupSelect) {
-        onGroupSelect(photo.batch_id);
-      } else {
-        loadGalleryPhotos();
-      }
-    }
-    if (!onGroupSelect) {
-      setIsExpanded(true);
+      onGroupSelect?.(photo.batch_id);
     }
   };
 
@@ -104,50 +97,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     );
   }
 
-  const displayPhotos = isExpanded ? galleryPhotos : [];
   const photoCount = photo.gallery_photos?.length || 0;
-
-  // Expanded view showing all photos in the gallery
-  if (isExpanded) {
-    return (
-      <div className="col-span-full">
-        <div className="bg-white rounded-xl shadow-lg p-6">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Images className="w-6 h-6 text-blue-600" />
-              <h3 className="text-xl font-semibold text-gray-900">
-                {photo.title} ({photoCount} photos)
-              </h3>
-            </div>
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          
-          <div className={`grid gap-6 ${
-            viewMode === 'flip' 
-              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-              : 'grid-cols-1 lg:grid-cols-2'
-          }`}>
-            {displayPhotos.map(galleryPhoto => (
-              <PhotoCard
-                key={galleryPhoto.id}
-                photo={galleryPhoto}
-                isFlipped={expandedFlippedCards.has(galleryPhoto.id)}
-                onFlip={() => handleExpandedFlip(galleryPhoto.id)}
-                onDelete={handleDeleteFromGallery}
-                onUpdate={handleUpdateInGallery}
-                viewMode={viewMode}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Tile view showing just the representative photo with gallery indicator
   if (viewMode === 'slide') {
