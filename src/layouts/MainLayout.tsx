@@ -26,7 +26,6 @@ export function MainLayout({ children }: MainLayoutProps) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-
     const { data, error } = await supabase
       .from('categories')
       .select('*')
@@ -42,15 +41,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   const handleCategoryChange = (categoryName: string) => {
-    console.log('🔄 Category changed to:', categoryName);
-    setSelectedCategory(categoryName);
-    setShowCategoryDropdown(false);
-  };
-
-  const handleTagChange = (tag: string) => {
-    console.log('🏷️ MainLayout: Tag changed to:', tag);
-    setSelectedTag(tag);
-  const handleCategoryChange = (categoryName: string) => {
     console.log('🔄 MainLayout: Category changed to:', categoryName);
     setSelectedCategory(categoryName);
     // Reset tag filter when category filter is used
@@ -58,6 +48,15 @@ export function MainLayout({ children }: MainLayoutProps) {
       setSelectedTag('all');
     }
     setShowCategoryDropdown(false);
+  };
+
+  const handleTagChange = (tag: string) => {
+    console.log('🏷️ MainLayout: Tag changed to:', tag);
+    setSelectedTag(tag);
+    // Reset category filter when tag filter is used
+    if (tag !== 'all') {
+      setSelectedCategory('all');
+    }
   };
 
   const handleSignOut = async () => {
@@ -113,9 +112,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   {showCategoryDropdown && (
                     <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
                       <button
-                        onClick={() => {
-                          handleCategoryChange('all');
-                        }}
+                        onClick={() => handleCategoryChange('all')}
                         className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
                           selectedCategory === 'all' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
                         }`}
@@ -125,9 +122,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                       {categories.map(category => (
                         <button
                           key={category.id}
-                          onClick={() => {
-                            handleCategoryChange(category.name);
-                          }}
+                          onClick={() => handleCategoryChange(category.name)}
                           className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
                             selectedCategory.toLowerCase() === category.name.toLowerCase() 
                               ? 'bg-blue-50 text-blue-700' 
