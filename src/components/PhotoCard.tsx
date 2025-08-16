@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
-import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X, Plus, Tag } from 'lucide-react';
+import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X, Plus, Tag, Images } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
 import type { PhotoCardProps, Photo } from '../types';
 
 export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode = 'flip', isPublicView = false }: PhotoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [batchPhotos, setBatchPhotos] = useState<Photo[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [editData, setEditData] = useState({
     title: photo.title,
     date_taken: photo.date_taken || '',
@@ -17,6 +21,69 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
   ]);
   const [newTag, setNewTag] = useState('');
   const [showNewTag, setShowNewTag] = useState(false);
+
+  const handleGalleryClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!photo.batch_id) return;
+
+    try {
+      const { data: photos, error } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('batch_id', photo.batch_id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (photos && photos.length > 0) {
+        // Add tags to each photo
+        const photosWithTags = await Promise.all(
+          photos.map(async (p) => {
+            const { data: tags } = await supabase
+              .from('photo_tags')
+              .select('tag_name')
+              .eq('photo_id', p.id);
+            
+            return {
+              ...p,
+              tags: tags?.map(t => t.tag_name) || []
+            };
+          })
+        );
+
+        setBatchPhotos(photosWithTags);
+        const currentIndex = photosWithTags.findIndex(p => p.id === photo.id);
+        setGalleryIndex(Math.max(0, currentIndex));
+        setIsGalleryOpen(true);
+      }
+    } catch (error) {
+      console.error('Error loading batch photos:', error);
+    }
+  };
+
+  const getBatchPhotoCount = async () => {
+    if (!photo.batch_id) return 0;
+    
+    try {
+      const { count } = await supabase
+        .from('photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('batch_id', photo.batch_id);
+      
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting batch count:', error);
+      return 0;
+    }
+  };
+
+  const [batchCount, setBatchCount] = useState(0);
+
+  React.useEffect(() => {
+    if (photo.batch_id) {
+      getBatchPhotoCount().then(setBatchCount);
+    }
+  }, [photo.batch_id]);
 
   const handleSave = async () => {
     try {
@@ -191,7 +258,23 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
               ))}
             </div>
           )}
+          {photo.batch_id && batchCount > 1 && (
+            <button
+              onClick={handleGalleryClick}
+              className="mt-4 flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+            >
+              <Images className="w-4 h-4" />
+              View Gallery ({batchCount} photos)
+            </button>
+          )}
         </div>
+
+        <PhotoGalleryModal
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          photos={batchPhotos}
+          initialIndex={galleryIndex}
+        />
       </div>
     );
   }
@@ -218,6 +301,15 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
               <Calendar className="w-4 h-4 mr-2" />
               {photo.date_taken}
             </div>
+            {photo.batch_id && batchCount > 1 && (
+              <button
+                onClick={handleGalleryClick}
+                className="absolute top-4 right-4 bg-black bg-opacity-50 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1 hover:bg-opacity-70 transition-colors"
+              >
+                <Images className="w-3 h-3" />
+                {batchCount}
+              </button>
+            )}
           </div>
         </div>
 
@@ -383,6 +475,15 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                     ))}
                   </div>
                 )}
+                {photo.batch_id && batchCount > 1 && (
+                  <button
+                    onClick={handleGalleryClick}
+                    className="mt-4 flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors text-sm"
+                  >
+                    <Images className="w-4 h-4" />
+                    View Gallery ({batchCount} photos)
+                  </button>
+                )}
               </div>
               {!isPublicView && (
                 <div className="flex justify-between pt-4 border-t border-gray-200">
@@ -411,6 +512,13 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             </div>
           )}
         </div>
+
+        <PhotoGalleryModal
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          photos={batchPhotos}
+          initialIndex={galleryIndex}
+        />
       </div>
     </div>
   );
