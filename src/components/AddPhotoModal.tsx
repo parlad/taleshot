@@ -120,14 +120,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
 
         if (tagError) throw tagError;
 
-        // Also update the tags array column in photos table
-        const { error: updateError } = await supabase
-          .from('photos')
-          .update({ tags: formData.tags })
-          .eq('id', photo.id);
-
-        if (updateError) throw updateError;
-        }
+      }
 
       onPhotoAdded();
       handleClose();
