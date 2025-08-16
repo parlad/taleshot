@@ -29,80 +29,83 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
     setIsLoadingPhotos(true);
     setPhotos([]); // Clear photos immediately when filter changes
     
-    console.log('🔄 PhotoGallery: Fetching photos - Category:', selectedCategory, 'Tag:', selectedTag);
     
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setPhotos([]);
+        return;
+      }
 
       if (selectedTag !== 'all') {
-        // Use the tags column directly from photos table
-        console.log(`🏷️ PhotoGallery: Filtering photos with tag: "${selectedTag}"`);
-        
+        // Use the database function to get photos by tag
         const { data: photosData, error } = await supabase
-          .from('photos')
-          .select('*')
-          .eq('user_id', user.id)
-          .contains('tags', [selectedTag])
-          .order('created_at', { ascending: false });
+          .rpc('get_photos_by_tag', {
+            user_uuid: user.id,
+            tag_name: selectedTag
+          });
 
         if (error) {
-          console.error('❌ PhotoGallery: Error fetching photos with tag:', error);
+          console.error('Error fetching photos with tag:', error);
           setPhotos([]);
+          return;
         }
 
-        const photosWithTags = (photosData || []).map(photo => ({
+        const transformedPhotos = (photosData || []).map(photo => ({
           ...photo,
-          tags: photo.tags || [],
-          categories: photo.tags || []
+          imageUrl: photo.image_url,
+          tags: photo.tag_names || [],
+          categories: photo.tag_names || []
         }));
 
-        console.log(`✅ PhotoGallery: Found ${photosWithTags.length} photos with tag "${selectedTag}"`);
-        setPhotos(photosWithTags);
+        setPhotos(transformedPhotos);
       } else if (selectedCategory !== 'all') {
-        // Use the tags column for category filtering too
-        console.log(`📂 PhotoGallery: Filtering photos with category: "${selectedCategory}"`);
+        // Use the database function to get photos by category (treating categories as tags)
         const { data: photosData, error } = await supabase
-          .from('photos')
-          .select('*')
-          .eq('user_id', user.id)
-          .contains('tags', [selectedCategory])
-          .order('created_at', { ascending: false });
+          .rpc('get_photos_by_tag', {
+            user_uuid: user.id,
+            tag_name: selectedCategory
+          });
 
         if (error) {
-          console.error('❌ PhotoGallery: Error fetching photos with category:', error);
-          return;
-        }
-
-        const photosWithTags = (photosData || []).map(photo => ({
-          ...photo,
-          tags: photo.tags || [],
-          categories: photo.tags || []
-        }));
-
-        console.log(`✅ PhotoGallery: Found ${photosWithTags.length} photos with category "${selectedCategory}"`);
-        
-      } else {
-        // Show all photos
-        const { data: photosData, error } = await supabase
-          .from('photos')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error) {
+          console.error('Error fetching photos with category:', error);
           setPhotos([]);
           return;
         }
 
-        const photosWithTags = (photosData || []).map(photo => ({
+        const transformedPhotos = (photosData || []).map(photo => ({
           ...photo,
-          tags: photo.tags || [],
-          categories: photo.tags || []
+          imageUrl: photo.image_url,
+          tags: photo.tag_names || [],
+          categories: photo.tag_names || []
         }));
 
-        setPhotos(photosWithTags);
+        setPhotos(transformedPhotos);
+      } else {
+        // Show all photos using the database function
+        const { data: photosData, error } = await supabase
+          .rpc('get_photos_with_tags', {
+            user_uuid: user.id
+          });
+
+        if (error) {
+          console.error('Error fetching all photos:', error);
+          setPhotos([]);
+          return;
+        }
+
+        const transformedPhotos = (photosData || []).map(photo => ({
+          ...photo,
+          imageUrl: photo.image_url,
+          tags: photo.tag_names || [],
+          categories: photo.tag_names || []
+        }));
+
+        setPhotos(transformedPhotos);
       }
 
     } catch (error) {
+      console.error('Error in fetchPhotos:', error);
       setPhotos([]);
     } finally {
       setIsLoadingPhotos(false);
@@ -181,71 +184,60 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         return;
       }
 
-      // Get category IDs for the selected categories
-      const { data: categoryData } = await supabase
-        .from('categories')
-        .select('id, name')
-        .in('name', updatedPhoto.categories || []);
+      // Delete existing photo-tag relationships
+      await supabase
+        .from('photo_tags')
+        .delete()
+        .eq('photo_id', updatedPhoto.id);
 
-      if (categoryData) {
-        // First, delete existing category associations
-        await supabase
-          .from('photo_categories')
-          .delete()
-          .eq('photo_id', updatedPhoto.id);
+      // Create new photo-tag relationships
+      if (updatedPhoto.categories && updatedPhoto.categories.length > 0) {
+        for (const tagName of updatedPhoto.categories) {
+          // Ensure the tag exists
+          let { data: existingTag, error: tagSelectError } = await supabase
+            .from('tags')
+            .select('id')
+            .eq('name', tagName)
+            .eq('user_id', user.id)
+            .single();
 
-        // Then, insert new category associations
-        if (categoryData.length > 0) {
-          const categoryAssociations = categoryData.map(category => ({
-            photo_id: updatedPhoto.id,
-            category_id: category.id
-          }));
+          if (tagSelectError && tagSelectError.code === 'PGRST116') {
+            // Tag doesn't exist, create it
+            const { data: newTag, error: tagInsertError } = await supabase
+              .from('tags')
+              .insert({
+                name: tagName,
+                user_id: user.id
+              })
+              .select('id')
+              .single();
 
-          await supabase
-            .from('photo_categories')
-            .insert(categoryAssociations);
+            if (tagInsertError) {
+              console.error('Error creating tag:', tagInsertError);
+              continue;
+            }
+            existingTag = newTag;
+          } else if (tagSelectError) {
+            console.error('Error selecting tag:', tagSelectError);
+            continue;
+          }
+
+          // Create photo-tag relationship
+          const { error: photoTagError } = await supabase
+            .from('photo_tags')
+            .insert({
+              photo_id: updatedPhoto.id,
+              tag_id: existingTag.id
+            });
+
+          if (photoTagError) {
+            console.error('Error creating photo-tag relationship:', photoTagError);
+          }
         }
       }
 
-      // Fetch the updated photo with all its relations
-      const { data: refreshedPhoto, error: refreshError } = await supabase
-        .from('photos')
-        .select(`
-          *,
-          photo_categories (
-            categories (
-              name
-            )
-          )
-        `)
-        .eq('id', updatedPhoto.id)
-        .single();
-
-      if (refreshError) {
-        console.error('Error refreshing photo data:', refreshError);
-        return;
-      }
-
-      // Transform the refreshed photo data
-      const transformedPhoto = {
-        ...refreshedPhoto,
-        categories: refreshedPhoto.photo_categories
-          ?.map(pc => pc.categories?.name)
-          .filter(Boolean) || []
-      };
-
-      // Update local state
-      setPhotos(prevPhotos =>
-        prevPhotos.map(photo =>
-          photo.id === updatedPhoto.id ? transformedPhoto : photo
-        )
-      );
-
-      setFilteredPhotos(prevPhotos =>
-        prevPhotos.map(photo =>
-          photo.id === updatedPhoto.id ? transformedPhoto : photo
-        )
-      );
+      // Refresh photos to get updated data
+      await fetchPhotos();
     } catch (error) {
       console.error('Error in handleUpdatePhoto:', error);
     }
@@ -300,16 +292,49 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           continue;
         }
         
-        // Update the photo with tags in the tags column
+        // Insert tags and create photo-tag relationships
         if (details.categories && details.categories.length > 0) {
-          const { error: tagsError } = await supabase
-            .from('photos')
-            .update({ tags: details.categories })
-            .eq('id', photo.id);
+          for (const tagName of details.categories) {
+            // First, ensure the tag exists
+            let { data: existingTag, error: tagSelectError } = await supabase
+              .from('tags')
+              .select('id')
+              .eq('name', tagName)
+              .eq('user_id', user.id)
+              .single();
 
-          if (tagsError) {
-            console.error('Error inserting tags:', tagsError);
-          } else {
+            if (tagSelectError && tagSelectError.code === 'PGRST116') {
+              // Tag doesn't exist, create it
+              const { data: newTag, error: tagInsertError } = await supabase
+                .from('tags')
+                .insert({
+                  name: tagName,
+                  user_id: user.id
+                })
+                .select('id')
+                .single();
+
+              if (tagInsertError) {
+                console.error('Error creating tag:', tagInsertError);
+                continue;
+              }
+              existingTag = newTag;
+            } else if (tagSelectError) {
+              console.error('Error selecting tag:', tagSelectError);
+              continue;
+            }
+
+            // Create photo-tag relationship
+            const { error: photoTagError } = await supabase
+              .from('photo_tags')
+              .insert({
+                photo_id: photo.id,
+                tag_id: existingTag.id
+              });
+
+            if (photoTagError) {
+              console.error('Error creating photo-tag relationship:', photoTagError);
+            }
           }
         }
       }
