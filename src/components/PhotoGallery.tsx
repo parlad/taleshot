@@ -28,11 +28,7 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
   const fetchPhotos = async () => {
     setIsLoadingPhotos(true);
     
-    // Determine which filter to use - tag takes priority over category
-    const activeFilter = selectedTag !== 'all' ? selectedTag : selectedCategory;
-    const filterType = selectedTag !== 'all' ? 'tag' : 'category';
-    
-    console.log(`🔄 PhotoGallery: Fetching photos for ${filterType}:`, activeFilter);
+    console.log('🔄 PhotoGallery: Fetching photos - Category:', selectedCategory, 'Tag:', selectedTag);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -41,18 +37,29 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
       let photosData;
       let error;
 
-      if (activeFilter === 'all') {
-        console.log('📸 PhotoGallery: Fetching ALL photos...');
-        const result = await supabase.rpc('get_user_photos_with_tags', {
-          user_uuid: user.id
+      if (selectedTag !== 'all') {
+        // Tag filter takes priority - show only photos with this specific tag
+        console.log(`🏷️ PhotoGallery: Fetching photos with tag: "${selectedTag}"`);
+        const result = await supabase.rpc('get_photos_by_tag', {
+          user_uuid: user.id,
+          tag_name: selectedTag
+        });
+        photosData = result.data;
+        error = result.error;
+      } else if (selectedCategory !== 'all') {
+        // Category filter - show photos with this category as a tag
+        console.log(`📂 PhotoGallery: Fetching photos with category: "${selectedCategory}"`);
+        const result = await supabase.rpc('get_photos_by_tag', {
+          user_uuid: user.id,
+          tag_name: selectedCategory
         });
         photosData = result.data;
         error = result.error;
       } else {
-        console.log(`🏷️ PhotoGallery: Fetching photos with ${filterType}: "${activeFilter}"`);
-        const result = await supabase.rpc('get_photos_by_tag', {
-          user_uuid: user.id,
-          tag_name: activeFilter
+        // No filter - show all photos
+        console.log('📸 PhotoGallery: Fetching ALL photos...');
+        const result = await supabase.rpc('get_user_photos_with_tags', {
+          user_uuid: user.id
         });
         photosData = result.data;
         error = result.error;
@@ -70,11 +77,9 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         categories: photo.tags || []
       }));
 
-      console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for ${filterType} "${activeFilter}"`);
-      console.log('📋 PhotoGallery: Photos with categories:', transformedPhotos.map(p => ({ 
-        title: p.title, 
-        categories: p.categories 
-      })));
+      const filterDescription = selectedTag !== 'all' ? `tag "${selectedTag}"` : 
+                               selectedCategory !== 'all' ? `category "${selectedCategory}"` : 'all photos';
+      console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for ${filterDescription}`);
       
       setPhotos(transformedPhotos);
     } catch (error) {
