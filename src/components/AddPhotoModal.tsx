@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Camera, Plus } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import type { Category } from '../types';
 
 interface AddPhotoModalProps {
   isOpen: boolean;
@@ -15,34 +14,16 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
     date_taken: '',
     reason: '',
     is_public: false,
-    categories: [] as string[]
+    tags: [] as string[]
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [loading, setLoading] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [newCategory, setNewCategory] = useState('');
-  const [showNewCategory, setShowNewCategory] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      fetchCategories();
-    }
-  }, [isOpen]);
-
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .order('name');
-
-      if (error) throw error;
-      setCategories(data || []);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
+  const [availableTags, setAvailableTags] = useState<string[]>([
+    'Family', 'Vacation', 'Celebration', 'Nature', 'Food', 'Pets', 'Travel', 'Japan', 'Village'
+  ]);
+  const [newTag, setNewTag] = useState('');
+  const [showNewTag, setShowNewTag] = useState(false);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -56,40 +37,30 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
     }
   };
 
-  const handleCategoryToggle = (categoryName: string) => {
+  const handleTagToggle = (tagName: string) => {
     setFormData(prev => ({
       ...prev,
-      categories: prev.categories.includes(categoryName)
-        ? prev.categories.filter(c => c !== categoryName)
-        : [...prev.categories, categoryName]
+      tags: prev.tags.includes(tagName)
+        ? prev.tags.filter(t => t !== tagName)
+        : [...prev.tags, tagName]
     }));
   };
 
-  const handleAddNewCategory = async () => {
-    if (!newCategory.trim()) return;
-
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
-        .from('categories')
-        .insert([{ name: newCategory.trim(), user_id: user.id }])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      setCategories(prev => [...prev, data]);
-      setFormData(prev => ({
-        ...prev,
-        categories: [...prev.categories, newCategory.trim()]
-      }));
-      setNewCategory('');
-      setShowNewCategory(false);
-    } catch (error) {
-      console.error('Error adding category:', error);
+  const handleAddNewTag = () => {
+    if (!newTag.trim()) return;
+    
+    const trimmedTag = newTag.trim();
+    if (!availableTags.includes(trimmedTag)) {
+      setAvailableTags(prev => [...prev, trimmedTag].sort());
     }
+    
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(trimmedTag) ? prev.tags : [...prev.tags, trimmedTag]
+    }));
+    
+    setNewTag('');
+    setShowNewTag(false);
   };
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -136,24 +107,27 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
 
       if (photoError) throw photoError;
 
-      // Add category associations
-      if (formData.categories.length > 0) {
-        const categoryInserts = formData.categories.map(categoryName => {
-          const category = categories.find(c => c.name === categoryName);
-          return {
-            photo_id: photo.id,
-            category_id: category?.id
-          };
-        }).filter(insert => insert.category_id);
+      // Add tag associations
+      if (formData.tags.length > 0) {
+        const tagInserts = formData.tags.map(tagName => ({
+          photo_id: photo.id,
+          tag_name: tagName
+        }));
 
-        if (categoryInserts.length > 0) {
-          const { error: categoryError } = await supabase
-            .from('photo_categories')
-            .insert(categoryInserts);
+        const { error: tagError } = await supabase
+          .from('photo_tags')
+          .insert(tagInserts);
 
-          if (categoryError) throw categoryError;
+        if (tagError) throw tagError;
+
+        // Also update the tags array column in photos table
+        const { error: updateError } = await supabase
+          .from('photos')
+          .update({ tags: formData.tags })
+          .eq('id', photo.id);
+
+        if (updateError) throw updateError;
         }
-      }
 
       onPhotoAdded();
       handleClose();
@@ -170,12 +144,12 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
       date_taken: '',
       reason: '',
       is_public: false,
-      categories: []
+      tags: []
     });
     setImageFile(null);
     setImagePreview('');
-    setNewCategory('');
-    setShowNewCategory(false);
+    setNewTag('');
+    setShowNewTag(false);
     onClose();
   };
 
@@ -293,30 +267,30 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             />
           </div>
 
-          {/* Categories */}
+          {/* Tags */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Categories
+              Tags
             </label>
             <div className="space-y-3">
               <div className="flex flex-wrap gap-2">
-                {categories.map(category => (
+                {availableTags.map(tag => (
                   <button
-                    key={category.id}
+                    key={tag}
                     type="button"
-                    onClick={() => handleCategoryToggle(category.name)}
+                    onClick={() => handleTagToggle(tag)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      formData.categories.includes(category.name)
+                      formData.tags.includes(tag)
                         ? 'bg-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {category.name}
+                    {tag}
                   </button>
                 ))}
                 <button
                   type="button"
-                  onClick={() => setShowNewCategory(true)}
+                  onClick={() => setShowNewTag(true)}
                   className="px-3 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
                 >
                   <Plus className="w-4 h-4" />
@@ -324,20 +298,20 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                 </button>
               </div>
 
-              {showNewCategory && (
+              {showNewTag && (
                 <div className="flex gap-2">
                   <input
-                    id="new-category"
-                    name="new-category"
+                    id="new-tag"
+                    name="new-tag"
                     type="text"
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value)}
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                    placeholder="Category name"
+                    placeholder="Tag name"
                   />
                   <button
                     type="button"
-                    onClick={handleAddNewCategory}
+                    onClick={handleAddNewTag}
                     className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     Add
@@ -345,8 +319,8 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                   <button
                     type="button"
                     onClick={() => {
-                      setShowNewCategory(false);
-                      setNewCategory('');
+                      setShowNewTag(false);
+                      setNewTag('');
                     }}
                     className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                   >

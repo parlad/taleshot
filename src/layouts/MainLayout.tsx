@@ -9,16 +9,11 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
   const [showViewDropdown, setShowViewDropdown] = useState(false);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const viewDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
-        setShowCategoryDropdown(false);
-      }
       if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
         setShowViewDropdown(false);
       }
@@ -50,32 +45,6 @@ export function MainLayout({ children }: MainLayoutProps) {
 
             {/* Navigation */}
             <div className="flex items-center gap-6">
-              {/* Category Filter - Only on home page */}
-              {isHomePage && (
-                <div className="category-dropdown" ref={categoryDropdownRef}>
-                  <button
-                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Filter className="w-4 h-4" />
-                    <span>Categories</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {showCategoryDropdown && (
-                    <div className="dropdown-menu">
-                      <button>All Categories</button>
-                      <button>Family</button>
-                      <button>Vacation</button>
-                      <button>Celebration</button>
-                      <button>Nature</button>
-                      <button>Food</button>
-                      <button>Pets</button>
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* View Mode Toggle - Only on home page */}
               {isHomePage && (
                 <div className="view-dropdown" ref={viewDropdownRef}>

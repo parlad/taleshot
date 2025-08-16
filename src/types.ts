@@ -5,7 +5,7 @@ export interface Photo {
   title: string;
   date_taken?: string;
   reason: string;
-  categories?: string[];
+  tags?: string[];
   user_id?: string;
   is_public?: boolean;
 }
@@ -20,12 +20,6 @@ export interface PhotoCardProps {
   onUpdate?: (updatedPhoto: Photo) => void;
   viewMode?: ViewMode;
   isPublicView?: boolean;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  user_id?: string;
 }
 
 export interface User {

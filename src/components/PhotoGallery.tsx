@@ -14,7 +14,6 @@ export function PhotoGallery() {
   const [loading, setLoading] = useState(true);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedTag, setSelectedTag] = useState('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
@@ -27,40 +26,30 @@ export function PhotoGallery() {
 
   useEffect(() => {
     filterPhotos();
-  }, [photos, selectedCategory, selectedTag]);
+  }, [photos, selectedTag]);
 
   const fetchPhotos = async () => {
     if (!user) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('photos')
-        .select(`
-          *,
-          photo_categories (
-            categories (
-              name
-            )
-          )
-        `)
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_user_photos_with_tags', {
+        user_uuid: user.id
+      });
 
       if (error) throw error;
 
-      const photosWithCategories = data?.map(photo => ({
+      const photosWithTags = data?.map(photo => ({
         ...photo,
-        categories: photo.photo_categories?.map((pc: any) => pc.categories.name) || [],
-        tags: photo.photo_categories?.map((pc: any) => pc.categories.name) || []
+        tags: photo.tags || []
       })) || [];
 
-      setPhotos(photosWithCategories);
+      setPhotos(photosWithTags);
 
       // Extract unique tags
       const tags = new Set<string>();
-      photosWithCategories.forEach(photo => {
-        photo.categories?.forEach(category => tags.add(category));
+      photosWithTags.forEach(photo => {
+        photo.tags?.forEach(tag => tags.add(tag));
       });
       setAvailableTags(Array.from(tags).sort());
 
@@ -74,15 +63,9 @@ export function PhotoGallery() {
   const filterPhotos = () => {
     let filtered = photos;
 
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(photo => 
-        photo.categories?.includes(selectedCategory)
-      );
-    }
-
     if (selectedTag !== 'all') {
       filtered = filtered.filter(photo => 
-        photo.categories?.includes(selectedTag)
+        photo.tags?.includes(selectedTag)
       );
     }
 
@@ -254,7 +237,6 @@ export function PhotoGallery() {
           <div className="text-gray-500 mb-4">No photos match your current filters</div>
           <button
             onClick={() => {
-              setSelectedCategory('all');
               setSelectedTag('all');
             }}
             className="text-blue-600 hover:text-blue-700 font-medium"

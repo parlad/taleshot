@@ -10,7 +10,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     date_taken: photo.date_taken || '',
     reason: photo.reason,
     is_public: photo.is_public || false,
-    categories: photo.categories || []
+    tags: photo.tags || []
   });
 
   const handleSave = async () => {
@@ -32,8 +32,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         title: editData.title,
         date_taken: editData.date_taken,
         reason: editData.reason,
-        is_public: editData.is_public,
-        categories: editData.categories
+        is_public: editData.is_public
       };
 
       onUpdate?.(updatedPhoto);
@@ -49,7 +48,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       date_taken: photo.date_taken || '',
       reason: photo.reason,
       is_public: photo.is_public || false,
-      categories: photo.categories || []
+      tags: photo.tags || []
     });
     setIsEditing(false);
   };
@@ -123,14 +122,14 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             )}
           </div>
           <p className="text-gray-700 leading-relaxed">{photo.reason}</p>
-          {photo.categories && photo.categories.length > 0 && (
+          {photo.tags && photo.tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mt-4">
-              {photo.categories.map((category, index) => (
+              {photo.tags.map((tag, index) => (
                 <span
                   key={index}
                   className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
                 >
-                  {category}
+                  {tag}
                 </span>
               ))}
             </div>
@@ -248,14 +247,14 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                   {photo.date_taken}
                 </div>
                 <p className="text-gray-700 leading-relaxed mb-4">{photo.reason}</p>
-                {photo.categories && photo.categories.length > 0 && (
+                {photo.tags && photo.tags.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {photo.categories.map((category, index) => (
+                    {photo.tags.map((tag, index) => (
                       <span
                         key={index}
                         className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
                       >
-                        {category}
+                        {tag}
                       </span>
                     ))}
                   </div>
