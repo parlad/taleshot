@@ -201,8 +201,8 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       <div
         className={`relative w-full h-full preserve-3d transition-transform duration-700 cursor-pointer ${
           isFlipped ? 'rotate-y-180' : ''
-        }`}
-        onClick={onFlip}
+        } ${isEditing ? 'cursor-default' : ''}`}
+        onClick={isEditing ? undefined : onFlip}
       >
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden rounded-xl overflow-hidden shadow-lg">
@@ -222,9 +222,9 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         </div>
 
         {/* Back of card */}
-        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-xl shadow-lg p-6 flex flex-col">
+        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-xl shadow-lg flex flex-col">
           {isEditing ? (
-            <div className="flex-1 space-y-4">
+            <div className="flex-1 space-y-4 p-4 overflow-y-auto max-h-full">
               <input
                 id={`edit-title-${photo.id}`}
                 name={`edit-title-${photo.id}`}
@@ -249,24 +249,24 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 value={editData.reason}
                 onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                rows={4}
+                rows={3}
                 placeholder="Why is this photo special?"
               />
               
               {/* Tags Section */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs font-medium text-gray-700 mb-2">
                   <Tag className="w-4 h-4 inline mr-1" />
                   Tags
                 </label>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <div className="flex flex-wrap gap-2">
                     {availableTags.map(tag => (
                       <button
                         key={tag}
                         type="button"
                         onClick={() => handleTagToggle(tag)}
-                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        className={`px-2 py-1 rounded-full text-xs font-medium transition-colors ${
                           editData.tags.includes(tag)
                             ? 'bg-blue-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -292,14 +292,14 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                         value={newTag}
                         onChange={(e) => setNewTag(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleAddNewTag()}
-                        className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                        className="flex-1 px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-xs"
                         placeholder="Tag name"
                         autoFocus
                       />
                       <button
                         type="button"
                         onClick={handleAddNewTag}
-                        className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                        className="px-2 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs"
                       >
                         Add
                       </button>
@@ -308,9 +308,9 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                         onClick={() => {
                           setShowNewTag(false);
                           setNewTag('');
-                        }}
-                        className="px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
-                      >
+                        className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
+                        className="px-2 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs"
+                        <Plus className="w-2 h-2" />
                         Cancel
                       </button>
                     </div>
@@ -327,20 +327,20 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                   onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="text-sm text-gray-700">Make this photo public</span>
+                <span className="text-xs text-gray-700">Make this photo public</span>
               </label>
               
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-2">
                 <button
                   onClick={handleSave}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm"
                 >
                   <Save className="w-4 h-4" />
                   Save
                 </button>
                 <button
                   onClick={handleCancel}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                  className="flex items-center gap-1 px-3 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
                 >
                   <X className="w-4 h-4" />
                   Cancel
@@ -348,7 +348,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
               </div>
             </div>
           ) : (
-            <>
+            <div className="p-6 flex flex-col h-full">
               <div className="flex-1">
                 <div className="flex items-start justify-between mb-4">
                   <h3 className="text-xl font-semibold text-gray-900">{photo.title}</h3>
@@ -408,7 +408,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                   </button>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
       </div>
