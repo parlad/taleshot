@@ -40,29 +40,80 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
       if (selectedTag !== 'all') {
         // Tag filter takes priority - show only photos with this specific tag
         console.log(`🏷️ PhotoGallery: Fetching photos with tag: "${selectedTag}"`);
-        const result = await supabase.rpc('get_photos_by_tag', {
-          user_uuid: user.id,
-          tag_name: selectedTag
-        });
+        
+        // Use direct query instead of RPC function for better control
+        const result = await supabase
+          .from('photos')
+          .select(`
+            *,
+            photo_tags!inner(tag_name)
+          `)
+          .eq('user_id', user.id)
+          .eq('photo_tags.tag_name', selectedTag)
+          .order('created_at', { ascending: false });
+          
         photosData = result.data;
         error = result.error;
+        
+        // Transform the data to include tags
+        if (photosData) {
+          photosData = photosData.map(photo => ({
+            ...photo,
+            tags: [selectedTag], // We know it has this tag
+            categories: [selectedTag] // For backward compatibility
+          }));
+        }
       } else if (selectedCategory !== 'all') {
         // Category filter - show photos with this category as a tag
         console.log(`📂 PhotoGallery: Fetching photos with category: "${selectedCategory}"`);
-        const result = await supabase.rpc('get_photos_by_tag', {
-          user_uuid: user.id,
-          tag_name: selectedCategory
-        });
+        
+        // Use direct query for category filtering too
+        const result = await supabase
+          .from('photos')
+          .select(`
+            *,
+            photo_tags!inner(tag_name)
+          `)
+          .eq('user_id', user.id)
+          .eq('photo_tags.tag_name', selectedCategory)
+          .order('created_at', { ascending: false });
+          
         photosData = result.data;
         error = result.error;
+        
+        // Transform the data to include tags
+        if (photosData) {
+          photosData = photosData.map(photo => ({
+            ...photo,
+            tags: [selectedCategory], // We know it has this tag
+            categories: [selectedCategory] // For backward compatibility
+          }));
+        }
       } else {
         // No filter - show all photos
         console.log('📸 PhotoGallery: Fetching ALL photos...');
-        const result = await supabase.rpc('get_user_photos_with_tags', {
-          user_uuid: user.id
-        });
+        
+        // Get all photos with their tags
+        const result = await supabase
+          .from('photos')
+          .select(`
+            *,
+            photo_tags(tag_name)
+          `)
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+          
         photosData = result.data;
         error = result.error;
+        
+        // Transform the data to include tags
+        if (photosData) {
+          photosData = photosData.map(photo => ({
+            ...photo,
+            tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
+            categories: photo.photo_tags?.map(pt => pt.tag_name) || []
+          }));
+        }
       }
 
       if (error) {
@@ -71,17 +122,11 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         return;
       }
 
-      // Transform the data to include categories from tags array
-      const transformedPhotos = (photosData || []).map(photo => ({
-        ...photo,
-        categories: photo.tags || []
-      }));
-
       const filterDescription = selectedTag !== 'all' ? `tag "${selectedTag}"` : 
                                selectedCategory !== 'all' ? `category "${selectedCategory}"` : 'all photos';
-      console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for ${filterDescription}`);
+      console.log(`✅ PhotoGallery: Fetched ${photosData?.length || 0} photos for ${filterDescription}`);
       
-      setPhotos(transformedPhotos);
+      setPhotos(photosData || []);
     } catch (error) {
       console.error('❌ PhotoGallery: Error in fetchPhotos:', error);
       setPhotos([]);
