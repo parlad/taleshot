@@ -37,6 +37,8 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         // Use the tags column directly from photos table
         console.log(`🏷️ PhotoGallery: Filtering photos with tag: "${selectedTag}"`);
         
+        const { data: photosData, error } = await supabase
+          .from('photos')
           .select('*')
           .eq('user_id', user.id)
           .contains('tags', [selectedTag])
@@ -58,6 +60,7 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
       } else if (selectedCategory !== 'all') {
         // Use the tags column for category filtering too
         console.log(`📂 PhotoGallery: Filtering photos with category: "${selectedCategory}"`);
+        const { data: photosData, error } = await supabase
           .from('photos')
           .select('*')
           .eq('user_id', user.id)
