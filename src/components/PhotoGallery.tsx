@@ -40,51 +40,59 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
       if (selectedTag !== 'all') {
         // Use the database function to get photos by tag
         const { data: photosData, error } = await supabase
-          .rpc('get_photos_by_tag', {
-            user_uuid: user.id,
-            tag_name: selectedTag
+          .rpc('get_user_photos_with_tags', {
+            user_uuid: user.id
           });
 
         if (error) {
-          console.error('Error fetching photos with tag:', error);
+          console.error('Error fetching photos:', error);
           setPhotos([]);
           return;
         }
 
-        const transformedPhotos = (photosData || []).map(photo => ({
+        // Filter photos that contain the selected tag
+        const filteredPhotos = (photosData || []).filter(photo => 
+          photo.tags && photo.tags.includes(selectedTag)
+        );
+
+        const transformedPhotos = filteredPhotos.map(photo => ({
           ...photo,
           imageUrl: photo.image_url,
-          tags: photo.tag_names || [],
-          categories: photo.tag_names || []
+          tags: photo.tags || [],
+          categories: photo.tags || []
         }));
 
         setPhotos(transformedPhotos);
       } else if (selectedCategory !== 'all') {
         // Use the database function to get photos by category (treating categories as tags)
         const { data: photosData, error } = await supabase
-          .rpc('get_photos_by_tag', {
-            user_uuid: user.id,
-            tag_name: selectedCategory
+          .rpc('get_user_photos_with_tags', {
+            user_uuid: user.id
           });
 
         if (error) {
-          console.error('Error fetching photos with category:', error);
+          console.error('Error fetching photos:', error);
           setPhotos([]);
           return;
         }
 
-        const transformedPhotos = (photosData || []).map(photo => ({
+        // Filter photos that contain the selected category as a tag
+        const filteredPhotos = (photosData || []).filter(photo => 
+          photo.tags && photo.tags.includes(selectedCategory)
+        );
+
+        const transformedPhotos = filteredPhotos.map(photo => ({
           ...photo,
           imageUrl: photo.image_url,
-          tags: photo.tag_names || [],
-          categories: photo.tag_names || []
+          tags: photo.tags || [],
+          categories: photo.tags || []
         }));
 
         setPhotos(transformedPhotos);
       } else {
         // Show all photos using the database function
         const { data: photosData, error } = await supabase
-          .rpc('get_photos_with_tags', {
+          .rpc('get_user_photos_with_tags', {
             user_uuid: user.id
           });
 
@@ -97,8 +105,8 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         const transformedPhotos = (photosData || []).map(photo => ({
           ...photo,
           imageUrl: photo.image_url,
-          tags: photo.tag_names || [],
-          categories: photo.tag_names || []
+          tags: photo.tags || [],
+          categories: photo.tags || []
         }));
 
         setPhotos(transformedPhotos);
