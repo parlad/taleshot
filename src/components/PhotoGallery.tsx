@@ -27,6 +27,7 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
   // Fetch photos based on selected category or tag
   const fetchPhotos = async () => {
     setIsLoadingPhotos(true);
+    setPhotos([]); // Clear photos immediately when filter changes
     
     console.log('🔄 PhotoGallery: Fetching photos - Category:', selectedCategory, 'Tag:', selectedTag);
     
@@ -41,8 +42,8 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         // Tag filter takes priority - show only photos with this specific tag
         console.log(`🏷️ PhotoGallery: Fetching photos with tag: "${selectedTag}"`);
         
-        // Use direct query instead of RPC function for better control
-        const result = await supabase
+        // Use direct query with proper filtering
+        const { data: photosData, error } = await supabase
           .from('photos')
           .select(`
             *,
@@ -51,24 +52,28 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           .eq('user_id', user.id)
           .eq('photo_tags.tag_name', selectedTag)
           .order('created_at', { ascending: false });
-          
-        photosData = result.data;
-        error = result.error;
-        
-        // Transform the data to include tags
-        if (photosData) {
-          photosData = photosData.map(photo => ({
-            ...photo,
-            tags: [selectedTag], // We know it has this tag
-            categories: [selectedTag] // For backward compatibility
-          }));
+
+        if (error) {
+          console.error('❌ PhotoGallery: Error fetching photos by tag:', error);
+          setPhotos([]);
+          return;
         }
+
+        // Transform the data to include all tags for each photo
+        const transformedPhotos = photosData?.map(photo => ({
+          ...photo,
+          tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
+          categories: photo.photo_tags?.map(pt => pt.tag_name) || []
+        })) || [];
+
+        console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for tag "${selectedTag}"`);
+        setPhotos(transformedPhotos);
+        
       } else if (selectedCategory !== 'all') {
         // Category filter - show photos with this category as a tag
         console.log(`📂 PhotoGallery: Fetching photos with category: "${selectedCategory}"`);
         
-        // Use direct query for category filtering too
-        const result = await supabase
+        const { data: photosData, error } = await supabase
           .from('photos')
           .select(`
             *,
@@ -77,24 +82,27 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           .eq('user_id', user.id)
           .eq('photo_tags.tag_name', selectedCategory)
           .order('created_at', { ascending: false });
-          
-        photosData = result.data;
-        error = result.error;
-        
-        // Transform the data to include tags
-        if (photosData) {
-          photosData = photosData.map(photo => ({
-            ...photo,
-            tags: [selectedCategory], // We know it has this tag
-            categories: [selectedCategory] // For backward compatibility
-          }));
+
+        if (error) {
+          console.error('❌ PhotoGallery: Error fetching photos by category:', error);
+          setPhotos([]);
+          return;
         }
+
+        const transformedPhotos = photosData?.map(photo => ({
+          ...photo,
+          tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
+          categories: photo.photo_tags?.map(pt => pt.tag_name) || []
+        })) || [];
+
+        console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos for category "${selectedCategory}"`);
+        setPhotos(transformedPhotos);
+        
       } else {
         // No filter - show all photos
         console.log('📸 PhotoGallery: Fetching ALL photos...');
         
-        // Get all photos with their tags
-        const result = await supabase
+        const { data: photosData, error } = await supabase
           .from('photos')
           .select(`
             *,
@@ -102,31 +110,23 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
-          
-        photosData = result.data;
-        error = result.error;
-        
-        // Transform the data to include tags
-        if (photosData) {
-          photosData = photosData.map(photo => ({
-            ...photo,
-            tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
-            categories: photo.photo_tags?.map(pt => pt.tag_name) || []
-          }));
+
+        if (error) {
+          console.error('❌ PhotoGallery: Error fetching all photos:', error);
+          setPhotos([]);
+          return;
         }
+
+        const transformedPhotos = photosData?.map(photo => ({
+          ...photo,
+          tags: photo.photo_tags?.map(pt => pt.tag_name) || [],
+          categories: photo.photo_tags?.map(pt => pt.tag_name) || []
+        })) || [];
+
+        console.log(`✅ PhotoGallery: Fetched ${transformedPhotos.length} photos (all photos)`);
+        setPhotos(transformedPhotos);
       }
 
-      if (error) {
-        console.error('❌ PhotoGallery: Error fetching photos:', error);
-        setPhotos([]);
-        return;
-      }
-
-      const filterDescription = selectedTag !== 'all' ? `tag "${selectedTag}"` : 
-                               selectedCategory !== 'all' ? `category "${selectedCategory}"` : 'all photos';
-      console.log(`✅ PhotoGallery: Fetched ${photosData?.length || 0} photos for ${filterDescription}`);
-      
-      setPhotos(photosData || []);
     } catch (error) {
       console.error('❌ PhotoGallery: Error in fetchPhotos:', error);
       setPhotos([]);
@@ -141,6 +141,7 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
 
   useEffect(() => {
     console.log('🔄 PhotoGallery: Filter changed - Category:', selectedCategory, 'Tag:', selectedTag);
+    // Force a complete reload of photos when filter changes
     fetchPhotos();
   }, [selectedCategory, selectedTag]);
 
