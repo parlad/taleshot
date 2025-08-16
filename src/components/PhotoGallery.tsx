@@ -85,15 +85,19 @@ export function PhotoGallery() {
     // Create photo tiles (single photos + gallery representatives)
     let photoTiles: Photo[] = [...singlePhotos];
     
-    // Add one representative photo per gallery
+    // Add one representative photo per gallery (only if gallery has multiple photos)
     galleryMap.forEach((galleryPhotos, galleryId) => {
-      if (galleryPhotos.length > 0) {
+      if (galleryPhotos.length > 1) {
+        // Create a gallery tile with the first photo as representative
         const representative = {
           ...galleryPhotos[0],
           gallery_photos: galleryPhotos,
           is_gallery_tile: true
         };
         photoTiles.push(representative);
+      } else if (galleryPhotos.length === 1) {
+        // If only one photo in batch, treat as single photo
+        photoTiles.push(galleryPhotos[0]);
       }
     });
     
