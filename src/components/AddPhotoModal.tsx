@@ -88,6 +88,8 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
             
             <div className="grid grid-cols-1 gap-6">
               <input
+               id="title"
+               name="title"
                 type="text"
                 placeholder="Title"
                 value={details.title}
@@ -97,6 +99,8 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
               />
               
               <input
+               id="dateTaken"
+               name="dateTaken"
                 type="date"
                 value={details.date_taken}
                 onChange={e => setDetails(prev => ({ ...prev, date_taken: e.target.value }))}
@@ -106,6 +110,8 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
               />
               
               <textarea
+               id="reason"
+               name="reason"
                 placeholder="What makes this memory special?"
                 value={details.reason}
                 onChange={e => setDetails(prev => ({ ...prev, reason: e.target.value }))}
@@ -123,6 +129,8 @@ export function AddPhotoModal({ isOpen, onClose, onAdd, fileCount, selectedFiles
                   )}
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
+                     id="isPublic"
+                     name="isPublic"
                       type="checkbox"
                       checked={details.is_public}
                       onChange={e => setDetails(prev => ({ ...prev, is_public: e.target.checked }))}

@@ -189,6 +189,8 @@ export function PhotoCard({
               {isEditing ? (
                 <div className="space-y-3 flex-1">
                   <input
+                   id={`title-${photo.id}`}
+                   name={`title-${photo.id}`}
                     type="text"
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
@@ -197,6 +199,8 @@ export function PhotoCard({
                     onClick={(e) => e.stopPropagation()}
                   />
                   <input
+                   id={`dateTaken-${photo.id}`}
+                   name={`dateTaken-${photo.id}`}
                     type="text"
                     value={editData.date_taken}
                     onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
@@ -205,6 +209,8 @@ export function PhotoCard({
                     onClick={(e) => e.stopPropagation()}
                   />
                   <textarea
+                   id={`reason-${photo.id}`}
+                   name={`reason-${photo.id}`}
                     value={editData.reason}
                     onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
                     className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 resize-none flex-1"
@@ -213,6 +219,8 @@ export function PhotoCard({
                   />
                   <div className="flex items-center gap-2">
                     <input
+                     id={`isPublic-${photo.id}`}
+                     name={`isPublic-${photo.id}`}
                       type="checkbox"
                       checked={editData.is_public}
                       onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}

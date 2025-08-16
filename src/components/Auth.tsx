@@ -104,6 +104,7 @@ export function Auth() {
                   </label>
                   <input
                     id="firstName"
+                   name="firstName"
                     type="text"
                     required={!isLogin}
                     value={formData.firstName}
@@ -118,6 +119,7 @@ export function Auth() {
                   </label>
                   <input
                     id="lastName"
+                   name="lastName"
                     type="text"
                     required={!isLogin}
                     value={formData.lastName}
@@ -135,6 +137,7 @@ export function Auth() {
               </label>
               <input
                 id="email"
+               name="email"
                 type="email"
                 autoComplete="email"
                 required
@@ -152,6 +155,7 @@ export function Auth() {
               <div className="relative">
                 <input
                   id="password"
+                 name="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete={isLogin ? "current-password" : "new-password"}
                   required
@@ -178,6 +182,7 @@ export function Auth() {
                 <div className="relative">
                   <input
                     id="confirmPassword"
+                   name="confirmPassword"
                     type={showPassword ? "text" : "password"}
                     autoComplete="new-password"
                     required={!isLogin}
