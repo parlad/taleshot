@@ -128,7 +128,8 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             reason: formData.reason,
             image_url: imageUrl,
             is_public: formData.is_public,
-            batch_id: galleryId
+            batch_id: galleryId,
+            upload_type: imageFiles.length > 1 ? 'group' : 'individual'
           }])
           .select()
           .single();

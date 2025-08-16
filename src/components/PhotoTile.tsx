@@ -11,9 +11,10 @@ interface PhotoTileProps {
   onDelete: (id: string) => void;
   onUpdate: (updatedPhoto: Photo) => void;
   viewMode: 'flip' | 'slide';
+  onGroupSelect?: (groupId: string) => void;
 }
 
-export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode }: PhotoTileProps) {
+export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onGroupSelect }: PhotoTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedFlippedCards, setExpandedFlippedCards] = useState<Set<string>>(new Set());
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
@@ -78,9 +79,15 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   const handleExpand = () => {
     if (photo.is_gallery_tile && photo.batch_id) {
-      loadGalleryPhotos();
+      if (onGroupSelect) {
+        onGroupSelect(photo.batch_id);
+      } else {
+        loadGalleryPhotos();
+      }
     }
-    setIsExpanded(true);
+    if (!onGroupSelect) {
+      setIsExpanded(true);
+    }
   };
 
   // If it's not a gallery tile, render as regular PhotoCard

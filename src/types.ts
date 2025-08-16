@@ -11,6 +11,7 @@ export interface Photo {
   batch_id?: string;
   gallery_photos?: Photo[];
   is_gallery_tile?: boolean;
+  upload_type?: 'individual' | 'group';
 }
 
 export type ViewMode = 'flip' | 'slide';

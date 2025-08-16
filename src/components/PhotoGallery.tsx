@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Grid, LayoutGrid, Camera, Heart, Users, Gift } from 'lucide-react';
+import { Plus, Grid, LayoutGrid, Camera, Heart, Users, Gift, ChevronLeft } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
@@ -18,6 +18,8 @@ export function PhotoGallery() {
   const [selectedTag, setSelectedTag] = useState('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showGroupPhotos, setShowGroupPhotos] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -67,12 +69,19 @@ export function PhotoGallery() {
   };
 
   const filterPhotos = () => {
+    // If showing group photos, filter to show only photos from selected group
+    if (showGroupPhotos && selectedGroupId) {
+      const groupPhotos = photos.filter(photo => photo.batch_id === selectedGroupId);
+      setFilteredPhotos(groupPhotos);
+      return;
+    }
+
     // Group photos by batch_id (gallery groups) and create tiles
     const galleryMap = new Map<string, Photo[]>();
     const singlePhotos: Photo[] = [];
     
     photos.forEach(photo => {
-      if (photo.batch_id) {
+      if (photo.batch_id && photo.upload_type === 'group') {
         if (!galleryMap.has(photo.batch_id)) {
           galleryMap.set(photo.batch_id, []);
         }
@@ -124,6 +133,16 @@ export function PhotoGallery() {
       }
       return newSet;
     });
+  };
+
+  const handleGroupSelect = (groupId: string) => {
+    setSelectedGroupId(groupId);
+    setShowGroupPhotos(true);
+  };
+
+  const handleBackToGallery = () => {
+    setShowGroupPhotos(false);
+    setSelectedGroupId(null);
   };
 
   const handleDelete = async (photoId: string) => {
@@ -225,7 +244,20 @@ export function PhotoGallery() {
       {/* Header with controls */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Your Photos</h1>
+          <div className="flex items-center gap-4">
+            {showGroupPhotos && (
+              <button
+                onClick={handleBackToGallery}
+                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Back to Gallery
+              </button>
+            )}
+            <h1 className="text-3xl font-bold text-gray-900">
+              {showGroupPhotos ? 'Group Photos' : 'Your Photos'}
+            </h1>
+          </div>
           <p className="text-gray-600 mt-1">
             {filteredPhotos.length} of {photos.length} photos
           </p>
@@ -301,6 +333,7 @@ export function PhotoGallery() {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
+              onGroupSelect={handleGroupSelect}
             />
           ))}
         </div>
