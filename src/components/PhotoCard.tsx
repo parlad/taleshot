@@ -46,7 +46,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             
             return {
               ...p,
-              tags: tags?.map(t => t.tag_name) || []
+              tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
             };
           })
         );

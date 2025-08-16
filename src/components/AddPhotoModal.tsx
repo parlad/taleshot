@@ -107,18 +107,17 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Generate a batch ID for multiple photos
-      const batchId = imageFiles.length > 1 ? crypto.randomUUID() : null;
+      // Generate a gallery ID and internal tag for multiple photos
+      const galleryId = imageFiles.length > 1 ? crypto.randomUUID() : null;
+      const galleryTag = galleryId ? `gallery_${galleryId}` : null;
 
       // Upload all images and create photo records
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
         const imageUrl = await uploadImage(file);
         
-        // Create a unique title for each photo if multiple files
-        const photoTitle = imageFiles.length > 1 
-          ? `${formData.title} (${i + 1})`
-          : formData.title;
+        // Use the same title for all photos in a gallery
+        const photoTitle = formData.title;
 
         const { data: photo, error: photoError } = await supabase
           .from('photos')
@@ -129,16 +128,21 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             reason: formData.reason,
             image_url: imageUrl,
             is_public: formData.is_public,
-            batch_id: batchId
+            batch_id: galleryId
           }])
           .select()
           .single();
 
         if (photoError) throw photoError;
 
-        // Add tag associations for each photo
-        if (formData.tags.length > 0) {
-          const tagInserts = formData.tags.map(tagName => ({
+        // Add tag associations for each photo (including gallery tag)
+        const allTags = [...formData.tags];
+        if (galleryTag) {
+          allTags.push(galleryTag);
+        }
+        
+        if (allTags.length > 0) {
+          const tagInserts = allTags.map(tagName => ({
             photo_id: photo.id,
             tag_name: tagName
           }));

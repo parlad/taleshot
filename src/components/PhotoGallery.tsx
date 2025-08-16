@@ -50,7 +50,12 @@ export function PhotoGallery() {
       // Extract unique tags
       const tags = new Set<string>();
       photosWithTags.forEach(photo => {
-        photo.tags?.forEach(tag => tags.add(tag));
+        photo.tags?.forEach(tag => {
+          // Filter out internal gallery tags from the UI
+          if (!tag.startsWith('gallery_')) {
+            tags.add(tag);
+          }
+        });
       });
       setAvailableTags(Array.from(tags).sort());
 
@@ -62,31 +67,31 @@ export function PhotoGallery() {
   };
 
   const filterPhotos = () => {
-    // Group photos by batch_id and create tiles
-    const photoMap = new Map<string, Photo[]>();
+    // Group photos by batch_id (gallery groups) and create tiles
+    const galleryMap = new Map<string, Photo[]>();
     const singlePhotos: Photo[] = [];
     
     photos.forEach(photo => {
       if (photo.batch_id) {
-        if (!photoMap.has(photo.batch_id)) {
-          photoMap.set(photo.batch_id, []);
+        if (!galleryMap.has(photo.batch_id)) {
+          galleryMap.set(photo.batch_id, []);
         }
-        photoMap.get(photo.batch_id)!.push(photo);
+        galleryMap.get(photo.batch_id)!.push(photo);
       } else {
         singlePhotos.push(photo);
       }
     });
     
-    // Create photo tiles (single photos + batch representatives)
+    // Create photo tiles (single photos + gallery representatives)
     let photoTiles: Photo[] = [...singlePhotos];
     
-    // Add one representative photo per batch
-    photoMap.forEach((batchPhotos, batchId) => {
-      if (batchPhotos.length > 0) {
+    // Add one representative photo per gallery
+    galleryMap.forEach((galleryPhotos, galleryId) => {
+      if (galleryPhotos.length > 0) {
         const representative = {
-          ...batchPhotos[0],
-          batch_photos: batchPhotos,
-          is_batch_tile: true
+          ...galleryPhotos[0],
+          gallery_photos: galleryPhotos,
+          is_gallery_tile: true
         };
         photoTiles.push(representative);
       }
@@ -98,7 +103,7 @@ export function PhotoGallery() {
     if (selectedTag !== 'all') {
       filtered = filtered.filter(photo => 
         photo.tags?.includes(selectedTag) || 
-        (photo.batch_photos && photo.batch_photos.some(p => p.tags?.includes(selectedTag)))
+        (photo.gallery_photos && photo.gallery_photos.some(p => p.tags?.includes(selectedTag)))
       );
     }
 

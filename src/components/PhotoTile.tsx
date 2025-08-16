@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Images, Calendar, Tag, X } from 'lucide-react';
 import { PhotoCard } from './PhotoCard';
+import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
 
 interface PhotoTileProps {
@@ -15,6 +16,7 @@ interface PhotoTileProps {
 export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode }: PhotoTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [expandedFlippedCards, setExpandedFlippedCards] = useState<Set<string>>(new Set());
+  const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
 
   const handleExpandedFlip = (photoId: string) => {
     setExpandedFlippedCards(prev => {
@@ -28,18 +30,61 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     });
   };
 
-  const handleDeleteFromBatch = (photoId: string) => {
+  const handleDeleteFromGallery = (photoId: string) => {
     onDelete(photoId);
-    // If this was the last photo in the batch, the tile will be removed automatically
+    // If this was the last photo in the gallery, the tile will be removed automatically
     // by the parent component's photo filtering logic
   };
 
-  const handleUpdateInBatch = (updatedPhoto: Photo) => {
+  const handleUpdateInGallery = (updatedPhoto: Photo) => {
     onUpdate(updatedPhoto);
   };
 
-  // If it's not a batch tile, render as regular PhotoCard
-  if (!photo.is_batch_tile || !photo.batch_photos) {
+  // Load gallery photos when expanding
+  const loadGalleryPhotos = async () => {
+    if (!photo.batch_id) return;
+    
+    try {
+      const { data: photos, error } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('batch_id', photo.batch_id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (photos && photos.length > 0) {
+        // Add tags to each photo
+        const photosWithTags = await Promise.all(
+          photos.map(async (p) => {
+            const { data: tags } = await supabase
+              .from('photo_tags')
+              .select('tag_name')
+              .eq('photo_id', p.id);
+            
+            return {
+              ...p,
+              tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
+            };
+          })
+        );
+
+        setGalleryPhotos(photosWithTags);
+      }
+    } catch (error) {
+      console.error('Error loading gallery photos:', error);
+    }
+  };
+
+  const handleExpand = () => {
+    if (photo.is_gallery_tile && photo.batch_id) {
+      loadGalleryPhotos();
+    }
+    setIsExpanded(true);
+  };
+
+  // If it's not a gallery tile, render as regular PhotoCard
+  if (!photo.is_gallery_tile) {
     return (
       <PhotoCard
         photo={photo}
@@ -52,10 +97,10 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     );
   }
 
-  const batchPhotos = photo.batch_photos;
-  const photoCount = batchPhotos.length;
+  const displayPhotos = isExpanded ? galleryPhotos : [];
+  const photoCount = photo.gallery_photos?.length || 0;
 
-  // Expanded view showing all photos in the batch
+  // Expanded view showing all photos in the gallery
   if (isExpanded) {
     return (
       <div className="col-span-full">
@@ -64,7 +109,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             <div className="flex items-center gap-3">
               <Images className="w-6 h-6 text-blue-600" />
               <h3 className="text-xl font-semibold text-gray-900">
-                Photo Collection ({photoCount} photos)
+                {photo.title} ({photoCount} photos)
               </h3>
             </div>
             <button
@@ -80,14 +125,14 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
               ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
               : 'grid-cols-1 lg:grid-cols-2'
           }`}>
-            {batchPhotos.map(batchPhoto => (
+            {displayPhotos.map(galleryPhoto => (
               <PhotoCard
-                key={batchPhoto.id}
-                photo={batchPhoto}
-                isFlipped={expandedFlippedCards.has(batchPhoto.id)}
-                onFlip={() => handleExpandedFlip(batchPhoto.id)}
-                onDelete={handleDeleteFromBatch}
-                onUpdate={handleUpdateInBatch}
+                key={galleryPhoto.id}
+                photo={galleryPhoto}
+                isFlipped={expandedFlippedCards.has(galleryPhoto.id)}
+                onFlip={() => handleExpandedFlip(galleryPhoto.id)}
+                onDelete={handleDeleteFromGallery}
+                onUpdate={handleUpdateInGallery}
                 viewMode={viewMode}
               />
             ))}
@@ -97,12 +142,12 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     );
   }
 
-  // Tile view showing just the representative photo with batch indicator
+  // Tile view showing just the representative photo with gallery indicator
   if (viewMode === 'slide') {
     return (
       <div 
         className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
-        onClick={() => setIsExpanded(true)}
+        onClick={handleExpand}
       >
         <div className="aspect-square relative">
           <img
@@ -147,12 +192,12 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     );
   }
 
-  // Flip card tile view
+  // Flip card gallery tile view
   return (
     <div className="perspective w-full h-96">
       <div
         className="relative w-full h-full preserve-3d transition-transform duration-700 cursor-pointer"
-        onClick={() => setIsExpanded(true)}
+        onClick={handleExpand}
       >
         <div className="absolute inset-0 backface-hidden rounded-xl overflow-hidden shadow-lg">
           <img
