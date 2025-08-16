@@ -3,6 +3,7 @@ import { Plus, Grid, LayoutGrid, Camera, Heart, Users, Gift } from 'lucide-react
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
+import { PhotoTile } from './PhotoTile';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
@@ -61,11 +62,43 @@ export function PhotoGallery() {
   };
 
   const filterPhotos = () => {
-    let filtered = photos;
+    // Group photos by batch_id and create tiles
+    const photoMap = new Map<string, Photo[]>();
+    const singlePhotos: Photo[] = [];
+    
+    photos.forEach(photo => {
+      if (photo.batch_id) {
+        if (!photoMap.has(photo.batch_id)) {
+          photoMap.set(photo.batch_id, []);
+        }
+        photoMap.get(photo.batch_id)!.push(photo);
+      } else {
+        singlePhotos.push(photo);
+      }
+    });
+    
+    // Create photo tiles (single photos + batch representatives)
+    let photoTiles: Photo[] = [...singlePhotos];
+    
+    // Add one representative photo per batch
+    photoMap.forEach((batchPhotos, batchId) => {
+      if (batchPhotos.length > 0) {
+        const representative = {
+          ...batchPhotos[0],
+          batch_photos: batchPhotos,
+          is_batch_tile: true
+        };
+        photoTiles.push(representative);
+      }
+    });
+    
+    // Apply tag filtering
+    let filtered = photoTiles;
 
     if (selectedTag !== 'all') {
       filtered = filtered.filter(photo => 
-        photo.tags?.includes(selectedTag)
+        photo.tags?.includes(selectedTag) || 
+        (photo.batch_photos && photo.batch_photos.some(p => p.tags?.includes(selectedTag)))
       );
     }
 
@@ -251,7 +284,7 @@ export function PhotoGallery() {
             : 'grid-cols-1 lg:grid-cols-2'
         }`}>
           {filteredPhotos.map(photo => (
-            <PhotoCard
+            <PhotoTile
               key={photo.id}
               photo={photo}
               isFlipped={flippedCards.has(photo.id)}

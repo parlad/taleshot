@@ -9,6 +9,8 @@ export interface Photo {
   user_id?: string;
   is_public?: boolean;
   batch_id?: string;
+  batch_photos?: Photo[];
+  is_batch_tile?: boolean;
 }
 
 export type ViewMode = 'flip' | 'slide';
