@@ -308,9 +308,9 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                         onClick={() => {
                           setShowNewTag(false);
                           setNewTag('');
-                        className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
+                        }}
                         className="px-2 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-xs"
-                        <Plus className="w-2 h-2" />
+                      >
                         Cancel
                       </button>
                     </div>
