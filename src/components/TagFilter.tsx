@@ -39,8 +39,6 @@ export function TagFilter({ selectedTag, onTagChange }: TagFilterProps) {
       // Extract unique tag names
       const uniqueTags = [...new Set(data?.map(item => item.tag_name) || [])];
       setAvailableTags(uniqueTags.sort());
-      
-      console.log('📋 Available tags:', uniqueTags);
     } catch (error) {
       console.error('Error in fetchAvailableTags:', error);
     } finally {
@@ -49,13 +47,11 @@ export function TagFilter({ selectedTag, onTagChange }: TagFilterProps) {
   };
 
   const handleTagSelect = (tag: string) => {
-    console.log('🏷️ Tag selected:', tag);
     onTagChange(tag);
     setIsDropdownOpen(false);
   };
 
   const clearFilter = () => {
-    console.log('🔄 Clearing tag filter');
     onTagChange('all');
     setIsDropdownOpen(false);
   };

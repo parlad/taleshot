@@ -41,7 +41,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   const handleCategoryChange = (categoryName: string) => {
-    console.log('🔄 MainLayout: Category changed to:', categoryName);
     setSelectedCategory(categoryName);
     // Reset tag filter when category filter is used
     if (categoryName !== 'all') {
@@ -51,7 +50,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   const handleTagChange = (tag: string) => {
-    console.log('🏷️ MainLayout: Tag changed to:', tag);
     setSelectedTag(tag);
     // Reset category filter when tag filter is used
     if (tag !== 'all') {

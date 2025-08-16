@@ -32,15 +32,11 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
     console.log('🔄 PhotoGallery: Fetching photos - Category:', selectedCategory, 'Tag:', selectedTag);
     
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
 
       if (selectedTag !== 'all') {
         // Use the tags column directly from photos table
         console.log(`🏷️ PhotoGallery: Filtering photos with tag: "${selectedTag}"`);
         
-        const { data: photosData, error } = await supabase
-          .from('photos')
           .select('*')
           .eq('user_id', user.id)
           .contains('tags', [selectedTag])
@@ -49,7 +45,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         if (error) {
           console.error('❌ PhotoGallery: Error fetching photos with tag:', error);
           setPhotos([]);
-          return;
         }
 
         const photosWithTags = (photosData || []).map(photo => ({
@@ -60,12 +55,9 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
 
         console.log(`✅ PhotoGallery: Found ${photosWithTags.length} photos with tag "${selectedTag}"`);
         setPhotos(photosWithTags);
-        
       } else if (selectedCategory !== 'all') {
         // Use the tags column for category filtering too
         console.log(`📂 PhotoGallery: Filtering photos with category: "${selectedCategory}"`);
-        
-        const { data: photosData, error } = await supabase
           .from('photos')
           .select('*')
           .eq('user_id', user.id)
@@ -74,7 +66,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
 
         if (error) {
           console.error('❌ PhotoGallery: Error fetching photos with category:', error);
-          setPhotos([]);
           return;
         }
 
@@ -85,12 +76,9 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         }));
 
         console.log(`✅ PhotoGallery: Found ${photosWithTags.length} photos with category "${selectedCategory}"`);
-        setPhotos(photosWithTags);
         
       } else {
         // Show all photos
-        console.log('📸 PhotoGallery: Fetching all photos...');
-        
         const { data: photosData, error } = await supabase
           .from('photos')
           .select('*')
@@ -98,7 +86,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           .order('created_at', { ascending: false });
 
         if (error) {
-          console.error('❌ PhotoGallery: Error fetching all photos:', error);
           setPhotos([]);
           return;
         }
@@ -113,7 +100,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
       }
 
     } catch (error) {
-      console.error('❌ PhotoGallery: Error in fetchPhotos:', error);
       setPhotos([]);
     } finally {
       setIsLoadingPhotos(false);
@@ -125,7 +111,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
   }, []);
 
   useEffect(() => {
-    console.log('🔄 PhotoGallery: Filter changed - Category:', selectedCategory, 'Tag:', selectedTag);
     // Force a complete reload of photos when filter changes
     fetchPhotos();
   }, [selectedCategory, selectedTag]);
@@ -147,7 +132,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
         return;
       }
 
-      console.log('📂 Fetched categories:', categoriesData);
       setAllCategories(categoriesData || []);
     } catch (error) {
       console.error('Error in fetchCategories:', error);
@@ -266,7 +250,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
 
   const handleAddPhotos = async (details: Omit<Photo, 'id' | 'imageUrl'>) => {
     setIsUploading(true);
-    console.log('📤 Adding photos with tags:', details.categories);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -324,7 +307,6 @@ export function PhotoGallery({ selectedCategory = 'all', selectedTag = 'all', vi
           if (tagsError) {
             console.error('Error inserting tags:', tagsError);
           } else {
-            console.log('✅ Successfully added photo with tags in tags column:', details.categories);
           }
         }
       }
