@@ -1,61 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Camera, Search, LogOut, ChevronDown, Grid, LayoutGrid } from 'lucide-react';
+import { Camera, Search, LogOut } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import { TagFilter } from '../components/TagFilter';
-import type { Category } from '../types';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [selectedTag, setSelectedTag] = useState('all');
-  const [viewMode, setViewMode] = useState<'flip' | 'slide'>('flip');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const [showViewDropdown, setShowViewDropdown] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .or(`user_id.eq.${user.id},user_id.is.null`)
-      .order('name');
-
-    if (error) {
-      console.error('Error fetching categories:', error);
-      return;
-    }
-
-    setCategories(data || []);
-  };
-
-  const handleCategoryChange = (categoryName: string) => {
-    setSelectedCategory(categoryName);
-    // Reset tag filter when category filter is used
-    if (categoryName !== 'all') {
-      setSelectedTag('all');
-    }
-    setShowCategoryDropdown(false);
-  };
-
-  const handleTagChange = (tag: string) => {
-    setSelectedTag(tag);
-    // Reset category filter when tag filter is used
-    if (tag !== 'all') {
-      setSelectedCategory('all');
-    }
-  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -91,99 +44,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                 Search
               </Link>
 
-              {/* Category Dropdown - Only show on home page */}
-              {isHomePage && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <span>
-                      {selectedCategory === 'all' 
-                        ? 'All Photos' 
-                        : categories.find(c => c.name === selectedCategory)?.name || 'All Photos'
-                      }
-                    </span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-
-                  {showCategoryDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                      <button
-                        onClick={() => handleCategoryChange('all')}
-                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                          selectedCategory === 'all' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
-                      >
-                        All Photos
-                      </button>
-                      {categories.map(category => (
-                        <button
-                          key={category.id}
-                          onClick={() => handleCategoryChange(category.name)}
-                          className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                            selectedCategory.toLowerCase() === category.name.toLowerCase() 
-                              ? 'bg-blue-50 text-blue-700' 
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          {category.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tag Filter - Only show on home page */}
-              {isHomePage && (
-                <TagFilter 
-                  selectedTag={selectedTag}
-                  onTagChange={handleTagChange}
-                />
-              )}
-
-              {/* View Mode Dropdown - Only show on home page */}
-              {isHomePage && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowViewDropdown(!showViewDropdown)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    {viewMode === 'flip' ? <Grid className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
-                    <span className="capitalize">{viewMode}</span>
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-
-                  {showViewDropdown && (
-                    <div className="absolute right-0 top-full mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                      <button
-                        onClick={() => {
-                          setViewMode('flip');
-                          setShowViewDropdown(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                          viewMode === 'flip' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
-                      >
-                        Flip
-                      </button>
-                      <button
-                        onClick={() => {
-                          setViewMode('slide');
-                          setShowViewDropdown(false);
-                        }}
-                        className={`w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors ${
-                          viewMode === 'slide' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                        }`}
-                      >
-                        Slide
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
               <button
                 onClick={handleSignOut}
                 className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -199,12 +59,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Main Content */}
       <main className="flex-1 bg-gradient-to-br from-gray-50 to-blue-50">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          {React.cloneElement(children as React.ReactElement, {
-            selectedCategory,
-            selectedTag,
-            viewMode,
-            categories
-          })}
+          {children}
         </div>
       </main>
 
