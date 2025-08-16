@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
+import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X, Plus, Tag } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import type { PhotoCardProps, Photo } from '../types';
 
@@ -10,11 +10,17 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     date_taken: photo.date_taken || '',
     reason: photo.reason,
     is_public: photo.is_public || false,
-    tags: photo.tags || []
+    tags: [...(photo.tags || [])]
   });
+  const [availableTags, setAvailableTags] = useState<string[]>([
+    'Family', 'Vacation', 'Celebration', 'Nature', 'Food', 'Pets', 'Travel', 'Japan', 'Village'
+  ]);
+  const [newTag, setNewTag] = useState('');
+  const [showNewTag, setShowNewTag] = useState(false);
 
   const handleSave = async () => {
     try {
+      // First update the photo
       const { error } = await supabase
         .from('photos')
         .update({
@@ -27,12 +33,35 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
       if (error) throw error;
 
+      // Delete existing photo tags
+      const { error: deleteTagsError } = await supabase
+        .from('photo_tags')
+        .delete()
+        .eq('photo_id', photo.id);
+
+      if (deleteTagsError) throw deleteTagsError;
+
+      // Insert new photo tags
+      if (editData.tags.length > 0) {
+        const tagInserts = editData.tags.map(tagName => ({
+          photo_id: photo.id,
+          tag_name: tagName
+        }));
+
+        const { error: insertTagsError } = await supabase
+          .from('photo_tags')
+          .insert(tagInserts);
+
+        if (insertTagsError) throw insertTagsError;
+      }
+
       const updatedPhoto: Photo = {
         ...photo,
         title: editData.title,
         date_taken: editData.date_taken,
         reason: editData.reason,
-        is_public: editData.is_public
+        is_public: editData.is_public,
+        tags: editData.tags
       };
 
       onUpdate?.(updatedPhoto);
@@ -48,9 +77,37 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       date_taken: photo.date_taken || '',
       reason: photo.reason,
       is_public: photo.is_public || false,
-      tags: photo.tags || []
+      tags: [...(photo.tags || [])]
     });
+    setNewTag('');
+    setShowNewTag(false);
     setIsEditing(false);
+  };
+
+  const handleTagToggle = (tagName: string) => {
+    setEditData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tagName)
+        ? prev.tags.filter(t => t !== tagName)
+        : [...prev.tags, tagName]
+    }));
+  };
+
+  const handleAddNewTag = () => {
+    if (!newTag.trim()) return;
+    
+    const trimmedTag = newTag.trim();
+    if (!availableTags.includes(trimmedTag)) {
+      setAvailableTags(prev => [...prev, trimmedTag].sort());
+    }
+    
+    setEditData(prev => ({
+      ...prev,
+      tags: prev.tags.includes(trimmedTag) ? prev.tags : [...prev.tags, trimmedTag]
+    }));
+    
+    setNewTag('');
+    setShowNewTag(false);
   };
 
   const togglePublic = async () => {
@@ -195,6 +252,72 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 rows={4}
                 placeholder="Why is this photo special?"
               />
+              
+              {/* Tags Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Tag className="w-4 h-4 inline mr-1" />
+                  Tags
+                </label>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap gap-2">
+                    {availableTags.map(tag => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                          editData.tags.includes(tag)
+                            ? 'bg-blue-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setShowNewTag(true)}
+                      className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Add New
+                    </button>
+                  </div>
+
+                  {showNewTag && (
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleAddNewTag()}
+                        className="flex-1 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none text-sm"
+                        placeholder="Tag name"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddNewTag}
+                        className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowNewTag(false);
+                          setNewTag('');
+                        }}
+                        className="px-3 py-1 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <label className="flex items-center gap-2">
                 <input
                   id={`edit-public-${photo.id}`}
@@ -206,6 +329,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 />
                 <span className="text-sm text-gray-700">Make this photo public</span>
               </label>
+              
               <div className="flex gap-2 pt-4">
                 <button
                   onClick={handleSave}
