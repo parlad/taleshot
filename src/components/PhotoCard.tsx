@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X, Plus, Tag } from 'lucide-react';
+import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X, Plus, Tag, Images } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
 import type { PhotoCardProps, Photo } from '../types';
 
 export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode = 'flip', isPublicView = false }: PhotoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [showGallery, setShowGallery] = useState(false);
+  const [batchPhotos, setBatchPhotos] = useState<Photo[]>([]);
   const [editData, setEditData] = useState({
     title: photo.title,
     date_taken: photo.date_taken || '',
@@ -131,10 +134,66 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     }
   };
 
+  const handleGalleryClick = async () => {
+    if (!photo.batch_id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('batch_id', photo.batch_id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      setBatchPhotos(data || []);
+      setShowGallery(true);
+    } catch (error) {
+      console.error('Error fetching batch photos:', error);
+    }
+  };
+
+  const getBatchPhotoCount = async () => {
+    if (!photo.batch_id) return 0;
+
+    try {
+      const { count, error } = await supabase
+        .from('photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('batch_id', photo.batch_id);
+
+      if (error) throw error;
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting batch count:', error);
+      return 0;
+    }
+  };
+
+  const [batchCount, setBatchCount] = useState<number>(0);
+
+  React.useEffect(() => {
+    if (photo.batch_id) {
+      getBatchPhotoCount().then(setBatchCount);
+    }
+  }, [photo.batch_id]);
+
   if (viewMode === 'slide') {
     return (
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+      <>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="aspect-square">
+          {photo.batch_id && batchCount > 1 && (
+            <div className="absolute top-3 left-3 z-10">
+              <button
+                onClick={handleGalleryClick}
+                className="flex items-center gap-1 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded-full hover:bg-opacity-80 transition-colors"
+              >
+                <Images className="w-3 h-3" />
+                {batchCount}
+              </button>
+            </div>
+          )}
           <img
             src={photo.imageUrl || photo.image_url}
             alt={photo.title}
@@ -193,11 +252,19 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           )}
         </div>
       </div>
+        <PhotoGalleryModal
+          isOpen={showGallery}
+          onClose={() => setShowGallery(false)}
+          photos={batchPhotos}
+          initialIndex={batchPhotos.findIndex(p => p.id === photo.id)}
+        />
+      </>
     );
   }
 
   return (
-    <div className="perspective w-full h-96">
+    <>
+      <div className="perspective w-full h-96">
       <div
         className={`relative w-full h-full preserve-3d transition-transform duration-700 cursor-pointer ${
           isFlipped ? 'rotate-y-180' : ''
@@ -206,6 +273,17 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       >
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden rounded-xl overflow-hidden shadow-lg">
+          {photo.batch_id && batchCount > 1 && (
+            <div className="absolute top-3 left-3 z-10">
+              <button
+                onClick={handleGalleryClick}
+                className="flex items-center gap-1 px-2 py-1 bg-black bg-opacity-70 text-white text-xs rounded-full hover:bg-opacity-80 transition-colors"
+              >
+                <Images className="w-3 h-3" />
+                {batchCount}
+              </button>
+            </div>
+          )}
           <img
             src={photo.imageUrl || photo.image_url}
             alt={photo.title}
@@ -413,5 +491,12 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         </div>
       </div>
     </div>
+      <PhotoGalleryModal
+        isOpen={showGallery}
+        onClose={() => setShowGallery(false)}
+        photos={batchPhotos}
+        initialIndex={batchPhotos.findIndex(p => p.id === photo.id)}
+      />
+    </>
   );
 }
