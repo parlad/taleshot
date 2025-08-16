@@ -8,6 +8,7 @@ export interface Photo {
   tags?: string[];
   user_id?: string;
   is_public?: boolean;
+  batch_id?: string;
 }
 
 export type ViewMode = 'flip' | 'slide';
