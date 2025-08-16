@@ -107,9 +107,6 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Generate a batch ID for multiple photos
-      const batchId = imageFiles.length > 1 ? crypto.randomUUID() : null;
-
       // Upload all images and create photo records
       for (let i = 0; i < imageFiles.length; i++) {
         const file = imageFiles[i];
@@ -128,8 +125,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             date_taken: formData.date_taken,
             reason: formData.reason,
             image_url: imageUrl,
-            is_public: formData.is_public,
-            batch_id: batchId
+            is_public: formData.is_public
           }])
           .select()
           .single();
