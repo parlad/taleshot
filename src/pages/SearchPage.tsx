@@ -201,7 +201,8 @@ export function SearchPage() {
 
   if (selectedUser) {
     return (
-      <div className="space-y-6">
+      <>
+        <div className="space-y-6">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setSelectedUser(null)}
@@ -272,16 +273,17 @@ export function SearchPage() {
             ))}
           </div>
         )}
-      </div>
+        </div>
 
-      {/* Photo Modal */}
-      {selectedPhoto && (
-        <PhotoModal
-          isOpen={!!selectedPhoto}
-          onClose={() => setSelectedPhoto(null)}
-          photo={selectedPhoto}
-        />
-      )}
+        {/* Photo Modal */}
+        {selectedPhoto && (
+          <PhotoModal
+            isOpen={!!selectedPhoto}
+            onClose={() => setSelectedPhoto(null)}
+            photo={selectedPhoto}
+          />
+        )}
+      </>
     );
   }
 
