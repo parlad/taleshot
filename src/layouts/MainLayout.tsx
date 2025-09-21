@@ -1,17 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Camera, Search, LogOut } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  onLogoClick?: () => void;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
+export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      // If already on home page, trigger photo reload
+      onLogoClick?.();
+    } else {
+      // Navigate to home page
+      navigate('/');
+    }
   };
 
   const isHomePage = location.pathname === '/';
@@ -23,7 +36,7 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
+            <button onClick={handleLogoClick} className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl blur-sm opacity-30"></div>
                 <div className="relative p-2 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl shadow-lg">
@@ -33,7 +46,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               <span className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                 Taleshot
               </span>
-            </Link>
+            </button>
 
             {/* Navigation */}
             <div className="flex items-center gap-3">

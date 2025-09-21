@@ -8,7 +8,11 @@ import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
 
-export function PhotoGallery() {
+interface PhotoGalleryProps {
+  onReload?: () => void;
+}
+
+export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const { user } = useSupabaseAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
@@ -20,6 +24,21 @@ export function PhotoGallery() {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [showGroupPhotos, setShowGroupPhotos] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+
+  // Expose reload function to parent
+  React.useEffect(() => {
+    if (onReload) {
+      // Replace the onReload function with our fetchPhotos function
+      const originalOnReload = onReload;
+      onReload = () => {
+        setSelectedTag('all');
+        setShowGroupPhotos(false);
+        setSelectedGroupId(null);
+        setFlippedCards(new Set());
+        fetchPhotos();
+      };
+    }
+  }, [onReload]);
 
   useEffect(() => {
     if (user) {

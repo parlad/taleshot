@@ -1,13 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
 import { Auth } from './components/Auth';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { SearchPage } from './pages/SearchPage';
 
-export default function App() {
+function AppContent() {
   const { user, loading } = useSupabaseAuth();
+  const [reloadTrigger, setReloadTrigger] = React.useState(0);
+
+  const handleLogoClick = () => {
+    setReloadTrigger(prev => prev + 1);
+  };
 
   if (loading) {
     return (
@@ -22,13 +27,19 @@ export default function App() {
   }
 
   return (
+    <MainLayout onLogoClick={handleLogoClick}>
+      <Routes>
+        <Route path="/" element={<HomePage key={reloadTrigger} />} />
+        <Route path="/search" element={<SearchPage />} />
+      </Routes>
+    </MainLayout>
+  );
+}
+
+export default function App() {
+  return (
     <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-      <MainLayout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/search" element={<SearchPage />} />
-        </Routes>
-      </MainLayout>
+      <AppContent />
     </Router>
   );
 }
