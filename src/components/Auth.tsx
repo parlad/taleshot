@@ -12,8 +12,16 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const { user } = useSupabaseAuth();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState('all');
+  const [flippedCards, setFlippedCards] = useState(new Set());
+  const [viewMode, setViewMode] = useState<ViewMode>('flip');
 
-  // Expose reload function to parent
+  useEffect(() => {
+    if (onReload) {
+      onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -68,6 +76,51 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
+    if (selectedTag === 'all') {
+      setFilteredPhotos(photos);
+    } else {
+      setFilteredPhotos(photos.filter(photo => 
+        photo.tags?.includes(selectedTag)
+      ));
+    }
+  };
+
+  const handleFlip = (photoId: string) => {
+    const newFlippedCards = new Set(flippedCards);
+    if (newFlippedCards.has(photoId)) {
+      newFlippedCards.delete(photoId);
+    } else {
+      newFlippedCards.add(photoId);
+    }
+    setFlippedCards(newFlippedCards);
+  };
+
+  const handleDelete = async (photoId: string) => {
+    // Delete logic here
+    fetchPhotos();
+  };
+
+  const handleUpdate = async (photoId: string, updates: any) => {
+    // Update logic here
+    fetchPhotos();
+  };
+
+  const handleGroupSelect = (groupId: string) => {
+    // Group select logic here
+  };
+
+  const EmptyState = () => (
+    <div className="text-center py-16">
+      <div className="max-w-md mx-auto">
+        <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Camera className="w-12 h-12 text-purple-600" />
+        </div>
+        
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-gray-900">
+            Your Photo Journey Starts Here
+          </h2>
+          
           <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
             Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
           </p>
@@ -166,8 +219,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
-              onGroupSelect={handleGroupSelect}
-              onPhotoAdded={fetchPhotos}
               onGroupSelect={handleGroupSelect}
               onPhotoAdded={fetchPhotos}
             />
