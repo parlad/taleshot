@@ -135,18 +135,36 @@ export function SearchPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {selectedUser.photos.map(photo => (
-              <div key={photo.id} className="photo-card overflow-hidden">
+              <div key={photo.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group">
                 <div className="aspect-square">
                   <img
                     src={photo.image_url}
                     alt={photo.title}
-                    className="w-full h-full object-cover image-hover-effect"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-800 mb-1">{photo.title}</h3>
-                  <p className="text-sm text-gray-600 mb-2">{photo.date_taken}</p>
-                  <p className="text-sm text-gray-700">{photo.reason}</p>
+                  {/* Overlay with photo info */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <h3 className="font-semibold text-lg mb-1">{photo.title}</h3>
+                    <p className="text-white/80 text-sm">{photo.date_taken}</p>
+                    {photo.tags && photo.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {photo.tags.slice(0, 2).map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {photo.tags.length > 2 && (
+                          <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full">
+                            +{photo.tags.length - 2}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
