@@ -461,7 +461,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   // Regular card view - NO FLIP FUNCTIONALITY
   return (
-    <div className="photo-card overflow-hidden">
+    <div className="photo-card overflow-hidden max-w-sm">
       <div className="aspect-square relative cursor-pointer" onClick={handleExpand}>
         <img
           src={photo.imageUrl || photo.image_url}
@@ -481,9 +481,9 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           </div>
         )}
       </div>
-      <div className="p-4">
+      <div className="p-3">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-800 text-lg">{photo.title}</h3>
+          <h3 className="font-semibold text-gray-800 text-base leading-tight">{photo.title}</h3>
           {!isPublicView && (
             <button
               onClick={(e) => {
@@ -494,30 +494,30 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 photo.is_public
                   ? 'bg-green-100 text-green-600 hover:bg-green-200 hover:scale-110'
                   : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-110'
-              }`}
+              } flex-shrink-0 ml-2`}
               title={photo.is_public ? 'Make private' : 'Make public'}
             >
               {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
             </button>
           )}
         </div>
-        <div className="flex items-center text-gray-600 text-sm mb-2">
+        <div className="flex items-center text-gray-500 text-xs mb-2">
           <Calendar className="w-4 h-4 mr-2" />
           {photo.date_taken}
         </div>
-        <p className="text-gray-700 text-sm line-clamp-2">{photo.reason}</p>
+        <p className="text-gray-600 text-xs line-clamp-2 leading-relaxed">{photo.reason}</p>
         {photo.tags && photo.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
+          <div className="flex flex-wrap gap-1 mt-2">
             {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 2).map((tag, index) => (
               <span
                 key={index}
-                className="category-tag text-xs"
+                className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-full font-medium"
               >
                 {tag}
               </span>
             ))}
             {photo.tags.filter(tag => !tag.startsWith('gallery_')).length > 2 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+              <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
                 +{photo.tags.filter(tag => !tag.startsWith('gallery_')).length - 2}
               </span>
             )}
