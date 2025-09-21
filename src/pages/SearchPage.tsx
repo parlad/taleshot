@@ -389,12 +389,6 @@ export function SearchPage() {
 
       {searchResults.length > 0 && (
         <div>
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-semibold text-gray-800 mb-2">
-              Found {searchResults.length} photographer{searchResults.length !== 1 ? 's' : ''}
-            </h2>
-            <p className="text-gray-600">Click on any photographer to explore their public collection</p>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
           {searchResults.map(result => (
             <div
