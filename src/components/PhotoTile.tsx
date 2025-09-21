@@ -509,6 +509,23 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Gallery ({photoCount} photos)</h4>
                     <div className="grid grid-cols-2 gap-3">
+                      {/* Add Photo Button */}
+                      <div className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 transition-colors flex items-center justify-center bg-gray-50 hover:bg-indigo-50 cursor-pointer group">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // TODO: Open add photo modal with gallery context
+                            console.log('Add photo to gallery:', photo.batch_id);
+                          }}
+                          className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-indigo-600 transition-colors"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-gray-200 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
+                            <Plus className="w-4 h-4" />
+                          </div>
+                          <span className="text-xs font-medium">Add Photo</span>
+                        </button>
+                      </div>
+                      
                       {photo.gallery_photos?.map((galleryPhoto, index) => (
                         <div
                           key={galleryPhoto.id}
