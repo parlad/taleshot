@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Image, ArrowLeft, Calendar, Tag, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, User, Image, ArrowLeft, Calendar, Tag, X, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
 
