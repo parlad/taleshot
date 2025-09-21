@@ -307,7 +307,7 @@ export function PhotoGallery() {
             ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
             : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
         }`}>
-          {filteredPhotos.map(photo => (
+        <div className={`grid gap-px ${
             <PhotoTile
               key={photo.id}
               photo={photo}
