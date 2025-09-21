@@ -99,20 +99,25 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         filtered = [];
       }
     } else {
-      // Group photos by batch_id (for photos uploaded together)
-      const batchGroups = new Map<string, Photo[]>();
+      // Group photos by title and tags (for photos uploaded together)
+      const titleTagGroups = new Map<string, Photo[]>();
       const individualPhotos: Photo[] = [];
       
       photos.forEach(photo => {
-        if (photo.batch_id) {
-          // Photo has a batch_id, so it belongs to a gallery
-          if (!batchGroups.has(photo.batch_id)) {
-            // Find all photos with the same batch_id
-            const batchPhotos = photos.filter(p => p.batch_id === photo.batch_id);
-            batchGroups.set(photo.batch_id, batchPhotos);
+        if (photo.batch_id && photo.upload_type === 'group') {
+          // Photo was uploaded as part of a group, so it belongs to a gallery
+          const groupKey = `${photo.title}_${photo.batch_id}`;
+          if (!titleTagGroups.has(groupKey)) {
+            // Find all photos with the same title and batch_id
+            const groupPhotos = photos.filter(p => 
+              p.title === photo.title && 
+              p.batch_id === photo.batch_id &&
+              p.upload_type === 'group'
+            );
+            titleTagGroups.set(groupKey, groupPhotos);
           }
         } else {
-          // Photo has no batch_id, so it's an individual photo
+          // Photo was uploaded individually or has no batch_id
           individualPhotos.push(photo);
         }
       });
@@ -120,15 +125,15 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       // Start with individual photos
       filtered = [...individualPhotos];
       
-      // Add one representative tile per batch group
-      batchGroups.forEach((groupPhotos, batchId) => {
+      // Add one representative tile per title-tag group
+      titleTagGroups.forEach((groupPhotos, groupKey) => {
         if (groupPhotos.length > 0) {
           // Use first photo as representative with gallery metadata
           const representative: Photo = {
             ...groupPhotos[0],
             is_gallery_tile: true,
             gallery_photos: groupPhotos,
-            batch_id: batchId // Use the actual batch_id
+            batch_id: groupPhotos[0].batch_id // Use the batch_id from the group
           };
           filtered.push(representative);
         }
