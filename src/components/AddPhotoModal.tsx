@@ -6,11 +6,13 @@ interface AddPhotoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onPhotoAdded: () => void;
+  existingGalleryId?: string;
+  galleryTitle?: string;
 }
 
-export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalProps) {
+export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId, galleryTitle }: AddPhotoModalProps) {
   const [formData, setFormData] = useState({
-    title: '',
+    title: galleryTitle || '',
     date_taken: '',
     reason: '',
     is_public: false,
@@ -107,8 +109,8 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Generate a gallery ID and internal tag for multiple photos
-      const galleryId = imageFiles.length > 1 ? crypto.randomUUID() : null;
+      // Use existing gallery ID or generate new one for multiple photos
+      const galleryId = existingGalleryId || (imageFiles.length > 1 ? crypto.randomUUID() : null);
       const galleryTag = galleryId ? `gallery_${galleryId}` : null;
 
       // Upload all images and create photo records
@@ -116,8 +118,10 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
         const file = imageFiles[i];
         const imageUrl = await uploadImage(file);
         
-        // Use the same title for all photos in a gallery
-        const photoTitle = formData.title;
+        // Use the same title for all photos in a gallery, or add numbering for existing galleries
+        const photoTitle = existingGalleryId && imageFiles.length === 1 
+          ? formData.title 
+          : formData.title;
 
         const { data: photo, error: photoError } = await supabase
           .from('photos')
@@ -129,7 +133,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             image_url: imageUrl,
             is_public: formData.is_public,
             batch_id: galleryId,
-            upload_type: imageFiles.length > 1 ? 'group' : 'individual'
+            upload_type: galleryId ? 'group' : 'individual'
           }])
           .select()
           .single();
@@ -167,7 +171,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
 
   const handleClose = () => {
     setFormData({
-      title: '',
+      title: galleryTitle || '',
       date_taken: '',
       reason: '',
       is_public: false,
@@ -188,7 +192,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
         <div className="p-6 border-b border-gray-200/50">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold gradient-text">
-              Add New Photo{imageFiles.length > 1 ? 's' : ''}
+              {existingGalleryId ? `Add to "${galleryTitle}" Gallery` : `Add New Photo${imageFiles.length > 1 ? 's' : ''}`}
             </h2>
             <button
               onClick={handleClose}
@@ -197,6 +201,11 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
               <X className="w-6 h-6" />
             </button>
           </div>
+          {existingGalleryId && (
+            <p className="text-sm text-gray-600 mt-2">
+              Adding photos to an existing gallery. They will share the same title and details.
+            </p>
+          )}
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
@@ -267,16 +276,17 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
           {/* Title */}
           <div>
             <label htmlFor="photo-title" className="block text-sm font-medium text-gray-700 mb-2">
-              Title {imageFiles.length > 1 && '(will be numbered for multiple photos)'}
+              Title {existingGalleryId ? '(inherited from gallery)' : imageFiles.length > 1 ? '(will be numbered for multiple photos)' : ''}
             </label>
             <input
               id="photo-title"
               name="photo-title"
               type="text"
               required
+              disabled={!!existingGalleryId}
               value={formData.title}
               onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              className="input-field"
+              className={`input-field ${existingGalleryId ? 'bg-gray-100 cursor-not-allowed' : ''}`}
               placeholder={imageFiles.length > 1 ? "Base title for your photos" : "Give your photo a title"}
             />
           </div>

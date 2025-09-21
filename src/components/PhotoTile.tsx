@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Images, Calendar, Tag, X, Edit3, Trash2, Eye, EyeOff, Save, Plus, Maximize2 } from 'lucide-react';
 import { PhotoCard } from './PhotoCard';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
+import { AddPhotoModal } from './AddPhotoModal';
 import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
 
@@ -13,11 +14,13 @@ interface PhotoTileProps {
   onUpdate: (updatedPhoto: Photo) => void;
   viewMode: 'flip' | 'slide';
   onGroupSelect?: (groupId: string) => void;
+  onPhotoAdded?: () => void;
 }
 
-export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onGroupSelect }: PhotoTileProps) {
+export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onGroupSelect, onPhotoAdded }: PhotoTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [editData, setEditData] = useState({
     title: photo.title,
@@ -514,8 +517,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            // TODO: Open add photo modal with gallery context
-                            console.log('Add photo to gallery:', photo.batch_id);
+                            setIsAddModalOpen(true);
                           }}
                           className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-indigo-600 transition-colors"
                         >
@@ -611,6 +613,18 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             )}
           </div>
         </div>
+
+        {/* Add Photo Modal */}
+        <AddPhotoModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onPhotoAdded={() => {
+            setIsAddModalOpen(false);
+            onPhotoAdded?.();
+          }}
+          existingGalleryId={photo.batch_id || undefined}
+          galleryTitle={photo.title}
+        />
       </div>
     );
   }

@@ -348,6 +348,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onUpdate={handleUpdate}
               viewMode={viewMode}
               onGroupSelect={handleGroupSelect}
+              onPhotoAdded={fetchPhotos}
             />
           ))}
         </div>
