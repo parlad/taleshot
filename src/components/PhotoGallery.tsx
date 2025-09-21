@@ -3,6 +3,7 @@ import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
+import { PhotoTile } from './PhotoTile';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
@@ -92,12 +93,53 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
+    let filtered: Photo[] = [];
+
+    // Group photos by batch_id for gallery functionality
+    const batchGroups = new Map<string, Photo[]>();
+    const individualPhotos: Photo[] = [];
+    
+    photos.forEach(photo => {
+      if (photo.batch_id && photo.upload_type === 'group') {
+        if (!batchGroups.has(photo.batch_id)) {
+          batchGroups.set(photo.batch_id, []);
+        }
+        batchGroups.get(photo.batch_id)!.push(photo);
+      } else {
+        individualPhotos.push(photo);
+      }
+    });
+    
+    // Start with individual photos
+    filtered = [...individualPhotos];
+    
+    // Add gallery tiles for batched photos
+    batchGroups.forEach((groupPhotos, batchId) => {
+      if (groupPhotos.length > 1) {
+        // Create a gallery tile using the first photo as representative
+        const representative: Photo = {
+          ...groupPhotos[0],
+          is_gallery_tile: true,
+          gallery_photos: groupPhotos
+        };
+        filtered.push(representative);
+      } else if (groupPhotos.length === 1) {
+        // Single photo in batch, treat as individual
+        filtered.push(groupPhotos[0]);
+      }
+    });
+
+    // Apply tag filtering
     if (selectedTag === 'all') {
-      setFilteredPhotos(photos);
+      setFilteredPhotos(filtered);
     } else {
-      setFilteredPhotos(photos.filter(photo => 
-        photo.tags?.includes(selectedTag)
-      ));
+      setFilteredPhotos(filtered.filter(photo => {
+        if (photo.is_gallery_tile && photo.gallery_photos) {
+          // For gallery tiles, check if any photo in the gallery has the tag
+          return photo.gallery_photos.some(p => p.tags?.includes(selectedTag));
+        }
+        return photo.tags?.includes(selectedTag);
+      }));
     }
   };
 
@@ -244,17 +286,30 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         </div>
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
-          {filteredPhotos.map(photo => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              isFlipped={flippedCards.has(photo.id)}
-              onFlip={() => handleFlip(photo.id)}
-              onDelete={handleDelete}
-              onUpdate={handleUpdate}
-              viewMode={viewMode}
-            />
-          ))}
+          {filteredPhotos.map(photo => 
+            photo.is_gallery_tile ? (
+              <PhotoTile
+                key={photo.id}
+                photo={photo}
+                isFlipped={flippedCards.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                viewMode={viewMode}
+                onPhotoAdded={fetchPhotos}
+              />
+            ) : (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                isFlipped={flippedCards.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                viewMode={viewMode}
+              />
+            )
+          )}
         </div>
       )}
 
