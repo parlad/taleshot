@@ -218,7 +218,7 @@ export function PhotoGallery() {
             Welcome to Taleshot
           </h2>
           
-          <p className="text-white/80 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
             Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
           </p>
 
@@ -239,7 +239,7 @@ export function PhotoGallery() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-white/70">Loading your photos...</div>
+          <div className="text-gray-600">Loading your photos...</div>
         </div>
       </div>
     );

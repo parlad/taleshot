@@ -24,10 +24,10 @@ export function MainLayout({ children }: MainLayoutProps) {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <div className="p-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl">
+              <div className="p-2 bg-indigo-600 rounded-xl">
                 <Camera className="w-6 h-6 text-white" />
               </div>
-              <span className="text-2xl font-bold gradient-text">
+              <span className="text-2xl font-bold text-gray-900">
                 Taleshot
               </span>
             </Link>
@@ -38,8 +38,8 @@ export function MainLayout({ children }: MainLayoutProps) {
                 to="/search"
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
                   !isHomePage
-                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium shadow-lg'
-                    : 'text-white/80 hover:text-white hover:bg-white/20 backdrop-blur-sm'
+                    ? 'bg-indigo-600 text-white font-medium shadow-lg'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50 backdrop-blur-sm'
                 }`}
               >
                 <Search className="w-4 h-4" />
@@ -48,7 +48,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 px-4 py-2 text-white/80 hover:text-white hover:bg-white/20 backdrop-blur-sm rounded-xl transition-all duration-300"
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-white/50 backdrop-blur-sm rounded-xl transition-all duration-300"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -70,12 +70,12 @@ export function MainLayout({ children }: MainLayoutProps) {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg">
+              <div className="p-1.5 bg-indigo-600 rounded-lg">
                 <Camera className="w-4 h-4 text-white" />
               </div>
-              <span className="text-lg font-semibold text-white">Taleshot</span>
+              <span className="text-lg font-semibold text-gray-900">Taleshot</span>
             </div>
-            <p className="text-white/70 text-sm">
+            <p className="text-gray-600 text-sm">
               © 2025 Taleshot. Capturing memories, one story at a time.
             </p>
           </div>
