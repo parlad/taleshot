@@ -19,18 +19,13 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
-      const reloadFunction = () => {
         setFlippedCards(new Set());
         fetchPhotos();
       };
-      return reloadFunction;
     }
   }, [onReload]);
 
@@ -93,117 +88,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-    if (selectedTag === 'all') {
-      setFilteredPhotos(photos);
-    } else {
-      setFilteredPhotos(photos.filter(photo => 
-        photo.tags?.includes(selectedTag)
-      ));
+        }
+        return photo.tags?.includes(selectedTag);
+      }));
     }
-  };
-
-  const PhotoTile = ({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onPhotoAdded }: any) => {
-    return (
-      photo.is_gallery_tile ? (
-        <div 
-          key={photo.id} 
-          className="group bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl border border-white/50 overflow-hidden cursor-pointer transition-all duration-500 hover:transform hover:scale-[1.02]"
-          onClick={() => setSelectedPhoto(photo.gallery_photos?.[0] || photo)}
-        >
-          <div className="aspect-square relative overflow-hidden">
-            <img
-              src={photo.image_url}
-              alt={photo.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            
-            {/* Gallery indicator */}
-            <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs flex items-center gap-1 shadow-lg backdrop-blur-sm">
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" clipRule="evenodd" />
-              </svg>
-              {photo.gallery_photos?.length || 1}
-            </div>
-            
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Photo info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-              <h3 className="font-bold text-white text-lg leading-tight mb-2">{photo.title}</h3>
-              <div className="flex items-center text-white/90 text-sm mb-3">
-                <Calendar className="w-4 h-4 mr-2" />
-                {photo.date_taken}
-              </div>
-              <div className="text-white/80 text-xs">
-                Gallery • {photo.gallery_photos?.length || 1} photos
-              </div>
-            </div>
-            
-            {/* Hover icon */}
-            <div className="absolute top-4 left-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div 
-          key={photo.id} 
-          className="group bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-2xl border border-white/50 overflow-hidden cursor-pointer transition-all duration-500 hover:transform hover:scale-[1.02]"
-          onClick={() => setSelectedPhoto(photo)}
-        >
-          <div className="aspect-square relative overflow-hidden">
-            <img
-              src={photo.image_url}
-              alt={photo.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-            />
-            
-            {/* Gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            
-            {/* Photo info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-              <h3 className="font-bold text-white text-lg leading-tight mb-2">{photo.title}</h3>
-              <div className="flex items-center text-white/90 text-sm mb-3">
-                <Calendar className="w-4 h-4 mr-2" />
-                {photo.date_taken}
-              </div>
-              {photo.tags && photo.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {photo.tags.slice(0, 2).map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-white/25 backdrop-blur-sm text-white text-xs rounded-full font-medium border border-white/20"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {photo.tags.length > 2 && (
-                    <span className="px-3 py-1 bg-white/25 backdrop-blur-sm text-white text-xs rounded-full font-medium border border-white/20">
-                      +{photo.tags.length - 2}
-                    </span>
-                  )}
-                </div>
-              )}
-            </div>
-            
-            {/* Hover icon */}
-            <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    );
   };
 
   const handleFlip = (photoId: string) => {
