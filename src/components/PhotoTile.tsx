@@ -484,23 +484,101 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Gallery ({photoCount} photos)</h4>
                     <div className="grid grid-cols-5 gap-1">
                       {photo.gallery_photos?.map((galleryPhoto, index) => (
-                        <button
+                        <div
                           key={galleryPhoto.id}
-                          onClick={() => setCurrentPhotoIndex(index)}
-                          className={`aspect-square rounded-md overflow-hidden border transition-colors ${
+                          className={`aspect-square rounded-md overflow-hidden border transition-colors relative group ${
                             index === currentPhotoIndex
                               ? 'border-slate-500 border-2'
                               : 'border-transparent hover:border-gray-300'
                           }`}
                         >
-                          <img
-                            src={galleryPhoto.image_url || galleryPhoto.imageUrl}
-                            alt={galleryPhoto.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </button>
+                          <button
+                            onClick={() => setCurrentPhotoIndex(index)}
+                            className="w-full h-full"
+                          >
+                            <img
+                              src={galleryPhoto.image_url || galleryPhoto.imageUrl}
+                              alt={galleryPhoto.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                          
+                          {/* Hover overlay with edit/delete buttons */}
+                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentPhotoIndex(index);
+                                setIsEditing(true);
+                              }}
+                              className="p-1 bg-white bg-opacity-20 backdrop-blur-sm rounded text-white hover:bg-opacity-30 transition-colors"
+                              title="Edit this photo"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!confirm('Are you sure you want to delete this photo from the gallery?')) return;
+                                
+                                try {
+                                  // Delete photo tags first
+                                  const { error: deleteTagsError } = await supabase
+                                    .from('photo_tags')
+                                    .delete()
+                                    .eq('photo_id', galleryPhoto.id);
+
+                                  if (deleteTagsError) {
+                                    console.error('Error deleting photo tags:', deleteTagsError);
+                                  }
+
+                                  // Delete the photo
+                                  const { error } = await supabase
+                                    .from('photos')
+                                    .delete()
+                                    .eq('id', galleryPhoto.id);
+
+                                  if (error) throw error;
+
+                                  // If this was the last photo in the gallery, delete the entire tile
+                                  if (photoCount <= 1) {
+                                    onDelete(photo.id);
+                                    return;
+                                  }
+
+                                  // Remove the photo from the gallery_photos array
+                                  if (photo.gallery_photos) {
+                                    const updatedGalleryPhotos = photo.gallery_photos.filter(p => p.id !== galleryPhoto.id);
+                                    
+                                    // Adjust current index if needed
+                                    if (currentPhotoIndex >= updatedGalleryPhotos.length) {
+                                      setCurrentPhotoIndex(updatedGalleryPhotos.length - 1);
+                                    }
+
+                                    const updatedPhoto: Photo = {
+                                      ...photo,
+                                      gallery_photos: updatedGalleryPhotos
+                                    };
+
+                                    onUpdate(updatedPhoto);
+                                  }
+                                } catch (error) {
+                                  console.error('Error deleting photo:', error);
+                                  alert('Failed to delete photo. Please try again.');
+                                }
+                              }}
+                              className="p-1 bg-red-500 bg-opacity-80 backdrop-blur-sm rounded text-white hover:bg-opacity-100 transition-colors"
+                              title="Delete this photo"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
                       ))}
                     </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Hover over thumbnails to edit or delete individual photos
+                    </p>
                   </div>
                 )}
 
