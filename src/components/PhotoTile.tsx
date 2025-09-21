@@ -482,11 +482,11 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 {photoCount > 1 && (
                   <div>
                     <h4 className="text-sm font-medium text-gray-700 mb-2">Gallery ({photoCount} photos)</h4>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 gap-3">
                       {photo.gallery_photos?.map((galleryPhoto, index) => (
                         <div
                           key={galleryPhoto.id}
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors relative group ${
+                          className={`aspect-square rounded-xl overflow-hidden border-3 transition-colors relative group ${
                             index === currentPhotoIndex
                               ? 'border-slate-500'
                               : 'border-transparent hover:border-gray-300'
@@ -502,24 +502,24 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                             <img
                               src={galleryPhoto.image_url || galleryPhoto.imageUrl}
                               alt={galleryPhoto.title}
-                              className={`w-full h-full object-cover hover:scale-105 transition-transform duration-200 ${
+                              className={`w-full h-full object-cover hover:scale-110 transition-transform duration-300 ${
                                 index === currentPhotoIndex ? 'ring-2 ring-slate-500 ring-inset' : ''
                               }`}
                             />
                           </button>
                           
                           {/* Hover overlay with edit/delete buttons */}
-                          <div className="absolute inset-0 bg-black bg-opacity-60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-2">
+                          <div className="absolute inset-0 bg-black bg-opacity-70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setCurrentPhotoIndex(index);
                                 setIsEditing(true);
                               }}
-                              className="p-2 bg-white bg-opacity-25 backdrop-blur-sm rounded-lg text-white hover:bg-opacity-40 transition-colors shadow-lg"
+                              className="p-3 bg-white bg-opacity-25 backdrop-blur-sm rounded-xl text-white hover:bg-opacity-40 transition-colors shadow-lg"
                               title="Edit this photo"
                             >
-                              <Edit3 className="w-4 h-4" />
+                              <Edit3 className="w-5 h-5" />
                             </button>
                             <button
                               onClick={async (e) => {
@@ -582,16 +582,16 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                                   alert('Failed to delete photo. Please try again.');
                                 }
                               }}
-                              className="p-2 bg-red-500 bg-opacity-80 backdrop-blur-sm rounded-lg text-white hover:bg-opacity-100 transition-colors shadow-lg"
+                              className="p-3 bg-red-500 bg-opacity-80 backdrop-blur-sm rounded-xl text-white hover:bg-opacity-100 transition-colors shadow-lg"
                               title="Delete this photo"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-5 h-5" />
                             </button>
                           </div>
                         </div>
                       ))}
                     </div>
-                    <p className="text-sm text-gray-500 mt-3 text-center">
+                    <p className="text-sm text-gray-500 mt-4 text-center">
                       Hover over thumbnails to edit or delete individual photos
                     </p>
                   </div>
