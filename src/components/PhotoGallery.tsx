@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { PhotoCard } from './PhotoCard';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
@@ -19,18 +18,12 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('flip');
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [showGroupPhotos, setShowGroupPhotos] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
       // Replace the onReload function with our fetchPhotos function
       const originalOnReload = onReload;
-      onReload = () => {
-        setSelectedTag('all');
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -85,63 +78,11 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-    let filtered = [...photos];
-
-    // Group photos by batch_id for gallery tiles
-    const groupedPhotos = new Map<string, Photo[]>();
-    const individualPhotos: Photo[] = [];
-
-    filtered.forEach(photo => {
-      if (photo.batch_id && photo.batch_id !== photo.id) {
-        if (!groupedPhotos.has(photo.batch_id)) {
-          groupedPhotos.set(photo.batch_id, []);
-        }
-        groupedPhotos.get(photo.batch_id)!.push(photo);
-      } else {
-        individualPhotos.push(photo);
-      }
-    });
-
-    // Create representative tiles for groups
-    filtered = [...individualPhotos];
-    
-    if (groupedPhotos.size > 0) {
-      groupedPhotos.forEach((groupPhotos, batchId) => {
-        if (groupPhotos.length > 1) {
-          const representative = {
-            ...groupPhotos[0],
-            is_gallery_tile: true,
-            gallery_photos: groupPhotos,
-            batch_id: groupPhotos[0].batch_id // Use the batch_id from the group
-          };
-          filtered.push(representative);
-        } else {
-          filtered.push(groupPhotos[0]);
-        }
-      });
-    }
-
-    // Apply tag filtering
-    if (selectedTag !== 'all') {
-      filtered = filtered.filter(photo => 
-        photo.tags?.includes(selectedTag) || 
-        (photo.gallery_photos && photo.gallery_photos.some(p => p.tags?.includes(selectedTag)))
-      );
-    }
-
-    setFilteredPhotos(filtered);
   };
 
-  const handleFlip = (photoId: string) => {
-    setFlippedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(photoId)) {
-        newSet.delete(photoId);
-      } else {
-        newSet.add(photoId);
-      }
-      return newSet;
-    });
+  const handleBackToGallery = () => {
+    setShowGroupPhotos(false);
+    setSelectedGroupId(null);
   };
 
   const handleGroupSelect = (groupId: string) => {
@@ -323,6 +264,8 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
+              onGroupSelect={handleGroupSelect}
+              onPhotoAdded={fetchPhotos}
               onGroupSelect={handleGroupSelect}
               onPhotoAdded={fetchPhotos}
             />
