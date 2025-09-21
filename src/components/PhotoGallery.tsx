@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift, ChevronLeft } from 'lucide-react';
+import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
-import { PhotoTile } from './PhotoTile';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
@@ -22,8 +21,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [selectedTag, setSelectedTag] = useState('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [showGroupPhotos, setShowGroupPhotos] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   // Expose reload function to parent
   React.useEffect(() => {
@@ -32,8 +29,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       const originalOnReload = onReload;
       onReload = () => {
         setSelectedTag('all');
-        setShowGroupPhotos(false);
-        setSelectedGroupId(null);
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -88,50 +83,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-    let filtered: Photo[] = [];
-
-    if (showGroupPhotos && selectedGroupId) {
-      // Show only photos from selected group
-      const groupPhoto = filteredPhotos.find(p => p.is_gallery_tile && p.batch_id === selectedGroupId);
-      if (groupPhoto && groupPhoto.gallery_photos) {
-        filtered = groupPhoto.gallery_photos;
-      } else {
-        filtered = [];
-      }
-    } else {
-      // Group photos by title and tags (for photos uploaded together)
-      const titleTagGroups = new Map<string, Photo[]>();
-      const individualPhotos: Photo[] = [];
-      
-      photos.forEach(photo => {
-        if (photo.batch_id && photo.upload_type === 'group') {
-          // Photo was uploaded as part of a group, so it belongs to a gallery
-          const groupKey = `${photo.title}_${photo.batch_id}`;
-          if (!titleTagGroups.has(groupKey)) {
-            // Find all photos with the same title and batch_id
-            const groupPhotos = photos.filter(p => 
-              p.title === photo.title && 
-              p.batch_id === photo.batch_id &&
-              p.upload_type === 'group'
-            );
-            titleTagGroups.set(groupKey, groupPhotos);
-          }
-        } else {
-          // Photo was uploaded individually or has no batch_id
-          individualPhotos.push(photo);
+          filtered.push(groupPhotos[0]);
         }
       });
-      
-      // Start with individual photos
-      filtered = [...individualPhotos];
-      
-      // Add one representative tile per title-tag group
-      titleTagGroups.forEach((groupPhotos, groupKey) => {
-        if (groupPhotos.length > 0) {
-          // Use first photo as representative with gallery metadata
-          const representative: Photo = {
-            ...groupPhotos[0],
-            is_gallery_tile: true,
+    }
             gallery_photos: groupPhotos,
             batch_id: groupPhotos[0].batch_id // Use the batch_id from the group
           };
@@ -144,6 +99,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     if (selectedTag !== 'all') {
       filtered = filtered.filter(photo => 
         photo.tags?.includes(selectedTag) || 
+        (photo.gallery_photos && photo.gallery_photos.some(p => p.tags?.includes(selectedTag)))
         (photo.gallery_photos && photo.gallery_photos.some(p => p.tags?.includes(selectedTag)))
       );
     }
@@ -161,6 +117,21 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       }
       return newSet;
     });
+  };
+
+  const handleGroupSelect = (groupId: string) => {
+    // Find the group photos based on the group ID
+    const groupPhoto = filteredPhotos.find(p => p.is_gallery_tile && p.batch_id === groupId);
+    if (groupPhoto && groupPhoto.gallery_photos) {
+      // Set the photos to show in group view
+      setSelectedGroupId(groupId);
+    }
+    setShowGroupPhotos(true);
+  };
+
+  const handleBackToGallery = () => {
+    setShowGroupPhotos(false);
+    setSelectedGroupId(null);
   };
 
   const handleGroupSelect = (groupId: string) => {
@@ -342,6 +313,8 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
+              onGroupSelect={handleGroupSelect}
+              onPhotoAdded={fetchPhotos}
               onGroupSelect={handleGroupSelect}
               onPhotoAdded={fetchPhotos}
             />
