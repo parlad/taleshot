@@ -28,7 +28,7 @@ export function TagFilter({ availableTags, selectedTag, onTagChange }: TagFilter
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-indigo-300 hover:shadow-md transition-all duration-300 text-gray-700 font-medium"
+        className="inline-flex items-center gap-1.5 px-3 py-2 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-indigo-300 hover:shadow-sm transition-all duration-300 text-gray-700 text-sm font-medium"
       >
         <Tag className="w-4 h-4 text-indigo-500" />
         <span>{displayText}</span>
@@ -36,14 +36,14 @@ export function TagFilter({ availableTags, selectedTag, onTagChange }: TagFilter
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-[1000] py-2 overflow-hidden">
-          <div className="py-1">
+        <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-[1000] py-1 overflow-hidden">
+          <div>
             <button
               onClick={() => {
                 onTagChange('all');
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+              className={`w-full text-left px-3 py-2 text-sm font-medium transition-all duration-200 ${
                 selectedTag === 'all' 
                   ? 'bg-indigo-50 text-indigo-700 border-r-3 border-indigo-500' 
                   : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'
@@ -58,7 +58,7 @@ export function TagFilter({ availableTags, selectedTag, onTagChange }: TagFilter
                   onTagChange(tag);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+                className={`w-full text-left px-3 py-2 text-sm font-medium transition-all duration-200 ${
                   selectedTag === tag 
                     ? 'bg-indigo-50 text-indigo-700 border-r-3 border-indigo-500' 
                     : 'text-gray-700 hover:bg-gray-50 hover:text-indigo-600'
