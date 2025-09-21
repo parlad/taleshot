@@ -499,7 +499,9 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                             <img
                               src={galleryPhoto.image_url || galleryPhoto.imageUrl}
                               alt={galleryPhoto.title}
-                              className="w-full h-full object-cover hover:scale-105 transition-transform duration-200"
+                              className={`w-full h-full object-cover hover:scale-105 transition-transform duration-200 ${
+                                index === currentPhotoIndex ? 'ring-2 ring-slate-500 ring-inset' : ''
+                              }`}
                             />
                           </button>
                           
