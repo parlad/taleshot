@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Grid, LayoutGrid, Camera, Heart, Users, Gift, ChevronLeft } from 'lucide-react';
+import { Plus, Camera, Heart, Users, Gift, ChevronLeft } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
@@ -288,31 +288,6 @@ export function PhotoGallery() {
             selectedTag={selectedTag}
             onTagChange={setSelectedTag}
           />
-
-          <div className="flex items-center bg-white border border-gray-300 rounded-lg">
-            <button
-              onClick={() => setViewMode('flip')}
-              className={`p-2 rounded-l-lg transition-colors ${
-                viewMode === 'flip'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-              title="Flip view"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode('slide')}
-              className={`p-2 rounded-r-lg transition-colors ${
-                viewMode === 'slide'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-              title="Card view"
-            >
-              <Grid className="w-4 h-4" />
-            </button>
-          </div>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
