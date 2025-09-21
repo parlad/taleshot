@@ -232,7 +232,10 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
                     {photos.map((photo, index) => (
                       <button
                         key={photo.id}
-                        onClick={() => setCurrentIndex(index)}
+                        onClick={() => {
+                          setCurrentIndex(index);
+                          setIsFullscreen(true);
+                        }}
                         className={`aspect-square rounded-lg overflow-hidden border-2 transition-colors ${
                           index === currentIndex
                             ? 'border-blue-500'
