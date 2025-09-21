@@ -461,19 +461,19 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   // Regular card view - NO FLIP FUNCTIONALITY
   return (
-    <div className="group cursor-pointer transition-all duration-300 hover:shadow-lg overflow-hidden" onClick={handleExpand}>
-      <div className="aspect-square relative">
+    <div className="group cursor-pointer transition-all duration-500 hover:shadow-2xl overflow-hidden rounded-2xl bg-white" onClick={handleExpand}>
+      <div className="aspect-square relative rounded-2xl overflow-hidden">
         <img
           src={photo.imageUrl || photo.image_url}
           alt={photo.title}
-          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
         
         {/* Gradient overlay - only visible on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         
         {/* Photo info overlay - only visible on hover */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
           <h3 className="font-semibold text-white text-lg leading-tight mb-2">{photo.title}</h3>
           <div className="flex items-center text-white/90 text-sm mb-3">
             <Calendar className="w-4 h-4 mr-2" />
@@ -488,11 +488,11 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
               e.stopPropagation();
               togglePublic();
             }}
-            className={`absolute top-3 right-3 p-2 rounded-lg transition-all duration-300 opacity-0 group-hover:opacity-100 ${
+            className={`absolute top-4 right-4 p-2.5 rounded-xl transition-all duration-500 opacity-0 group-hover:opacity-100 transform group-hover:scale-110 ${
               photo.is_public
                 ? 'bg-green-500/80 text-white hover:bg-green-600/80'
                 : 'bg-gray-500/80 text-white hover:bg-gray-600/80'
-            } backdrop-blur-sm`}
+            } backdrop-blur-sm shadow-lg`}
             title={photo.is_public ? 'Make private' : 'Make public'}
           >
             {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -501,15 +501,15 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         
         {/* Gallery indicator - only visible if part of a batch */}
         {photo.batch_id && batchCount > 1 && (
-          <div className="absolute top-3 left-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1 shadow-lg">
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs flex items-center gap-1 shadow-lg backdrop-blur-sm">
             <Images className="w-3 h-3" />
             {batchCount}
           </div>
         )}
         
         {/* Expand icon - only visible on hover */}
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <div className="p-3 bg-white/20 backdrop-blur-sm rounded-full text-white">
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+          <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl text-white transform group-hover:scale-110 transition-transform duration-300 shadow-lg">
             <Maximize2 className="w-5 h-5" />
           </div>
         </div>
