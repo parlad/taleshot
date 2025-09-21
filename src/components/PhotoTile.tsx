@@ -263,6 +263,32 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             className="w-full h-full object-contain"
           />
           
+          {/* Edit and Delete buttons overlay on photo */}
+          {!isEditing && (
+            <div className="absolute top-4 right-4 flex gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsEditing(true);
+                }}
+                className="p-3 bg-black bg-opacity-60 hover:bg-opacity-80 text-white rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                title="Edit photo"
+              >
+                <Edit3 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeletePhoto();
+                }}
+                className="p-3 bg-black bg-opacity-60 hover:bg-opacity-80 text-white rounded-full transition-all duration-300 hover:scale-110 backdrop-blur-sm"
+                title="Delete photo"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
           {/* Navigation arrows for gallery */}
           {photoCount > 1 && (
             <>
@@ -511,114 +537,22 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                       ))}
                     </div>
                     
-                    {/* Gallery Actions */}
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                      <p className="text-sm text-gray-600 mb-3 text-center">
-                        Selected: Photo {currentPhotoIndex + 1} of {photoCount}
+                    {/* Simple gallery info */}
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center">
+                      <p className="text-sm text-gray-600">
+                        Viewing: Photo {currentPhotoIndex + 1} of {photoCount}
                       </p>
-                      <div className="flex gap-2 justify-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsEditing(true);
-                          }}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                          Edit Selected
-                        </button>
-                        <button
-                          onClick={async (e) => {
-                            e.stopPropagation();
-                            if (!confirm('Are you sure you want to delete this photo from the gallery?')) return;
-                            
-                            const galleryPhoto = photo.gallery_photos?.[currentPhotoIndex];
-                            if (!galleryPhoto) return;
-                            
-                            try {
-                              // Delete photo tags first
-                              const { error: deleteTagsError } = await supabase
-                                .from('photo_tags')
-                                .delete()
-                                .eq('photo_id', galleryPhoto.id);
-
-                              if (deleteTagsError) {
-                                console.error('Error deleting photo tags:', deleteTagsError);
-                              }
-
-                              // Delete the photo
-                              const { error } = await supabase
-                                .from('photos')
-                                .delete()
-                                .eq('id', galleryPhoto.id);
-
-                              if (error) throw error;
-
-                              // Remove the photo from the gallery_photos array immediately
-                              if (photo.gallery_photos) {
-                                const updatedGalleryPhotos = photo.gallery_photos.filter(p => p.id !== galleryPhoto.id);
-                                
-                                // If this was the last photo in the gallery, delete the entire tile
-                                if (updatedGalleryPhotos.length === 0) {
-                                  handleClose();
-                                  onDelete(photo.id);
-                                  return;
-                                }
-
-                                // Adjust current index if needed
-                                let newCurrentIndex = currentPhotoIndex;
-                                if (currentPhotoIndex < updatedGalleryPhotos.length) {
-                                  // Current index is still valid
-                                } else {
-                                  // Current index is now out of bounds, go to last photo
-                                  newCurrentIndex = updatedGalleryPhotos.length - 1;
-                                }
-                                
-                                setCurrentPhotoIndex(newCurrentIndex);
-
-                                const updatedPhoto: Photo = {
-                                  ...photo,
-                                  gallery_photos: updatedGalleryPhotos
-                                };
-
-                                onUpdate(updatedPhoto);
-                              }
-                            } catch (error) {
-                              console.error('Error deleting photo:', error);
-                              alert('Failed to delete photo. Please try again.');
-                            }
-                          }}
-                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          Delete Selected
-                        </button>
-                      </div>
                     </div>
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-3 border-t border-gray-200">
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
-                  >
-                    <Edit3 className="w-3 h-3" />
-                    Edit Photo
-                  </button>
+                <div className="flex gap-2 pt-3 border-t border-gray-200 justify-center">
                   <button
                     onClick={togglePublic}
-                    className="flex items-center gap-1 px-2 py-1.5 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
                   >
-                    {currentPhoto.is_public ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {currentPhoto.is_public ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     Make {currentPhoto.is_public ? 'Private' : 'Public'}
-                  </button>
-                  <button
-                    onClick={handleDeletePhoto}
-                    className="flex items-center gap-1 px-2 py-1.5 text-xs bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    Delete
                   </button>
                 </div>
               </div>
