@@ -507,93 +507,94 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                               }`}
                             />
                           </button>
-                          
-                          {/* Hover overlay with edit/delete buttons */}
-                          <div className="absolute inset-0 bg-black bg-opacity-70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center gap-3">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentPhotoIndex(index);
-                                setIsEditing(true);
-                              }}
-                              className="p-3 bg-white bg-opacity-25 backdrop-blur-sm rounded-xl text-white hover:bg-opacity-40 transition-colors shadow-lg"
-                              title="Edit this photo"
-                            >
-                              <Edit3 className="w-5 h-5" />
-                            </button>
-                            <button
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (!confirm('Are you sure you want to delete this photo from the gallery?')) return;
-                                
-                                try {
-                                  // Delete photo tags first
-                                  const { error: deleteTagsError } = await supabase
-                                    .from('photo_tags')
-                                    .delete()
-                                    .eq('photo_id', galleryPhoto.id);
-
-                                  if (deleteTagsError) {
-                                    console.error('Error deleting photo tags:', deleteTagsError);
-                                  }
-
-                                  // Delete the photo
-                                  const { error } = await supabase
-                                    .from('photos')
-                                    .delete()
-                                    .eq('id', galleryPhoto.id);
-
-                                  if (error) throw error;
-
-                                  // Remove the photo from the gallery_photos array immediately
-                                  if (photo.gallery_photos) {
-                                    const updatedGalleryPhotos = photo.gallery_photos.filter(p => p.id !== galleryPhoto.id);
-                                    
-                                    // If this was the last photo in the gallery, delete the entire tile
-                                    if (updatedGalleryPhotos.length === 0) {
-                                      handleClose();
-                                      onDelete(photo.id);
-                                      return;
-                                    }
-
-                                    // Adjust current index if needed
-                                    let newCurrentIndex = currentPhotoIndex;
-                                    if (index < currentPhotoIndex) {
-                                      // If we deleted a photo before the current one, adjust the index down
-                                      newCurrentIndex = currentPhotoIndex - 1;
-                                    } else if (index === currentPhotoIndex) {
-                                      // If we deleted the current photo, stay at same index or go to previous if at end
-                                      if (currentPhotoIndex >= updatedGalleryPhotos.length) {
-                                        newCurrentIndex = updatedGalleryPhotos.length - 1;
-                                      }
-                                    }
-                                    
-                                    setCurrentPhotoIndex(newCurrentIndex);
-
-                                    const updatedPhoto: Photo = {
-                                      ...photo,
-                                      gallery_photos: updatedGalleryPhotos
-                                    };
-
-                                    onUpdate(updatedPhoto);
-                                  }
-                                } catch (error) {
-                                  console.error('Error deleting photo:', error);
-                                  alert('Failed to delete photo. Please try again.');
-                                }
-                              }}
-                              className="p-3 bg-red-500 bg-opacity-80 backdrop-blur-sm rounded-xl text-white hover:bg-opacity-100 transition-colors shadow-lg"
-                              title="Delete this photo"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
                         </div>
                       ))}
                     </div>
-                    <p className="text-sm text-gray-500 mt-4 text-center">
-                      Hover over thumbnails to edit or delete individual photos
-                    </p>
+                    
+                    {/* Gallery Actions */}
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 mb-3 text-center">
+                        Selected: Photo {currentPhotoIndex + 1} of {photoCount}
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditing(true);
+                          }}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                          Edit Selected
+                        </button>
+                        <button
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!confirm('Are you sure you want to delete this photo from the gallery?')) return;
+                            
+                            const galleryPhoto = photo.gallery_photos?.[currentPhotoIndex];
+                            if (!galleryPhoto) return;
+                            
+                            try {
+                              // Delete photo tags first
+                              const { error: deleteTagsError } = await supabase
+                                .from('photo_tags')
+                                .delete()
+                                .eq('photo_id', galleryPhoto.id);
+
+                              if (deleteTagsError) {
+                                console.error('Error deleting photo tags:', deleteTagsError);
+                              }
+
+                              // Delete the photo
+                              const { error } = await supabase
+                                .from('photos')
+                                .delete()
+                                .eq('id', galleryPhoto.id);
+
+                              if (error) throw error;
+
+                              // Remove the photo from the gallery_photos array immediately
+                              if (photo.gallery_photos) {
+                                const updatedGalleryPhotos = photo.gallery_photos.filter(p => p.id !== galleryPhoto.id);
+                                
+                                // If this was the last photo in the gallery, delete the entire tile
+                                if (updatedGalleryPhotos.length === 0) {
+                                  handleClose();
+                                  onDelete(photo.id);
+                                  return;
+                                }
+
+                                // Adjust current index if needed
+                                let newCurrentIndex = currentPhotoIndex;
+                                if (currentPhotoIndex < updatedGalleryPhotos.length) {
+                                  // Current index is still valid
+                                } else {
+                                  // Current index is now out of bounds, go to last photo
+                                  newCurrentIndex = updatedGalleryPhotos.length - 1;
+                                }
+                                
+                                setCurrentPhotoIndex(newCurrentIndex);
+
+                                const updatedPhoto: Photo = {
+                                  ...photo,
+                                  gallery_photos: updatedGalleryPhotos
+                                };
+
+                                onUpdate(updatedPhoto);
+                              }
+                            } catch (error) {
+                              console.error('Error deleting photo:', error);
+                              alert('Failed to delete photo. Please try again.');
+                            }
+                          }}
+                          className="flex items-center gap-1 px-3 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Selected
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
