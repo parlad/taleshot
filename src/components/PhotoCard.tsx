@@ -505,7 +505,6 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           <Calendar className="w-4 h-4 mr-2" />
           {photo.date_taken}
         </div>
-        <p className="text-gray-600 text-xs line-clamp-2 leading-relaxed">{photo.reason}</p>
         {photo.tags && photo.tags.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-2">
             {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 2).map((tag, index) => (
