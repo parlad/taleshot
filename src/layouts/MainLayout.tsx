@@ -60,7 +60,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-4 py-6">
+        <div className="max-w-6xl mx-auto px-4 py-3">
           {children}
         </div>
       </main>

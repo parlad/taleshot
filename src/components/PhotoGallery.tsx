@@ -259,9 +259,9 @@ export function PhotoGallery() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Header with controls */}
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between mb-3">
         <div>
           <div className="flex items-center gap-4">
             {showGroupPhotos && (
@@ -277,7 +277,7 @@ export function PhotoGallery() {
               {showGroupPhotos ? 'Group Photos' : 'Your Photos'}
             </h1>
           </div>
-          <p className="text-gray-600 text-sm mt-0.5">
+          <p className="text-gray-600 text-xs mt-0">
             {filteredPhotos.length} of {photos.length} photos
           </p>
         </div>
