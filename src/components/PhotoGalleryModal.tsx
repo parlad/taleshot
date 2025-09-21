@@ -60,11 +60,11 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
   // Fullscreen view
   if (isFullscreen) {
     return (
-      <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
+      <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center px-[20%]">
         {/* Close Button */}
         <button
           onClick={() => setIsFullscreen(false)}
-          className="absolute top-4 right-4 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
+          className="absolute top-4 right-[20%] z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
         >
           <X className="w-6 h-6" />
         </button>
@@ -72,7 +72,7 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
         {/* Minimize Button */}
         <button
           onClick={() => setIsFullscreen(false)}
-          className="absolute top-4 right-16 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
+          className="absolute top-4 right-[calc(20%+4rem)] z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
           title="Exit fullscreen"
         >
           <Minimize2 className="w-6 h-6" />
@@ -83,13 +83,13 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
           <>
             <button
               onClick={goToPrevious}
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 z-10 p-3 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
+              className="absolute left-[20%] top-1/2 transform -translate-y-1/2 z-10 p-3 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
             <button
               onClick={goToNext}
-              className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-3 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
+              className="absolute right-[20%] top-1/2 transform -translate-y-1/2 z-10 p-3 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
             >
               <ChevronRight className="w-6 h-6" />
             </button>
@@ -97,14 +97,16 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
         )}
 
         {/* Main Image */}
-        <img
-          src={currentPhoto.image_url || currentPhoto.imageUrl}
-          alt={currentPhoto.title}
-          className="max-w-full max-h-full object-contain"
-        />
+        <div className="w-full h-full flex items-center justify-center">
+          <img
+            src={currentPhoto.image_url || currentPhoto.imageUrl}
+            alt={currentPhoto.title}
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+          />
+        </div>
 
         {/* Photo Info Overlay */}
-        <div className="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white p-4 rounded-lg max-w-md">
+        <div className="absolute bottom-4 left-[20%] bg-black bg-opacity-70 text-white p-4 rounded-lg max-w-md">
           <h3 className="text-lg font-semibold mb-1">{currentPhoto.title}</h3>
           <div className="flex items-center text-white/80 text-sm mb-2">
             <Calendar className="w-4 h-4 mr-2" />
@@ -131,7 +133,7 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
 
         {/* Photo Counter */}
         {photos.length > 1 && (
-          <div className="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-4 py-2 rounded-full">
+          <div className="absolute bottom-4 right-[20%] bg-black bg-opacity-50 text-white px-4 py-2 rounded-full">
             {currentIndex + 1} of {photos.length}
           </div>
         )}
