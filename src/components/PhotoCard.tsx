@@ -223,63 +223,63 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
         {/* Info Section - 30% */}
         <div className="w-[30%] h-full bg-white overflow-y-auto">
-          <div className="p-8">
+          <div className="p-4">
             {/* Header with close button */}
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Photo Details</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Photo Details</h2>
               <button
                 onClick={handleCloseExpanded}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
               >
-                <X className="w-6 h-6" />
+                <X className="w-4 h-4 text-gray-600" />
               </button>
             </div>
 
             {isEditing ? (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
                   <input
                     type="text"
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Date Taken</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Date Taken</label>
                   <input
                     type="text"
                     value={editData.date_taken}
                     onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Story</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Story</label>
                   <textarea
                     value={editData.reason}
                     onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                    rows={6}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                    rows={3}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                  <div className="space-y-3">
-                    <div className="flex flex-wrap gap-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Tags</label>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1">
                       {availableTags.map(tag => (
                         <button
                           key={tag}
                           type="button"
                           onClick={() => handleTagToggle(tag)}
-                          className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
                             editData.tags.includes(tag)
-                              ? 'bg-blue-600 text-white'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                              ? 'bg-slate-600 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                           }`}
                         >
                           {tag}
@@ -288,26 +288,26 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                       <button
                         type="button"
                         onClick={() => setShowNewTag(true)}
-                        className="px-3 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
+                        className="px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center gap-1"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3" />
                         Add New
                       </button>
                     </div>
 
                     {showNewTag && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-1">
                         <input
                           type="text"
                           value={newTag}
                           onChange={(e) => setNewTag(e.target.value)}
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
                           placeholder="Tag name"
                         />
                         <button
                           type="button"
                           onClick={handleAddNewTag}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                         >
                           Add
                         </button>
@@ -317,7 +317,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                             setShowNewTag(false);
                             setNewTag('');
                           }}
-                          className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                          className="px-2 py-1 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
                         >
                           Cancel
                         </button>
@@ -327,60 +327,60 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 </div>
 
                 <div>
-                  <label className="flex items-center gap-3">
+                  <label className="flex items-center gap-2">
                     <input
                       type="checkbox"
                       checked={editData.is_public}
                       onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      className="w-3 h-3 text-slate-600 bg-gray-100 border-gray-300 rounded focus:ring-slate-500 focus:ring-1"
                     />
-                    <span className="text-sm font-medium text-gray-700">Make this photo public</span>
+                    <span className="text-xs font-medium text-gray-600">Make this photo public</span>
                   </label>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex gap-2 pt-3">
                   <button
                     onClick={handleSave}
-                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
                   >
-                    <Save className="w-4 h-4" />
+                    <Save className="w-3 h-3" />
                     Save Changes
                   </button>
                   <button
                     onClick={handleCancel}
-                    className="flex items-center gap-2 px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                     Cancel
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">{photo.title}</h3>
-                  <div className="flex items-center text-gray-600 mb-4">
-                    <Calendar className="w-4 h-4 mr-2" />
+                  <h3 className="text-base font-semibold text-gray-800 mb-1">{photo.title}</h3>
+                  <div className="flex items-center text-gray-500 text-sm mb-3">
+                    <Calendar className="w-3 h-3 mr-1" />
                     {photo.date_taken}
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Story</h4>
-                  <p className="text-gray-700 leading-relaxed">{photo.reason}</p>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Story</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">{photo.reason}</p>
                 </div>
 
                 {photo.tags && photo.tags.length > 0 && (
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
-                      <Tag className="w-4 h-4 mr-2" />
+                    <h4 className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                      <Tag className="w-3 h-3 mr-1" />
                       Tags
                     </h4>
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
                       {photo.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                          className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs rounded-md"
                         >
                           {tag}
                         </span>
@@ -391,28 +391,28 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
                 {photo.batch_id && batchCount > 1 && (
                   <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Gallery</h4>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1">Gallery</h4>
                     <button
                       onClick={handleGalleryClick}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors"
                     >
-                      <Images className="w-4 h-4" />
+                      <Images className="w-3 h-3" />
                       View Gallery ({batchCount} photos)
                     </button>
                   </div>
                 )}
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Visibility</h4>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Visibility</h4>
                   <div className="flex items-center gap-2">
                     {photo.is_public ? (
-                      <span className="flex items-center gap-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                        <Eye className="w-4 h-4" />
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-md text-xs">
+                        <Eye className="w-3 h-3" />
                         Public
                       </span>
                     ) : (
-                      <span className="flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
-                        <EyeOff className="w-4 h-4" />
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-xs">
+                        <EyeOff className="w-3 h-3" />
                         Private
                       </span>
                     )}
@@ -420,26 +420,26 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 </div>
 
                 {!isPublicView && (
-                  <div className="flex gap-3 pt-6 border-t border-gray-200">
+                  <div className="flex gap-2 pt-3 border-t border-gray-200">
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <Edit3 className="w-3 h-3" />
                       Edit Photo
                     </button>
                     <button
                       onClick={togglePublic}
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
                     >
-                      {photo.is_public ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {photo.is_public ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                       Make {photo.is_public ? 'Private' : 'Public'}
                     </button>
                     <button
                       onClick={() => onDelete(photo.id)}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3 h-3" />
                       Delete
                     </button>
                   </div>
