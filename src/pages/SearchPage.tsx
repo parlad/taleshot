@@ -340,9 +340,6 @@ export function SearchPage() {
         <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
           Discover Public Photos
         </h1>
-        <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-          Search for users and explore their beautiful public photo collections from around the world
-        </p>
       </div>
 
       <div className="max-w-2xl mx-auto">
