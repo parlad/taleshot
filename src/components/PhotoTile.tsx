@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Images, Calendar, Tag, X } from 'lucide-react';
 import { PhotoCard } from './PhotoCard';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
 import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
 
@@ -15,21 +16,9 @@ interface PhotoTileProps {
 }
 
 export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onGroupSelect }: PhotoTileProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [expandedFlippedCards, setExpandedFlippedCards] = useState<Set<string>>(new Set());
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
   const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
-
-  const handleExpandedFlip = (photoId: string) => {
-    setExpandedFlippedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(photoId)) {
-        newSet.delete(photoId);
-      } else {
-        newSet.add(photoId);
-      }
-      return newSet;
-    });
-  };
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   const handleDeleteFromGallery = (photoId: string) => {
     onDelete(photoId);
@@ -42,44 +31,36 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
   };
 
   // Load gallery photos when expanding
-  const loadGalleryPhotos = async () => {
-    if (!photo.batch_id) return;
+  const loadGalleryPhotos = async (groupPhotos: Photo[]) => {
+    if (!groupPhotos || groupPhotos.length === 0) return;
     
     try {
-      const { data: photos, error } = await supabase
-        .from('photos')
-        .select('*')
-        .eq('batch_id', photo.batch_id)
-        .order('created_at', { ascending: true });
+      // Add tags to each photo
+      const photosWithTags = await Promise.all(
+        groupPhotos.map(async (p) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', p.id);
+          
+          return {
+            ...p,
+            tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
+          };
+        })
+      );
 
-      if (error) throw error;
-
-      if (photos && photos.length > 0) {
-        // Add tags to each photo
-        const photosWithTags = await Promise.all(
-          photos.map(async (p) => {
-            const { data: tags } = await supabase
-              .from('photo_tags')
-              .select('tag_name')
-              .eq('photo_id', p.id);
-            
-            return {
-              ...p,
-              tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
-            };
-          })
-        );
-
-        setGalleryPhotos(photosWithTags);
-      }
+      setGalleryPhotos(photosWithTags);
+      setGalleryIndex(0);
+      setIsGalleryOpen(true);
     } catch (error) {
       console.error('Error loading gallery photos:', error);
     }
   };
 
-  const handleExpand = () => {
-    if (photo.is_gallery_tile && photo.batch_id) {
-      onGroupSelect?.(photo.batch_id);
+  const handleExpand = async () => {
+    if (photo.is_gallery_tile && photo.gallery_photos) {
+      await loadGalleryPhotos(photo.gallery_photos);
     }
   };
 
@@ -176,6 +157,13 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           </div>
         </div>
       </div>
+
+      <PhotoGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        photos={galleryPhotos}
+        initialIndex={galleryIndex}
+      />
     </div>
   );
 }
