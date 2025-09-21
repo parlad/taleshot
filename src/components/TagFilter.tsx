@@ -36,7 +36,7 @@ export function TagFilter({ availableTags, selectedTag, onTagChange }: TagFilter
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-xl z-50 py-2 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-48 bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-xl shadow-xl z-[9999] py-2 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-white/50 to-white/80 pointer-events-none"></div>
           <div className="py-1">
             <button
