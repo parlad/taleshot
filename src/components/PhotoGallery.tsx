@@ -306,7 +306,6 @@ export function PhotoGallery() {
           viewMode === 'flip' 
             ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
             : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-        }`}>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px">
           {filteredPhotos.map(photo => (
             <PhotoTile
@@ -320,7 +319,6 @@ export function PhotoGallery() {
               onGroupSelect={handleGroupSelect}
             />
           ))}
-        </div>
       )}
       <AddPhotoModal
         isOpen={isAddModalOpen}
