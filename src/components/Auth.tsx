@@ -1,242 +1,184 @@
-import React, { useState } from 'react';
-import { supabase } from '../utils/supabase';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
+import { AddPhotoModal } from './AddPhotoModal';
+import { TagFilter } from './TagFilter';
+import type { Photo, ViewMode } from '../types';
 
-export function Auth() {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    firstName: '',
-    lastName: ''
-  });
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+interface PhotoGalleryProps {
+  onReload?: () => void;
+}
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+export function PhotoGallery({ onReload }: PhotoGalleryProps) {
+  const { user } = useSupabaseAuth();
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
+
+  // Expose reload function to parent
+        setFlippedCards(new Set());
+        fetchPhotos();
+      };
+    }
+  }, [onReload]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPhotos();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    filterPhotos();
+  }, [photos, selectedTag]);
+
+  const fetchPhotos = async () => {
+    if (!user) return;
+
     setLoading(true);
-
     try {
-      if (isLogin) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: formData.email,
-          password: formData.password,
-        });
-        
-        if (signInError) {
-          throw signInError;
-        }
-      } else {
-        // Validate signup form
-        if (!formData.firstName.trim() || !formData.lastName.trim()) {
-          throw new Error('First name and last name are required');
-        }
-        if (formData.password !== formData.confirmPassword) {
-          throw new Error('Passwords do not match');
-        }
-        if (formData.password.length < 6) {
-          throw new Error('Password must be at least 6 characters long');
-        }
+      const { data, error } = await supabase.rpc('get_user_photos_with_tags', {
+        user_uuid: user.id
+      });
 
-        // Sign up the user
-        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
-          email: formData.email,
-          password: formData.password,
-          options: {
-            emailRedirectTo: window.location.origin
+      if (error) throw error;
+
+      const photosWithTags = data?.map(photo => ({
+        ...photo,
+        tags: photo.tags || []
+      })) || [];
+
+      setPhotos(photosWithTags);
+
+      // Extract unique tags
+      const tags = new Set<string>();
+      photosWithTags.forEach(photo => {
+        photo.tags?.forEach(tag => {
+          // Filter out internal gallery tags from the UI
+          if (!tag.startsWith('gallery_')) {
+            tags.add(tag);
           }
         });
+      });
+      setAvailableTags(Array.from(tags).sort());
 
-        if (signUpError) {
-          throw signUpError;
-        }
-
-        if (user) {
-          // Create or update profile
-          const { error: profileError } = await supabase
-            .from('profiles')
-            .upsert({
-              id: user.id,
-              first_name: formData.firstName.trim(),
-              last_name: formData.lastName.trim(),
-              updated_at: new Date()
-            });
-
-          if (profileError) throw profileError;
-        }
-      }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during authentication');
+    } catch (error) {
+      console.error('Error fetching photos:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center mb-6 floating">
-            <Camera className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isLogin ? 'Welcome back!' : 'Create your account'}
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Start your memory journey'}
+  const filterPhotos = () => {
+          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+            Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
           </p>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
+          >
+            <Plus className="w-6 h-6" />
+            Add Your First Photo
+          </button>
         </div>
-
-        <form className="mt-8 space-y-6 card-modern p-8" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="rounded-md shadow-sm space-y-4">
-            {!isLogin && (
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name
-                  </label>
-                  <input
-                    id="firstName"
-                   name="firstName"
-                    type="text"
-                    required={!isLogin}
-                    value={formData.firstName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className="input-field"
-                    placeholder="John"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    id="lastName"
-                   name="lastName"
-                    type="text"
-                    required={!isLogin}
-                    value={formData.lastName}
-                    onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className="input-field"
-                    placeholder="Doe"
-                  />
-                </div>
-              </div>
-            )}
-
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
-              </label>
-              <input
-                id="email"
-               name="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                className="input-field"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                 name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={isLogin ? "current-password" : "new-password"}
-                  required
-                  value={formData.password}
-                  onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="input-field pr-12"
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-
-            {!isLogin && (
-              <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="confirmPassword"
-                   name="confirmPassword"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    required={!isLogin}
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="input-field pr-12"
-                    placeholder="••••••••"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-purple-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full btn-hover-effect disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-            >
-              {loading ? 'Loading...' : (isLogin ? 'Sign in' : 'Sign up')}
-            </button>
-          </div>
-
-          <div className="text-center">
-            <button
-              type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setFormData({
-                  email: '',
-                  password: '',
-                  confirmPassword: '',
-                  firstName: '',
-                  lastName: ''
-                });
-              }}
-              className="text-sm gradient-text hover:underline transition-all duration-300"
-            >
-              {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
-            </button>
-          </div>
-        </form>
       </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-gray-600">Loading your photos...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (photos.length === 0) {
+    return (
+      <>
+        <EmptyState />
+        <AddPhotoModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onPhotoAdded={fetchPhotos}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
+            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <Camera className="w-4 h-4" />
+              {photos.length} photos
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <TagFilter
+            availableTags={availableTags}
+            selectedTag={selectedTag}
+            onTagChange={setSelectedTag}
+          />
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Add Photo
+          </button>
+        </div>
+      </div>
+
+      {/* Photo Grid */}
+      {filteredPhotos.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 mb-4">No photos match your current filters</div>
+          <button
+            onClick={() => {
+              setSelectedTag('all');
+            }}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <div className={`grid gap-6 ${
+          viewMode === 'flip' 
+            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
+            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+        } p-2`}>
+          {filteredPhotos.map(photo => (
+            <PhotoTile
+              key={photo.id}
+              photo={photo}
+              isFlipped={flippedCards.has(photo.id)}
+              onFlip={() => handleFlip(photo.id)}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              viewMode={viewMode}
+              onGroupSelect={handleGroupSelect}
+              onPhotoAdded={fetchPhotos}
+              onGroupSelect={handleGroupSelect}
+              onPhotoAdded={fetchPhotos}
+            />
+          ))}
+        </div>
+      )}
+      <AddPhotoModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onPhotoAdded={fetchPhotos}
+      />
     </div>
   );
 }
