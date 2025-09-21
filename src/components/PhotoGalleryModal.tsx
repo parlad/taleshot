@@ -97,11 +97,11 @@ export function PhotoGalleryModal({ isOpen, onClose, photos, initialIndex }: Pho
         )}
 
         {/* Main Image */}
-        <div className="w-full h-full flex items-center justify-center">
+        <div className="w-full h-full">
           <img
             src={currentPhoto.image_url || currentPhoto.imageUrl}
             alt={currentPhoto.title}
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            className="w-full h-full object-cover"
           />
         </div>
 
