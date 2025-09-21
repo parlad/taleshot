@@ -520,6 +520,13 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           photos={batchPhotos}
           initialIndex={galleryIndex}
         />
+
+        <PhotoGalleryModal
+          isOpen={isFullscreenOpen}
+          onClose={() => setIsFullscreenOpen(false)}
+          photos={[photo]}
+          initialIndex={0}
+        />
       </div>
     </div>
   );

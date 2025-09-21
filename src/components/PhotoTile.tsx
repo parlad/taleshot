@@ -164,6 +164,13 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         photos={galleryPhotos}
         initialIndex={galleryIndex}
       />
+
+      <PhotoGalleryModal
+        isOpen={isFullscreenOpen}
+        onClose={() => setIsFullscreenOpen(false)}
+        photos={[photo]}
+        initialIndex={0}
+      />
     </div>
   );
 }
