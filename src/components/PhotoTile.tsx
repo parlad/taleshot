@@ -533,11 +533,46 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                               }`}
                             />
                           </button>
+                          
+                          {/* Edit and Delete icons on hover */}
+                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentPhotoIndex(index);
+                                setIsEditing(true);
+                              }}
+                              className="p-1.5 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-blue-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
+                              title="Edit photo"
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCurrentPhotoIndex(index);
+                                handleDeletePhoto();
+                              }}
+                              className="p-1.5 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-red-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
+                              title="Delete photo"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                          
+                          {/* Selected indicator */}
+                          {index === currentPhotoIndex && (
+                            <div className="absolute top-2 left-2 w-5 h-5 bg-slate-500 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                     
-                    {/* Simple gallery info */}
+                    {/* Gallery info */}
                     <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center">
                       <p className="text-sm text-gray-600">
                         Viewing: Photo {currentPhotoIndex + 1} of {photoCount}
@@ -546,7 +581,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-3 border-t border-gray-200 justify-center mt-4">
+                <div className="flex justify-center pt-3 border-t border-gray-200 mt-4">
                   <button
                     onClick={togglePublic}
                     className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
