@@ -256,7 +256,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     return (
       <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex">
         {/* Photo Section - 60% */}
-        <div className="w-[60%] h-full flex items-center justify-center bg-black relative">
+        <div className="w-[70%] h-full flex items-center justify-center bg-black relative">
           <img
             src={currentPhoto.imageUrl || currentPhoto.image_url}
             alt={currentPhoto.title}
@@ -293,8 +293,8 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           )}
         </div>
 
-        {/* Info Section - 40% */}
-        <div className="w-[40%] h-full bg-white overflow-y-auto">
+        {/* Info Section - 30% */}
+        <div className="w-[30%] h-full bg-white overflow-y-auto">
           <div className="p-8">
             {/* Header with close button */}
             <div className="flex items-center justify-between mb-6">
