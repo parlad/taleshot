@@ -543,10 +543,39 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                         Viewing: Photo {currentPhotoIndex + 1} of {photoCount}
                       </p>
                     </div>
+                    
+                    {/* Edit and Delete buttons for selected photo */}
+                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                      <p className="text-sm text-gray-600 text-center mb-3">
+                        Selected: Photo {currentPhotoIndex + 1} of {photoCount}
+                      </p>
+                      <div className="flex gap-2 justify-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsEditing(true);
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                          Edit Selected
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeletePhoto();
+                          }}
+                          className="flex items-center gap-2 px-4 py-2 text-sm bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete Selected
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 )}
 
-                <div className="flex gap-2 pt-3 border-t border-gray-200 justify-center">
+                <div className="flex gap-2 pt-3 border-t border-gray-200 justify-center mt-4">
                   <button
                     onClick={togglePublic}
                     className="flex items-center gap-1 px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
