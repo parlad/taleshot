@@ -462,73 +462,77 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
   }
 
   // Regular card view (slide mode)
-  return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-      <div className="aspect-square relative cursor-pointer" onClick={handleExpand}>
-        <img
-          src={photo.imageUrl || photo.image_url}
-          alt={photo.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <button className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-full text-white hover:bg-opacity-30 transition-colors">
-            <Maximize2 className="w-6 h-6" />
-          </button>
-        </div>
-        {photo.batch_id && batchCount > 1 && (
-          <div className="absolute top-4 right-4 bg-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
-            <Images className="w-3 h-3" />
-            {batchCount}
-          </div>
-        )}
-      </div>
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900 text-lg">{photo.title}</h3>
-          {!isPublicView && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePublic();
-              }}
-              className={`p-1 rounded-lg transition-colors ${
-                photo.is_public
-                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-              title={photo.is_public ? 'Make private' : 'Make public'}
-            >
-              {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+  if (viewMode === 'slide') {
+    return (
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+        <div className="aspect-square relative cursor-pointer" onClick={handleExpand}>
+          <img
+            src={photo.imageUrl || photo.image_url}
+            alt={photo.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+            <button className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-full text-white hover:bg-opacity-30 transition-colors">
+              <Maximize2 className="w-6 h-6" />
             </button>
+          </div>
+          {photo.batch_id && batchCount > 1 && (
+            <div className="absolute top-4 right-4 bg-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+              <Images className="w-3 h-3" />
+              {batchCount}
+            </div>
           )}
         </div>
-        <div className="flex items-center text-gray-500 text-sm mb-2">
-          <Calendar className="w-4 h-4 mr-2" />
-          {photo.date_taken}
-        </div>
-        <p className="text-gray-700 text-sm line-clamp-2">{photo.reason}</p>
-        {photo.tags && photo.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-3">
-            {photo.tags.slice(0, 2).map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-semibold text-gray-900 text-lg">{photo.title}</h3>
+            {!isPublicView && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePublic();
+                }}
+                className={`p-1 rounded-lg transition-colors ${
+                  photo.is_public
+                    ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+                title={photo.is_public ? 'Make private' : 'Make public'}
               >
-                {tag}
-              </span>
-            ))}
-            {photo.tags.length > 2 && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                +{photo.tags.length - 2}
-              </span>
+                {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              </button>
             )}
           </div>
-        )}
+          <div className="flex items-center text-gray-500 text-sm mb-2">
+            <Calendar className="w-4 h-4 mr-2" />
+            {photo.date_taken}
+          </div>
+          <p className="text-gray-700 text-sm line-clamp-2">{photo.reason}</p>
+          {photo.tags && photo.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-3">
+              {photo.tags.slice(0, 2).map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                >
+                  {tag}
+                </span>
+              ))}
+              {photo.tags.length > 2 && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  +{photo.tags.length - 2}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
+
+  // Grid view
+  if (viewMode === 'grid') {
     return (
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="aspect-square">
@@ -848,13 +852,6 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           onClose={() => setIsGalleryOpen(false)}
           photos={batchPhotos}
           initialIndex={galleryIndex}
-        />
-
-        <PhotoGalleryModal
-          isOpen={isFullscreenOpen}
-          onClose={() => setIsFullscreenOpen(false)}
-          photos={[photo]}
-          initialIndex={0}
         />
       </div>
     </div>
