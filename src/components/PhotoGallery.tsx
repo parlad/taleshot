@@ -184,9 +184,19 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const handleDelete = async (photoId: string) => {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
-
     try {
+      // Delete photo tags first
+      const { error: deleteTagsError } = await supabase
+        .from('photo_tags')
+        .delete()
+        .eq('photo_id', photoId);
+
+      if (deleteTagsError) {
+        console.error('Error deleting photo tags:', deleteTagsError);
+        // Continue with photo deletion even if tag deletion fails
+      }
+
+      // Delete the photo
       const { error } = await supabase
         .from('photos')
         .delete()
@@ -194,6 +204,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
 
       if (error) throw error;
 
+      // Remove from local state
       setPhotos(prev => prev.filter(photo => photo.id !== photoId));
       setFlippedCards(prev => {
         const newSet = new Set(prev);
@@ -202,6 +213,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       });
     } catch (error) {
       console.error('Error deleting photo:', error);
+      alert('Failed to delete photo. Please try again.');
     }
   };
 

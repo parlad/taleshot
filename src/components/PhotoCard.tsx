@@ -86,6 +86,40 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     }
   }, [photo.batch_id]);
 
+  const handleDeletePhoto = async () => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      // Delete photo tags first
+      const { error: deleteTagsError } = await supabase
+        .from('photo_tags')
+        .delete()
+        .eq('photo_id', photo.id);
+
+      if (deleteTagsError) {
+        console.error('Error deleting photo tags:', deleteTagsError);
+        // Continue with photo deletion even if tag deletion fails
+      }
+
+      // Delete the photo
+      const { error } = await supabase
+        .from('photos')
+        .delete()
+        .eq('id', photo.id);
+
+      if (error) throw error;
+
+      // Call the onDelete callback to remove from UI
+      onDelete(photo.id);
+      
+      // Close the expanded view
+      setIsExpanded(false);
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Failed to delete photo. Please try again.');
+    }
+  };
+
   const handleSave = async () => {
     try {
       // First update the photo
@@ -436,7 +470,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                       Make {photo.is_public ? 'Private' : 'Public'}
                     </button>
                     <button
-                      onClick={() => onDelete(photo.id)}
+                      onClick={handleDeletePhoto}
                       className="flex items-center gap-1 px-2 py-1.5 text-xs bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
                     >
                       <Trash2 className="w-3 h-3" />
