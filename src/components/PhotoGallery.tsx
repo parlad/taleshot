@@ -261,7 +261,7 @@ export function PhotoGallery() {
   return (
     <div className="space-y-3">
       {/* Page Header */}
-      <div className="glass-effect rounded-2xl p-6 shadow-lg border border-white/20">
+      <div className="glass-effect rounded-2xl p-6 shadow-lg border border-white/20 relative z-10">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold gradient-text mb-1">Your Photos</h1>
