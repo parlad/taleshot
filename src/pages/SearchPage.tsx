@@ -48,61 +48,71 @@ function PhotoModal({ isOpen, onClose, photo }: PhotoModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-      <div className="relative w-full h-full flex items-center justify-center p-4">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
+    <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex">
+      {/* Photo Section - 70% */}
+      <div className="w-[70%] h-full flex items-center justify-center bg-black">
+        <img
+          src={photo.image_url}
+          alt={photo.title}
+          className="w-full h-full object-contain"
+        />
+      </div>
 
-        {/* Main Content */}
-        <div className="flex flex-col lg:flex-row items-center justify-center w-full h-full max-w-7xl gap-6">
-          {/* Image */}
-          <div className="flex-1 flex items-center justify-center">
-            <img
-              src={photo.image_url}
-              alt={photo.title}
-              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
-            />
+      {/* Info Section - 30% */}
+      <div className="w-[30%] h-full bg-white overflow-y-auto">
+        <div className="p-4">
+          {/* Header with close button */}
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-800">Photo Details</h2>
+            <button
+              onClick={onClose}
+              className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              <X className="w-4 h-4 text-gray-600" />
+            </button>
           </div>
 
-          {/* Photo Info */}
-          <div className="w-full lg:w-80 bg-white rounded-lg p-6 max-h-[80vh] overflow-y-auto">
-            <div className="space-y-4">
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-base font-semibold text-gray-800 mb-1">{photo.title}</h3>
+              <div className="flex items-center text-gray-500 text-sm mb-3">
+                <Calendar className="w-3 h-3 mr-1" />
+                {photo.date_taken}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Story</h4>
+              <p className="text-sm text-gray-600 leading-relaxed">{photo.reason}</p>
+            </div>
+
+            {photo.tags && photo.tags.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{photo.title}</h2>
-                <div className="flex items-center text-gray-600 text-sm">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {photo.date_taken}
+                <h4 className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                  <Tag className="w-3 h-3 mr-1" />
+                  Tags
+                </h4>
+                <div className="flex flex-wrap gap-1">
+                  {photo.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs rounded-md"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
+            )}
 
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-2">Story</h3>
-                <p className="text-gray-700 leading-relaxed">{photo.reason}</p>
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-1">Visibility</h4>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-md text-xs">
+                  <Eye className="w-3 h-3" />
+                  Public
+                </span>
               </div>
-
-              {photo.tags && photo.tags.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
-                    <Tag className="w-4 h-4 mr-2" />
-                    Tags
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {photo.tags.map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>
