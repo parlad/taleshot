@@ -461,65 +461,72 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   // Regular card view - NO FLIP FUNCTIONALITY
   return (
-    <div className="photo-card overflow-hidden max-w-sm">
-      <div className="aspect-square relative cursor-pointer" onClick={handleExpand}>
+    <div className="photo-card overflow-hidden max-w-sm cursor-pointer" onClick={handleExpand}>
+      <div className="aspect-square relative">
         <img
           src={photo.imageUrl || photo.image_url}
           alt={photo.title}
           className="w-full h-full object-cover image-hover-effect"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-all duration-300" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-300">
+        
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        
+        {/* Photo info overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+          <div className="flex items-start justify-between mb-2">
+            <h3 className="font-semibold text-white text-lg leading-tight">{photo.title}</h3>
+            {!isPublicView && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  togglePublic();
+                }}
+                className={`p-2 rounded-lg transition-all duration-300 ${
+                  photo.is_public
+                    ? 'bg-green-500/80 text-white hover:bg-green-600/80'
+                    : 'bg-gray-500/80 text-white hover:bg-gray-600/80'
+                } flex-shrink-0 ml-2 backdrop-blur-sm`}
+                title={photo.is_public ? 'Make private' : 'Make public'}
+              >
+                {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center text-white/80 text-sm mb-2">
+            <Calendar className="w-4 h-4 mr-2" />
+            {photo.date_taken}
+          </div>
+          {photo.tags && photo.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 2).map((tag, index) => (
+                <span
+                  key={index}
+                  className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full font-medium"
+                >
+                  {tag}
+                </span>
+              ))}
+              {photo.tags.filter(tag => !tag.startsWith('gallery_')).length > 2 && (
+                <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full">
+                  +{photo.tags.filter(tag => !tag.startsWith('gallery_')).length - 2}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Hover effect for expand button */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-300 bg-black/20">
           <button className="p-3 glass-effect rounded-full text-white hover:scale-110 transition-all duration-300">
             <Maximize2 className="w-6 h-6" />
           </button>
         </div>
+        
         {photo.batch_id && batchCount > 1 && (
           <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-lg">
             <Images className="w-3 h-3" />
             {batchCount}
-          </div>
-        )}
-      </div>
-      <div className="p-3">
-        <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-800 text-base leading-tight">{photo.title}</h3>
-          {!isPublicView && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                togglePublic();
-              }}
-              className={`p-2 rounded-lg transition-all duration-300 ${
-                photo.is_public
-                  ? 'bg-green-100 text-green-600 hover:bg-green-200 hover:scale-110'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-110'
-              } flex-shrink-0 ml-2`}
-              title={photo.is_public ? 'Make private' : 'Make public'}
-            >
-              {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-            </button>
-          )}
-        </div>
-        <div className="flex items-center text-gray-500 text-xs mb-2">
-          <Calendar className="w-4 h-4 mr-2" />
-          {photo.date_taken}
-        </div>
-        {photo.tags && photo.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 2).map((tag, index) => (
-              <span
-                key={index}
-                className="px-2 py-0.5 bg-indigo-50 text-indigo-600 text-xs rounded-full font-medium"
-              >
-                {tag}
-              </span>
-            ))}
-            {photo.tags.filter(tag => !tag.startsWith('gallery_')).length > 2 && (
-              <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
-                +{photo.tags.filter(tag => !tag.startsWith('gallery_')).length - 2}
-              </span>
-            )}
           </div>
         )}
       </div>
