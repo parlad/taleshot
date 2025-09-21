@@ -202,18 +202,15 @@ export function PhotoGallery() {
         </div>
 
         <div className="relative z-10">
-                  className="flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/20 backdrop-blur-sm rounded-xl transition-all duration-300"
+          <div className="flex items-center justify-center gap-4 mb-8">
             <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
               <Camera className="w-full h-full text-white" />
             </div>
             <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
               <Heart className="w-full h-full text-white" />
-            <div className="text-white/70 mb-4">No photos match your current filters</div>
+            </div>
             <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
               <Users className="w-full h-full text-white" />
-            </div>
-            <p className="text-white/70 mt-1">
-              className="gradient-text hover:underline font-medium transition-all duration-300"
             </div>
           </div>
 
