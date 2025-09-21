@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
@@ -16,19 +15,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedTag, setSelectedTag] = useState('all');
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [showGroupPhotos, setShowGroupPhotos] = useState(false);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>('flip');
 
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
-      // Replace the onReload function with our fetchPhotos function
-      const originalOnReload = onReload;
-      onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -83,64 +73,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-    if (selectedTag === 'all') {
-      setFilteredPhotos(photos);
-    } else {
-      setFilteredPhotos(photos.filter(photo => 
-        photo.tags?.includes(selectedTag)
-      ));
-    }
-  };
-
-  const handleFlip = (photoId: string) => {
-    setFlippedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(photoId)) {
-        newSet.delete(photoId);
-      } else {
-        newSet.add(photoId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleBackToGallery = () => {
-    setShowGroupPhotos(false);
-    setSelectedGroupId(null);
-  };
-
-  const handleGroupSelect = (groupId: string) => {
-    // Find the group photos based on the group ID
-    const groupPhoto = filteredPhotos.find(p => p.is_gallery_tile && p.batch_id === groupId);
-    if (groupPhoto && groupPhoto.gallery_photos) {
-      // Set the photos to show in group view
-      setSelectedGroupId(groupId);
-    }
-    setShowGroupPhotos(true);
-  };
-
-  const handleDelete = async (photoId: string) => {
-    try {
-      // Delete photo tags first
-      const { error: deleteTagsError } = await supabase
-        .from('photo_tags')
-        .delete()
-        .eq('photo_id', photoId);
-
-      if (deleteTagsError) {
-        console.error('Error deleting photo tags:', deleteTagsError);
-        // Continue with photo deletion even if tag deletion fails
-      }
-
-      // Delete the photo
-      const { error } = await supabase
-        .from('photos')
-        .delete()
-        .eq('id', photoId);
-
-      if (error) throw error;
-
-      // Remove from local state
       setPhotos(prev => prev.filter(photo => photo.id !== photoId));
       setFlippedCards(prev => {
         const newSet = new Set(prev);
@@ -283,6 +215,8 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
+              onGroupSelect={handleGroupSelect}
+              onPhotoAdded={fetchPhotos}
               onGroupSelect={handleGroupSelect}
               onPhotoAdded={fetchPhotos}
             />
