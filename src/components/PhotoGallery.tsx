@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { PhotoCard } from './PhotoCard';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
@@ -23,6 +25,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
+      const originalOnReload = onReload;
       onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
@@ -45,16 +48,28 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.rpc('get_user_photos_with_tags', {
-        user_uuid: user.id
-      });
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const photosWithTags = data?.map(photo => ({
-        ...photo,
-        tags: photo.tags || []
-      })) || [];
+      // Get tags for each photo
+      const photosWithTags = await Promise.all(
+        (data || []).map(async (photo) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+          
+          return {
+            ...photo,
+            tags: tags?.map(t => t.tag_name) || []
+          };
+        })
+      );
 
       setPhotos(photosWithTags);
 
@@ -62,7 +77,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       const tags = new Set<string>();
       photosWithTags.forEach(photo => {
         photo.tags?.forEach(tag => {
-          // Filter out internal gallery tags from the UI
           if (!tag.startsWith('gallery_')) {
             tags.add(tag);
           }
@@ -117,10 +131,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     setPhotos(prev => prev.map(photo => 
       photo.id === updatedPhoto.id ? updatedPhoto : photo
     ));
-  };
-
-  const handleGroupSelect = (groupId: string) => {
-    // Handle group selection logic
   };
 
   const EmptyState = () => (
@@ -233,13 +243,9 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           </button>
         </div>
       ) : (
-        <div className={`grid gap-6 ${
-          viewMode === 'flip' 
-            ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3' 
-            : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-        } p-2`}>
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
           {filteredPhotos.map(photo => (
-            <PhotoTile
+            <PhotoCard
               key={photo.id}
               photo={photo}
               isFlipped={flippedCards.has(photo.id)}
@@ -247,12 +253,11 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
-              onGroupSelect={handleGroupSelect}
-              onPhotoAdded={fetchPhotos}
             />
           ))}
         </div>
       )}
+
       <AddPhotoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
