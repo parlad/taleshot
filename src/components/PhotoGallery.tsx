@@ -15,10 +15,15 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('flip');
 
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
+      onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -73,6 +78,29 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
+    if (selectedTag === 'all') {
+      setFilteredPhotos(photos);
+    } else {
+      setFilteredPhotos(photos.filter(photo => 
+        photo.tags?.includes(selectedTag)
+      ));
+    }
+  };
+
+  const handleFlip = (photoId: string) => {
+    setFlippedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDelete = async (photoId: string) => {
+    try {
       setPhotos(prev => prev.filter(photo => photo.id !== photoId));
       setFlippedCards(prev => {
         const newSet = new Set(prev);
@@ -89,6 +117,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     setPhotos(prev => prev.map(photo => 
       photo.id === updatedPhoto.id ? updatedPhoto : photo
     ));
+  };
+
+  const handleGroupSelect = (groupId: string) => {
+    // Handle group selection logic
   };
 
   const EmptyState = () => (
@@ -215,8 +247,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
-              onGroupSelect={handleGroupSelect}
-              onPhotoAdded={fetchPhotos}
               onGroupSelect={handleGroupSelect}
               onPhotoAdded={fetchPhotos}
             />
