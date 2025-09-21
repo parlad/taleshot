@@ -1,63 +1,129 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, Users, Camera, Eye, Calendar, Tag, Images } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { PhotoCard } from './PhotoCard';
-import { AddPhotoModal } from './AddPhotoModal';
-import { TagFilter } from './TagFilter';
-import type { Photo, ViewMode } from '../types';
+import { PhotoGalleryModal } from '../components/PhotoGalleryModal';
+import type { Photo, User } from '../types';
 
-interface PhotoGalleryProps {
-  onReload?: () => void;
+interface SearchResult {
+  user_id: string;
+  user_email: string;
+  first_name?: string;
+  last_name?: string;
+  photo_count: number;
+  sample_photos: Photo[];
 }
 
-export function PhotoGallery({ onReload }: PhotoGalleryProps) {
-  const { user } = useSupabaseAuth();
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('card');
+export function SearchPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedUserPhotos, setSelectedUserPhotos] = useState<Photo[]>([]);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
-  // Expose reload function to parent
-  React.useEffect(() => {
-    if (onReload) {
-      onReload = () => {
-        setFlippedCards(new Set());
-        fetchPhotos();
-      };
-    }
-  }, [onReload]);
-
-  useEffect(() => {
-    if (user) {
-      fetchPhotos();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    filterPhotos();
-  }, [photos, selectedTag]);
-
-  const fetchPhotos = async () => {
-    if (!user) return;
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Search for users with public photos
+      const { data: users, error } = await supabase
+        .rpc('search_public_photos_with_profile', { search_query: searchQuery });
+
+      if (error) throw error;
+
+      // Group photos by batch_id for each user
+      const processedResults = await Promise.all(
+        (users || []).map(async (user) => {
+          // Get all public photos for this user
+          const { data: allPhotos, error: photosError } = await supabase
+            .from('photos')
+            .select('*')
+            .eq('user_id', user.user_id)
+            .eq('is_public', true)
+            .order('created_at', { ascending: false });
+
+          if (photosError) throw photosError;
+
+          // Get tags for each photo
+          const photosWithTags = await Promise.all(
+            (allPhotos || []).map(async (photo) => {
+              const { data: tags } = await supabase
+                .from('photo_tags')
+                .select('tag_name')
+                .eq('photo_id', photo.id);
+              
+              return {
+                ...photo,
+                tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
+              };
+            })
+          );
+
+          // Group photos by batch_id
+          const batchGroups = new Map<string, Photo[]>();
+          const individualPhotos: Photo[] = [];
+          
+          photosWithTags.forEach(photo => {
+            if (photo.batch_id && photo.upload_type === 'group') {
+              if (!batchGroups.has(photo.batch_id)) {
+                batchGroups.set(photo.batch_id, []);
+              }
+              batchGroups.get(photo.batch_id)!.push(photo);
+            } else {
+              individualPhotos.push(photo);
+            }
+          });
+          
+          // Create display photos array with gallery tiles
+          const displayPhotos: Photo[] = [...individualPhotos];
+          
+          batchGroups.forEach((groupPhotos, batchId) => {
+            if (groupPhotos.length > 1) {
+              // Create a gallery tile using the first photo as representative
+              const representative: Photo = {
+                ...groupPhotos[0],
+                is_gallery_tile: true,
+                gallery_photos: groupPhotos
+              };
+              displayPhotos.push(representative);
+            } else if (groupPhotos.length === 1) {
+              // Single photo in batch, treat as individual
+              displayPhotos.push(groupPhotos[0]);
+            }
+          });
+
+          return {
+            ...user,
+            sample_photos: displayPhotos.slice(0, 6) // Show up to 6 photos/tiles
+          };
+        })
+      );
+
+      setSearchResults(processedResults);
+    } catch (error) {
+      console.error('Error searching photos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePhotoClick = async (userId: string, photoIndex: number) => {
+    try {
+      // Get all public photos for this user
+      const { data: allPhotos, error } = await supabase
         .from('photos')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
+        .eq('is_public', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       // Get tags for each photo
       const photosWithTags = await Promise.all(
-        (data || []).map(async (photo) => {
+        (allPhotos || []).map(async (photo) => {
           const { data: tags } = await supabase
             .from('photo_tags')
             .select('tag_name')
@@ -65,215 +131,175 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           
           return {
             ...photo,
-            tags: tags?.map(t => t.tag_name) || []
+            tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
           };
         })
       );
 
-      setPhotos(photosWithTags);
-
-      // Extract unique tags
-      const tags = new Set<string>();
-      photosWithTags.forEach(photo => {
-        photo.tags?.forEach(tag => {
-          if (!tag.startsWith('gallery_')) {
-            tags.add(tag);
-          }
-        });
-      });
-      setAvailableTags(Array.from(tags).sort());
-
+      setSelectedUserPhotos(photosWithTags);
+      setGalleryIndex(photoIndex);
+      setIsGalleryOpen(true);
     } catch (error) {
-      console.error('Error fetching photos:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error loading user photos:', error);
     }
   };
 
-  const filterPhotos = () => {
-    if (selectedTag === 'all') {
-      setFilteredPhotos(photos);
-    } else {
-      setFilteredPhotos(photos.filter(photo => {
-        return photo.tags?.includes(selectedTag);
-      }));
-    }
+  const handleGalleryClick = async (photo: Photo) => {
+    if (!photo.batch_id || !photo.gallery_photos) return;
+
+    setSelectedUserPhotos(photo.gallery_photos);
+    setGalleryIndex(0);
+    setIsGalleryOpen(true);
   };
-
-  const handleFlip = (photoId: string) => {
-    setFlippedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(photoId)) {
-        newSet.delete(photoId);
-      } else {
-        newSet.add(photoId);
-      }
-      return newSet;
-    });
-  };
-
-  const handleDelete = async (photoId: string) => {
-    try {
-      setPhotos(prev => prev.filter(photo => photo.id !== photoId));
-      setFlippedCards(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(photoId);
-        return newSet;
-      });
-    } catch (error) {
-      console.error('Error deleting photo:', error);
-      alert('Failed to delete photo. Please try again.');
-    }
-  };
-
-  const handleUpdate = (updatedPhoto: Photo) => {
-    setPhotos(prev => prev.map(photo => 
-      photo.id === updatedPhoto.id ? updatedPhoto : photo
-    ));
-  };
-
-  const EmptyState = () => (
-    <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full empty-state relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-30 floating"></div>
-          <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full opacity-30 floating" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
-              <Camera className="w-full h-full text-white" />
-            </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
-              <Heart className="w-full h-full text-white" />
-            </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
-              <Users className="w-full h-full text-white" />
-            </div>
-          </div>
-
-          <h2 className="text-4xl font-bold gradient-text mb-4">
-            Welcome to Taleshot
-          </h2>
-          
-          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
-            Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
-          </p>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
-          >
-            <Plus className="w-6 h-6" />
-            Add Your First Photo
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-gray-600">Loading your photos...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (photos.length === 0) {
-    return (
-      <>
-        <EmptyState />
-        <AddPhotoModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onPhotoAdded={fetchPhotos}
-        />
-      </>
-    );
-  }
 
   return (
-    <div className="space-y-3">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-              <Camera className="w-4 h-4" />
-              {photos.length} photos
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <TagFilter
-            availableTags={availableTags}
-            selectedTag={selectedTag}
-            onTagChange={setSelectedTag}
-          />
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Add Photo
-          </button>
-        </div>
+    <div className="space-y-6">
+      {/* Search Header */}
+      <div className="text-center">
+        <h1 className="text-3xl font-bold gradient-text mb-2">Discover Photos</h1>
+        <p className="text-gray-600">Search for users and explore their public photo collections</p>
       </div>
 
-      {/* Photo Grid */}
-      {filteredPhotos.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">No photos match your current filters</div>
+      {/* Search Form */}
+      <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors text-lg"
+            placeholder="Search by email or name..."
+          />
           <button
-            onClick={() => {
-              setSelectedTag('all');
-            }}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            type="submit"
+            disabled={loading || !searchQuery.trim()}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
           >
-            Clear filters
+            {loading ? 'Searching...' : 'Search'}
           </button>
         </div>
-      ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
-          {filteredPhotos.map(photo => 
-            photo.is_gallery_tile ? (
-              <PhotoTile
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-                onPhotoAdded={fetchPhotos}
-              />
-            ) : (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-              />
-            )
-          )}
+      </form>
+
+      {/* Search Results */}
+      {searchResults.length > 0 && (
+        <div className="space-y-8">
+          {searchResults.map((result) => (
+            <div key={result.user_id} className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+              {/* User Info */}
+              <div className="flex items-center gap-4 mb-6">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    {result.first_name && result.last_name 
+                      ? `${result.first_name} ${result.last_name}` 
+                      : result.user_email
+                    }
+                  </h3>
+                  <p className="text-gray-600 text-sm flex items-center gap-2">
+                    <Camera className="w-4 h-4" />
+                    {result.photo_count} public photos shared
+                  </p>
+                </div>
+              </div>
+
+              {/* Photo Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                {result.sample_photos.map((photo, index) => (
+                  <div
+                    key={photo.id}
+                    className="aspect-square rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow relative group"
+                    onClick={() => {
+                      if (photo.is_gallery_tile && photo.gallery_photos) {
+                        handleGalleryClick(photo);
+                      } else {
+                        handlePhotoClick(result.user_id, index);
+                      }
+                    }}
+                  >
+                    <img
+                      src={photo.image_url || photo.imageUrl}
+                      alt={photo.title}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    />
+                    
+                    {/* Gallery indicator */}
+                    {photo.is_gallery_tile && photo.gallery_photos && (
+                      <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
+                        <Images className="w-3 h-3" />
+                        {photo.gallery_photos.length}
+                      </div>
+                    )}
+                    
+                    {/* Hover overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-2 left-2 right-2 text-white">
+                        <h4 className="font-medium text-sm truncate">{photo.title}</h4>
+                        <div className="flex items-center text-xs text-white/80 mt-1">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          {photo.date_taken}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Public indicator */}
+                    <div className="absolute top-2 left-2 bg-green-500 text-white p-1 rounded-full">
+                      <Eye className="w-3 h-3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* View All Button */}
+              {result.photo_count > 6 && (
+                <div className="mt-4 text-center">
+                  <button
+                    onClick={() => handlePhotoClick(result.user_id, 0)}
+                    className="text-purple-600 hover:text-purple-700 font-medium"
+                  >
+                    View all {result.photo_count} photos →
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
 
-      <AddPhotoModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onPhotoAdded={fetchPhotos}
+      {/* Empty State */}
+      {searchQuery && !loading && searchResults.length === 0 && (
+        <div className="text-center py-12">
+          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Search className="w-8 h-8 text-gray-400" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
+          <p className="text-gray-600">
+            No users found matching "{searchQuery}". Try searching with a different email or name.
+          </p>
+        </div>
+      )}
+
+      {/* Initial State */}
+      {!searchQuery && searchResults.length === 0 && (
+        <div className="text-center py-16">
+          <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Search className="w-10 h-10 text-purple-600" />
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Start Exploring</h3>
+          <p className="text-gray-600 max-w-md mx-auto">
+            Search for users by their email address or name to discover their public photo collections.
+          </p>
+        </div>
+      )}
+
+      {/* Photo Gallery Modal */}
+      <PhotoGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        photos={selectedUserPhotos}
+        initialIndex={galleryIndex}
       />
     </div>
   );
