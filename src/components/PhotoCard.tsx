@@ -7,6 +7,7 @@ import type { PhotoCardProps, Photo } from '../types';
 export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode = 'flip', isPublicView = false }: PhotoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
   const [batchPhotos, setBatchPhotos] = useState<Photo[]>([]);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [editData, setEditData] = useState({
