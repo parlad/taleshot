@@ -261,28 +261,28 @@ export function PhotoGallery() {
   return (
     <div className="space-y-6">
       {/* Header with controls */}
-      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between mb-6">
         <div>
           <div className="flex items-center gap-4">
             {showGroupPhotos && (
               <button
                 onClick={handleBackToGallery}
-                className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-2 py-1 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors text-sm"
               >
                 <ChevronLeft className="w-4 h-4" />
                 Back to Gallery
               </button>
             )}
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-gray-900">
               {showGroupPhotos ? 'Group Photos' : 'Your Photos'}
             </h1>
           </div>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 text-sm mt-0.5">
             {filteredPhotos.length} of {photos.length} photos
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <TagFilter
             availableTags={availableTags}
             selectedTag={selectedTag}
@@ -291,7 +291,7 @@ export function PhotoGallery() {
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors add-photo-btn"
+            className="flex items-center gap-2 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors text-sm font-medium"
           >
             <Plus className="w-4 h-4" />
             Add Photo
