@@ -461,21 +461,21 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   // Regular card view - NO FLIP FUNCTIONALITY
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+    <div className="photo-card overflow-hidden">
       <div className="aspect-square relative cursor-pointer" onClick={handleExpand}>
         <img
           src={photo.imageUrl || photo.image_url}
           alt={photo.title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover image-hover-effect"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <button className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-full text-white hover:bg-opacity-30 transition-colors">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-all duration-300" />
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-all duration-300">
+          <button className="p-3 glass-effect rounded-full text-white hover:scale-110 transition-all duration-300">
             <Maximize2 className="w-6 h-6" />
           </button>
         </div>
         {photo.batch_id && batchCount > 1 && (
-          <div className="absolute top-4 right-4 bg-blue-600 text-white px-2 py-1 rounded-full text-xs flex items-center gap-1">
+          <div className="absolute top-4 right-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1 rounded-full text-xs flex items-center gap-1 shadow-lg">
             <Images className="w-3 h-3" />
             {batchCount}
           </div>
@@ -483,17 +483,17 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       </div>
       <div className="p-4">
         <div className="flex items-start justify-between mb-2">
-          <h3 className="font-semibold text-gray-900 text-lg">{photo.title}</h3>
+          <h3 className="font-semibold text-gray-800 text-lg">{photo.title}</h3>
           {!isPublicView && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 togglePublic();
               }}
-              className={`p-1 rounded-lg transition-colors ${
+              className={`p-2 rounded-lg transition-all duration-300 ${
                 photo.is_public
-                  ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-green-100 text-green-600 hover:bg-green-200 hover:scale-110'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:scale-110'
               }`}
               title={photo.is_public ? 'Make private' : 'Make public'}
             >
@@ -501,7 +501,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             </button>
           )}
         </div>
-        <div className="flex items-center text-gray-500 text-sm mb-2">
+        <div className="flex items-center text-gray-600 text-sm mb-2">
           <Calendar className="w-4 h-4 mr-2" />
           {photo.date_taken}
         </div>
@@ -511,7 +511,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 2).map((tag, index) => (
               <span
                 key={index}
-                className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                className="category-tag text-xs"
               >
                 {tag}
               </span>

@@ -183,16 +183,16 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-200">
+    <div className="modal-overlay fixed inset-0 flex items-center justify-center p-4 z-50">
+      <div className="modal-content max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-6 border-b border-gray-200/50">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-gray-900">
+            <h2 className="text-2xl font-bold gradient-text">
               Add New Photo{imageFiles.length > 1 ? 's' : ''}
             </h2>
             <button
               onClick={handleClose}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-all duration-300 hover:scale-110"
             >
               <X className="w-6 h-6" />
             </button>
@@ -213,12 +213,12 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                       <img
                         src={preview}
                         alt={`Preview ${index + 1}`}
-                        className="w-full h-32 object-cover rounded-lg"
+                        className="w-full h-32 object-cover rounded-xl"
                       />
                       <button
                         type="button"
                         onClick={() => removeImage(index)}
-                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors"
+                        className="absolute top-2 right-2 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 hover:scale-110 transition-all duration-300"
                       >
                         <X className="w-3 h-3" />
                       </button>
@@ -231,19 +231,19 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                     setImageFiles([]);
                     setImagePreviews([]);
                   }}
-                  className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="btn-secondary w-full"
                 >
                   Clear All Photos
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-purple-300 border-dashed rounded-xl cursor-pointer glass-effect hover:bg-white/30 transition-all duration-300">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Camera className="w-12 h-12 text-gray-400 mb-4" />
-                  <p className="mb-2 text-sm text-gray-500">
+                  <Camera className="w-12 h-12 text-purple-400 mb-4" />
+                  <p className="mb-2 text-sm text-white/80">
                     <span className="font-semibold">Click to upload</span> multiple photos or drag and drop
                   </p>
-                  <p className="text-xs text-gray-500">PNG, JPG or GIF (MAX. 10MB each)</p>
+                  <p className="text-xs text-white/60">PNG, JPG or GIF (MAX. 10MB each)</p>
                 </div>
                 <input
                   id="photo-upload"
@@ -258,7 +258,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
               </label>
             )}
             {imageFiles.length > 1 && (
-              <p className="text-sm text-blue-600 mt-2">
+              <p className="text-sm gradient-text mt-2 font-medium">
                 {imageFiles.length} photos selected. They will be uploaded with the same details below.
               </p>
             )}
@@ -327,10 +327,10 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                     key={tag}
                     type="button"
                     onClick={() => handleTagToggle(tag)}
-                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                       formData.tags.includes(tag)
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
                     }`}
                   >
                     {tag}
@@ -339,7 +339,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                 <button
                   type="button"
                   onClick={() => setShowNewTag(true)}
-                  className="px-3 py-2 rounded-lg text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors flex items-center gap-1"
+                  className="px-3 py-2 rounded-xl text-sm font-medium bg-green-100 text-green-700 hover:bg-green-200 hover:scale-105 transition-all duration-300 flex items-center gap-1"
                 >
                   <Plus className="w-4 h-4" />
                   Add New
@@ -354,13 +354,13 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                     type="text"
                     value={newTag}
                     onChange={(e) => setNewTag(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    className="input-field flex-1"
                     placeholder="Tag name"
                   />
                   <button
                     type="button"
                     onClick={handleAddNewTag}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    className="px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 hover:scale-105 transition-all duration-300"
                   >
                     Add
                   </button>
@@ -370,7 +370,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                       setShowNewTag(false);
                       setNewTag('');
                     }}
-                    className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                    className="px-4 py-2 bg-gray-600 text-white rounded-xl hover:bg-gray-700 hover:scale-105 transition-all duration-300"
                   >
                     Cancel
                   </button>
@@ -388,7 +388,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
                 type="checkbox"
                 checked={formData.is_public}
                 onChange={(e) => setFormData(prev => ({ ...prev, is_public: e.target.checked }))}
-                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
               />
               <span className="text-sm font-medium text-gray-700">
                 Make {imageFiles.length > 1 ? 'these photos' : 'this photo'} public (others can discover {imageFiles.length > 1 ? 'them' : 'it'})
@@ -401,7 +401,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             <button
               type="submit"
               disabled={loading || imageFiles.length === 0}
-              className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="btn-primary flex-1 flex items-center justify-center gap-2 btn-hover-effect disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? (
                 <>
@@ -418,7 +418,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded }: AddPhotoModalPr
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+              className="px-6 py-3 bg-gray-600 text-white rounded-xl hover:bg-gray-700 hover:scale-105 transition-all duration-300"
             >
               Cancel
             </button>

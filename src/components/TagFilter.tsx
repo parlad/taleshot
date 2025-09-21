@@ -28,23 +28,23 @@ export function TagFilter({ availableTags, selectedTag, onTagChange }: TagFilter
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+        className="flex items-center gap-2 px-4 py-2 glass-effect rounded-xl hover:bg-white/30 transition-all duration-300 text-white"
       >
-        <Tag className="w-4 h-4 text-gray-500" />
-        <span className="text-sm font-medium text-gray-700">{displayText}</span>
-        <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+        <Tag className="w-4 h-4 text-white/80" />
+        <span className="text-sm font-medium text-white">{displayText}</span>
+        <ChevronDown className={`w-4 h-4 text-white/80 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+        <div className="dropdown-menu w-48">
           <div className="py-1">
             <button
               onClick={() => {
                 onTagChange('all');
                 setIsOpen(false);
               }}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                selectedTag === 'all' ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+              className={`w-full text-left px-4 py-2 text-sm transition-all duration-300 ${
+                selectedTag === 'all' ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium' : 'text-gray-700'
               }`}
             >
               All Tags
@@ -56,8 +56,8 @@ export function TagFilter({ availableTags, selectedTag, onTagChange }: TagFilter
                   onTagChange(tag);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors ${
-                  selectedTag === tag ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'
+                className={`w-full text-left px-4 py-2 text-sm transition-all duration-300 ${
+                  selectedTag === tag ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium' : 'text-gray-700'
                 }`}
               >
                 {tag}

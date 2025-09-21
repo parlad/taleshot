@@ -19,13 +19,15 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-lg border-b border-gray-200 sticky top-0 z-50">
+      <header className="glass-effect sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <Camera className="w-8 h-8 text-blue-600" />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+              <div className="p-2 bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-2xl font-bold gradient-text">
                 Taleshot
               </span>
             </Link>
@@ -34,10 +36,10 @@ export function MainLayout({ children }: MainLayoutProps) {
             <div className="flex items-center gap-6">
               <Link
                 to="/search"
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-300 ${
                   !isHomePage
-                    ? 'bg-blue-100 text-blue-700 font-medium'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white font-medium shadow-lg'
+                    : 'text-white/80 hover:text-white hover:bg-white/20 backdrop-blur-sm'
                 }`}
               >
                 <Search className="w-4 h-4" />
@@ -46,7 +48,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
               <button
                 onClick={handleSignOut}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-white/80 hover:text-white hover:bg-white/20 backdrop-blur-sm rounded-xl transition-all duration-300"
               >
                 <LogOut className="w-4 h-4" />
                 Sign Out
@@ -57,21 +59,23 @@ export function MainLayout({ children }: MainLayoutProps) {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 bg-gradient-to-br from-gray-50 to-blue-50">
+      <main className="flex-1">
         <div className="max-w-6xl mx-auto px-4 py-8">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200">
+      <footer className="glass-effect border-t border-white/20">
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Camera className="w-6 h-6 text-blue-600" />
-              <span className="text-lg font-semibold text-gray-800">Taleshot</span>
+              <div className="p-1.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg">
+                <Camera className="w-4 h-4 text-white" />
+              </div>
+              <span className="text-lg font-semibold text-white">Taleshot</span>
             </div>
-            <p className="text-gray-600 text-sm">
+            <p className="text-white/70 text-sm">
               © 2025 Taleshot. Capturing memories, one story at a time.
             </p>
           </div>

@@ -193,41 +193,41 @@ export function PhotoGallery() {
   };
 
   const EmptyState = () => (
-    <div className="min-h-[60vh] flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full bg-white/50 backdrop-blur-lg rounded-3xl p-12 text-center relative overflow-hidden">
+    <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <div className="max-w-2xl w-full empty-state relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-blue-100 rounded-full opacity-50 animate-pulse"></div>
-          <div className="absolute bottom-10 right-10 w-32 h-32 bg-indigo-100 rounded-full opacity-50 animate-pulse delay-300"></div>
-          <div className="absolute top-1/2 right-20 w-16 h-16 bg-purple-100 rounded-full opacity-50 animate-pulse delay-700"></div>
+          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-30 floating"></div>
+          <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full opacity-30 floating" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
         </div>
 
         <div className="relative z-10">
-          <div className="grid grid-cols-2 gap-4 max-w-[200px] mx-auto mb-8">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 p-4 shadow-lg">
+                  className="flex items-center gap-2 px-3 py-2 text-white/80 hover:text-white hover:bg-white/20 backdrop-blur-sm rounded-xl transition-all duration-300"
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
               <Camera className="w-full h-full text-white" />
             </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 p-4 shadow-lg">
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
               <Heart className="w-full h-full text-white" />
-            </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 p-4 shadow-lg">
+            <div className="text-white/70 mb-4">No photos match your current filters</div>
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
               <Users className="w-full h-full text-white" />
             </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-pink-500 to-pink-600 p-4 shadow-lg">
-              <Gift className="w-full h-full text-white" />
+            <p className="text-white/70 mt-1">
+              className="gradient-text hover:underline font-medium transition-all duration-300"
             </div>
           </div>
 
-          <h2 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text mb-4">
+          <h2 className="text-4xl font-bold gradient-text mb-4">
             Welcome to Taleshot
           </h2>
           
-          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+          <p className="text-white/80 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
             Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
           </p>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-2xl hover:from-blue-700 hover:to-indigo-700 transform hover:scale-105 transition-all duration-200 shadow-lg hover:shadow-xl"
+            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
           >
             <Plus className="w-6 h-6" />
             Add Your First Photo
@@ -240,7 +240,10 @@ export function PhotoGallery() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-gray-500">Loading your photos...</div>
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-white/70">Loading your photos...</div>
+        </div>
       </div>
     );
   }
@@ -332,7 +335,7 @@ export function PhotoGallery() {
           ))}
         </div>
       )}
-
+              className="add-photo-btn flex items-center gap-2 px-4 py-2 text-white rounded-xl transition-all duration-300 btn-hover-effect"
       <AddPhotoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
