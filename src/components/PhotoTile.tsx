@@ -493,7 +493,10 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                           }`}
                         >
                           <button
-                            onClick={() => setCurrentPhotoIndex(index)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentPhotoIndex(index);
+                            }}
                             className="w-full h-full"
                           >
                             <img
