@@ -332,7 +332,6 @@ export function PhotoGallery() {
           ))}
         </div>
       )}
-              className="add-photo-btn flex items-center gap-2 px-4 py-2 text-white rounded-xl transition-all duration-300 btn-hover-effect"
       <AddPhotoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
