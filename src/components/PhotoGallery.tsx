@@ -261,8 +261,51 @@ export function PhotoGallery() {
   return (
     <div className="space-y-3">
       {/* Header with controls */}
-      <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center justify-between mb-3">
-        <div>
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-gray-100/50 shadow-sm mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-4">
+              {showGroupPhotos && (
+                <button
+                  onClick={handleBackToGallery}
+                  className="flex items-center gap-2 px-3 py-1.5 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-300 text-sm font-medium border border-gray-200 hover:border-indigo-200"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Back to Gallery
+                </button>
+              )}
+              <div>
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  {showGroupPhotos ? 'Group Photos' : 'Your Photos'}
+                </h1>
+                <p className="text-gray-500 text-sm mt-1 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium">
+                    <Camera className="w-3 h-3" />
+                    {filteredPhotos.length}
+                  </span>
+                  of {photos.length} photos
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <TagFilter
+              availableTags={availableTags}
+              selectedTag={selectedTag}
+              onTagChange={setSelectedTag}
+            />
+
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-300 text-sm font-medium shadow-lg shadow-indigo-500/25 hover:shadow-xl hover:shadow-indigo-500/30 hover:scale-105"
+            >
+              <Plus className="w-4 h-4" />
+              Add Photo
+            </button>
+          </div>
+        </div>
+      </div>
           <div className="flex items-center gap-4">
             {showGroupPhotos && (
               <button
