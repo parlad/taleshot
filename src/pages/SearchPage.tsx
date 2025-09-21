@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Image, ArrowLeft } from 'lucide-react';
+import { Search, User, Image, ArrowLeft, Calendar, Tag, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
 
@@ -20,12 +20,104 @@ interface UserProfile {
   photos: Photo[];
 }
 
+interface PhotoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  photo: Photo;
+}
+
+function PhotoModal({ isOpen, onClose, photo }: PhotoModalProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isOpen, onClose]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
+      <div className="relative w-full h-full flex items-center justify-center p-4">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 p-2 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
+        {/* Main Content */}
+        <div className="flex flex-col lg:flex-row items-center justify-center w-full h-full max-w-7xl gap-6">
+          {/* Image */}
+          <div className="flex-1 flex items-center justify-center">
+            <img
+              src={photo.image_url}
+              alt={photo.title}
+              className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+            />
+          </div>
+
+          {/* Photo Info */}
+          <div className="w-full lg:w-80 bg-white rounded-lg p-6 max-h-[80vh] overflow-y-auto">
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{photo.title}</h2>
+                <div className="flex items-center text-gray-600 text-sm">
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {photo.date_taken}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="font-semibold text-gray-900 mb-2">Story</h3>
+                <p className="text-gray-700 leading-relaxed">{photo.reason}</p>
+              </div>
+
+              {photo.tags && photo.tags.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2 flex items-center">
+                    <Tag className="w-4 h-4 mr-2" />
+                    Tags
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {photo.tags.map((tag, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function SearchPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   useEffect(() => {
     if (searchQuery.trim().length > 2) {
@@ -135,30 +227,40 @@ export function SearchPage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {selectedUser.photos.map(photo => (
-              <div key={photo.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group">
+              <div 
+                key={photo.id} 
+                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer group"
+                onClick={() => setSelectedPhoto(photo)}
+              >
                 <div className="aspect-square">
                   <img
                     src={photo.image_url}
                     alt={photo.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-full object-cover"
                   />
-                  {/* Overlay with photo info */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                    <h3 className="font-semibold text-lg mb-1">{photo.title}</h3>
-                    <p className="text-white/80 text-sm">{photo.date_taken}</p>
+                  
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                  
+                  {/* Photo info overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                    <h3 className="font-semibold text-white text-lg leading-tight mb-2">{photo.title}</h3>
+                    <div className="flex items-center text-white/80 text-sm mb-2">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      {photo.date_taken}
+                    </div>
                     {photo.tags && photo.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
+                      <div className="flex flex-wrap gap-1">
                         {photo.tags.slice(0, 2).map((tag, index) => (
                           <span
                             key={index}
-                            className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full"
+                            className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full font-medium"
                           >
                             {tag}
                           </span>
                         ))}
                         {photo.tags.length > 2 && (
-                          <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full">
+                          <span className="px-2 py-0.5 bg-white/20 backdrop-blur-sm text-white text-xs rounded-full font-medium">
                             +{photo.tags.length - 2}
                           </span>
                         )}
@@ -171,6 +273,15 @@ export function SearchPage() {
           </div>
         )}
       </div>
+
+      {/* Photo Modal */}
+      {selectedPhoto && (
+        <PhotoModal
+          isOpen={!!selectedPhoto}
+          onClose={() => setSelectedPhoto(null)}
+          photo={selectedPhoto}
+        />
+      )}
     );
   }
 
