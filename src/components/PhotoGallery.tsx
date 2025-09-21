@@ -21,6 +21,8 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [selectedTag, setSelectedTag] = useState('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [showGroupPhotos, setShowGroupPhotos] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   // Expose reload function to parent
   React.useEffect(() => {
@@ -83,14 +85,38 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-          filtered.push(groupPhotos[0]);
+    let filtered = [...photos];
+
+    // Group photos by batch_id for gallery tiles
+    const groupedPhotos = new Map<string, Photo[]>();
+    const individualPhotos: Photo[] = [];
+
+    filtered.forEach(photo => {
+      if (photo.batch_id && photo.batch_id !== photo.id) {
+        if (!groupedPhotos.has(photo.batch_id)) {
+          groupedPhotos.set(photo.batch_id, []);
         }
-      });
-    }
+        groupedPhotos.get(photo.batch_id)!.push(photo);
+      } else {
+        individualPhotos.push(photo);
+      }
+    });
+
+    // Create representative tiles for groups
+    filtered = [...individualPhotos];
+    
+    if (groupedPhotos.size > 0) {
+      groupedPhotos.forEach((groupPhotos, batchId) => {
+        if (groupPhotos.length > 1) {
+          const representative = {
+            ...groupPhotos[0],
+            is_gallery_tile: true,
             gallery_photos: groupPhotos,
             batch_id: groupPhotos[0].batch_id // Use the batch_id from the group
           };
           filtered.push(representative);
+        } else {
+          filtered.push(groupPhotos[0]);
         }
       });
     }
@@ -99,7 +125,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     if (selectedTag !== 'all') {
       filtered = filtered.filter(photo => 
         photo.tags?.includes(selectedTag) || 
-        (photo.gallery_photos && photo.gallery_photos.some(p => p.tags?.includes(selectedTag)))
         (photo.gallery_photos && photo.gallery_photos.some(p => p.tags?.includes(selectedTag)))
       );
     }
@@ -117,21 +142,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       }
       return newSet;
     });
-  };
-
-  const handleGroupSelect = (groupId: string) => {
-    // Find the group photos based on the group ID
-    const groupPhoto = filteredPhotos.find(p => p.is_gallery_tile && p.batch_id === groupId);
-    if (groupPhoto && groupPhoto.gallery_photos) {
-      // Set the photos to show in group view
-      setSelectedGroupId(groupId);
-    }
-    setShowGroupPhotos(true);
-  };
-
-  const handleBackToGallery = () => {
-    setShowGroupPhotos(false);
-    setSelectedGroupId(null);
   };
 
   const handleGroupSelect = (groupId: string) => {
@@ -313,8 +323,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               onDelete={handleDelete}
               onUpdate={handleUpdate}
               viewMode={viewMode}
-              onGroupSelect={handleGroupSelect}
-              onPhotoAdded={fetchPhotos}
               onGroupSelect={handleGroupSelect}
               onPhotoAdded={fetchPhotos}
             />
