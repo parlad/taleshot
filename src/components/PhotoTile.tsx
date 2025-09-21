@@ -540,19 +540,26 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
                                   if (error) throw error;
 
-                                  // If this was the last photo in the gallery, delete the entire tile
-                                  if (photoCount <= 1) {
+                                  // Remove the photo from the gallery_photos array immediately
+                                  if (photo.gallery_photos) {
+                                    const updatedGalleryPhotos = photo.gallery_photos.filter(p => p.id !== galleryPhoto.id);
+                                    
+                                    // If this was the last photo in the gallery, delete the entire tile
+                                    if (updatedGalleryPhotos.length === 0) {
+                                      handleClose();
                                     onDelete(photo.id);
                                     return;
                                   }
 
-                                  // Remove the photo from the gallery_photos array
-                                  if (photo.gallery_photos) {
-                                    const updatedGalleryPhotos = photo.gallery_photos.filter(p => p.id !== galleryPhoto.id);
-                                    
                                     // Adjust current index if needed
                                     if (currentPhotoIndex >= updatedGalleryPhotos.length) {
                                       setCurrentPhotoIndex(updatedGalleryPhotos.length - 1);
+                                    } else if (index < currentPhotoIndex) {
+                                      // If we deleted a photo before the current one, adjust the index
+                                      setCurrentPhotoIndex(currentPhotoIndex - 1);
+                                    } else if (index === currentPhotoIndex && currentPhotoIndex > 0) {
+                                      // If we deleted the current photo, go to the previous one
+                                      setCurrentPhotoIndex(currentPhotoIndex - 1);
                                     }
 
                                     const updatedPhoto: Photo = {
