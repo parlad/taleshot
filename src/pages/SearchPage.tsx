@@ -71,12 +71,27 @@ export function SearchPage() {
         return;
       }
 
+      // Add tags to each photo
+      const photosWithTags = await Promise.all(
+        photos.map(async (p) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', p.id);
+          
+          return {
+            ...p,
+            tags: tags?.map(t => t.tag_name) || []
+          };
+        })
+      );
+
       setSelectedUser({
         user_id: userId,
         user_email: userEmail,
         first_name: firstName,
         last_name: lastName,
-        photos: photos || []
+        photos: photosWithTags || []
       });
     } catch (error) {
       console.error('Error loading user profile:', error);
