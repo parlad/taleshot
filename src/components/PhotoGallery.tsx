@@ -73,19 +73,36 @@ export function PhotoGallery() {
 
     if (showGroupPhotos && selectedGroupId) {
       // Show only photos from selected group
-      filtered = photos.filter(photo => photo.batch_id === selectedGroupId);
+      const groupPhoto = filteredPhotos.find(p => p.is_gallery_tile && p.batch_id === selectedGroupId);
+      if (groupPhoto && groupPhoto.gallery_photos) {
+        filtered = groupPhoto.gallery_photos;
+      } else {
+        filtered = [];
+      }
     } else {
-      // Group photos by batch_id and create tiles
-      const batchGroups = new Map<string, Photo[]>();
+      // Group photos by title and tags combination
+      const titleTagGroups = new Map<string, Photo[]>();
       const individualPhotos: Photo[] = [];
       
       photos.forEach(photo => {
-        if (photo.batch_id && photo.upload_type === 'group') {
-          if (!batchGroups.has(photo.batch_id)) {
-            batchGroups.set(photo.batch_id, []);
+        // Create a unique key based on title and sorted tags
+        const tagsKey = photo.tags ? [...photo.tags].sort().join(',') : '';
+        const groupKey = `${photo.title}|${tagsKey}`;
+        
+        // Check if there are other photos with the same title and tags
+        const similarPhotos = photos.filter(p => {
+          const pTagsKey = p.tags ? [...p.tags].sort().join(',') : '';
+          const pGroupKey = `${p.title}|${pTagsKey}`;
+          return pGroupKey === groupKey;
+        });
+        
+        if (similarPhotos.length > 1) {
+          // Multiple photos with same title and tags - group them
+          if (!titleTagGroups.has(groupKey)) {
+            titleTagGroups.set(groupKey, similarPhotos);
           }
-          batchGroups.get(photo.batch_id)!.push(photo);
         } else {
+          // Single photo with unique title/tags combination
           individualPhotos.push(photo);
         }
       });
@@ -93,14 +110,16 @@ export function PhotoGallery() {
       // Start with individual photos
       filtered = [...individualPhotos];
       
-      // Add one representative tile per batch group
-      batchGroups.forEach((groupPhotos, batchId) => {
+      // Add one representative tile per title/tag group
+      titleTagGroups.forEach((groupPhotos, groupKey) => {
         if (groupPhotos.length > 0) {
-          // Use first photo as representative with gallery metadata
+          // Use first photo as representative with gallery metadata and create a unique group ID
+          const groupId = `group_${groupKey.replace(/[^a-zA-Z0-9]/g, '_')}_${groupPhotos[0].id}`;
           const representative: Photo = {
             ...groupPhotos[0],
             is_gallery_tile: true,
-            gallery_photos: groupPhotos
+            gallery_photos: groupPhotos,
+            batch_id: groupId // Use generated group ID for navigation
           };
           filtered.push(representative);
         }
@@ -131,7 +150,12 @@ export function PhotoGallery() {
   };
 
   const handleGroupSelect = (groupId: string) => {
-    setSelectedGroupId(groupId);
+    // Find the group photos based on the group ID
+    const groupPhoto = filteredPhotos.find(p => p.is_gallery_tile && p.batch_id === groupId);
+    if (groupPhoto && groupPhoto.gallery_photos) {
+      // Set the photos to show in group view
+      setSelectedGroupId(groupId);
+    }
     setShowGroupPhotos(true);
   };
 
