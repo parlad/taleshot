@@ -261,17 +261,17 @@ export function PhotoGallery() {
   return (
     <div className="space-y-3">
       {/* Page Header */}
-      <div className="glass-effect rounded-2xl p-6 shadow-lg border border-white/20 relative z-10">
+      <div className="glass-effect rounded-xl p-4 shadow-md border border-white/20 relative z-10">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold gradient-text mb-1">Your Photos</h1>
-            <div className="flex items-center gap-2 text-sm text-gray-600">
+            <h1 className="text-xl font-bold gradient-text mb-0.5">Your Photos</h1>
+            <div className="flex items-center gap-2 text-xs text-gray-500">
               <Camera className="w-4 h-4" />
               <span>{photos.length} of {photos.length} photos</span>
             </div>
           </div>
           
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <TagFilter
               availableTags={availableTags}
               selectedTag={selectedTag}
@@ -279,7 +279,7 @@ export function PhotoGallery() {
             />
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl"
+              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
             >
               <Plus className="w-4 h-4" />
               Add Photo
