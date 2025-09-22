@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
-import { Calendar, Tag, X, Edit3, Trash2, Eye, EyeOff, Save, Plus } from 'lucide-react';
+import { Calendar, Edit3, Trash2, Eye, EyeOff, Save, X, Plus, Tag, Images, Maximize2 } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import type { Photo, ViewMode } from '../types';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
+import type { PhotoCardProps, Photo } from '../types';
 
-interface PhotoCardProps {
-  photo: Photo;
-  isFlipped: boolean;
-  onFlip: () => void;
-  onDelete: (id: string) => void;
-  onUpdate: (updatedPhoto: Photo) => void;
-  viewMode: ViewMode;
-}
-
-export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode }: PhotoCardProps) {
+export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode = 'slide', isPublicView = false }: PhotoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [batchPhotos, setBatchPhotos] = useState<Photo[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
   const [editData, setEditData] = useState({
     title: photo.title,
     date_taken: photo.date_taken || '',
@@ -27,8 +23,106 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
   const [newTag, setNewTag] = useState('');
   const [showNewTag, setShowNewTag] = useState(false);
 
+  const handleGalleryClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!photo.batch_id) return;
+
+    try {
+      const { data: photos, error } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('batch_id', photo.batch_id)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      if (photos && photos.length > 0) {
+        // Add tags to each photo
+        const photosWithTags = await Promise.all(
+          photos.map(async (p) => {
+            const { data: tags } = await supabase
+              .from('photo_tags')
+              .select('tag_name')
+              .eq('photo_id', p.id);
+            
+            return {
+              ...p,
+              tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
+            };
+          })
+        );
+
+        setBatchPhotos(photosWithTags);
+        const currentIndex = photosWithTags.findIndex(p => p.id === photo.id);
+        setGalleryIndex(Math.max(0, currentIndex));
+        setIsGalleryOpen(true);
+      }
+    } catch (error) {
+      console.error('Error loading batch photos:', error);
+    }
+  };
+
+  const getBatchPhotoCount = async () => {
+    if (!photo.batch_id) return 0;
+    
+    try {
+      const { count } = await supabase
+        .from('photos')
+        .select('*', { count: 'exact', head: true })
+        .eq('batch_id', photo.batch_id);
+      
+      return count || 0;
+    } catch (error) {
+      console.error('Error getting batch count:', error);
+      return 0;
+    }
+  };
+
+  const [batchCount, setBatchCount] = useState(0);
+
+  React.useEffect(() => {
+    if (photo.batch_id) {
+      getBatchPhotoCount().then(setBatchCount);
+    }
+  }, [photo.batch_id]);
+
+  const handleDeletePhoto = async () => {
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      // Delete photo tags first
+      const { error: deleteTagsError } = await supabase
+        .from('photo_tags')
+        .delete()
+        .eq('photo_id', photo.id);
+
+      if (deleteTagsError) {
+        console.error('Error deleting photo tags:', deleteTagsError);
+        // Continue with photo deletion even if tag deletion fails
+      }
+
+      // Delete the photo
+      const { error } = await supabase
+        .from('photos')
+        .delete()
+        .eq('id', photo.id);
+
+      if (error) throw error;
+
+      // Call the onDelete callback to remove from UI
+      onDelete(photo.id);
+      
+      // Close the expanded view
+      setIsExpanded(false);
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Failed to delete photo. Please try again.');
+    }
+  };
+
   const handleSave = async () => {
     try {
+      // First update the photo
       const { error } = await supabase
         .from('photos')
         .update({
@@ -72,7 +166,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         tags: editData.tags
       };
 
-      onUpdate(updatedPhoto);
+      onUpdate?.(updatedPhoto);
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating photo:', error);
@@ -118,6 +212,15 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     setShowNewTag(false);
   };
 
+  const handleExpand = () => {
+    setIsExpanded(true);
+  };
+
+  const handleCloseExpanded = () => {
+    setIsExpanded(false);
+    setIsEditing(false);
+  };
+
   const togglePublic = async () => {
     try {
       const newPublicState = !photo.is_public;
@@ -133,301 +236,318 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         is_public: newPublicState
       };
 
-      onUpdate(updatedPhoto);
+      onUpdate?.(updatedPhoto);
     } catch (error) {
       console.error('Error updating photo visibility:', error);
     }
   };
 
-  const handleDeletePhoto = async () => {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
-
-    try {
-      const { error } = await supabase
-        .from('photos')
-        .delete()
-        .eq('id', photo.id);
-
-      if (error) throw error;
-
-      onDelete(photo.id);
-    } catch (error) {
-      console.error('Error deleting photo:', error);
-    }
-  };
-
-  if (!isFlipped) {
-    // Front of card - show photo
+  // Fullscreen expanded view - 60% photo, 40% info
+  if (isExpanded) {
     return (
-      <div className="photo-card group cursor-pointer">
-        <div className="aspect-square overflow-hidden rounded-t-xl">
+      <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex">
+        {/* Photo Section - 60% */}
+        <div className="w-[70%] h-full flex items-center justify-center bg-black">
           <img
-            src={photo.image_url || photo.imageUrl}
+            src={photo.imageUrl || photo.image_url}
             alt={photo.title}
-            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+            className="w-full h-full object-contain"
           />
-          {photo.is_gallery_tile && photo.gallery_photos && (
-            <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
-              {photo.gallery_photos.length} photos
-            </div>
-          )}
         </div>
-        
-        <div className="p-4 bg-white rounded-b-xl">
-          <div className="flex items-start justify-between mb-2">
-            <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 flex-1">
-              {photo.title}
-            </h3>
-            <div className="flex items-center gap-1 ml-2">
-              {photo.is_public ? (
-                <div className="w-2 h-2 bg-green-500 rounded-full" title="Public" />
-              ) : (
-                <div className="w-2 h-2 bg-gray-400 rounded-full" title="Private" />
-              )}
-            </div>
-          </div>
-          
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              {photo.date_taken}
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onFlip();
-              }}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Details
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
-  // Back of card - show details
-  return (
-    <div className="photo-card bg-white rounded-xl p-4 h-full">
-      {isEditing ? (
-        <div className="space-y-4 h-full flex flex-col">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">Edit Photo</h3>
-            <button
-              onClick={handleCancel}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-
-          <div className="flex-1 space-y-4 overflow-y-auto">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Title</label>
-              <input
-                type="text"
-                value={editData.title}
-                onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
+        {/* Info Section - 30% */}
+        <div className="w-[30%] h-full bg-white overflow-y-auto">
+          <div className="p-4">
+            {/* Header with close button */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-gray-800">Photo Details</h2>
+              <button
+                onClick={handleCloseExpanded}
+                className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <X className="w-4 h-4 text-gray-600" />
+              </button>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Date Taken</label>
-              <input
-                type="text"
-                value={editData.date_taken}
-                onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-1">Story</label>
-              <textarea
-                value={editData.reason}
-                onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                rows={3}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">Tags</label>
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  {availableTags.map(tag => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => handleTagToggle(tag)}
-                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                        editData.tags.includes(tag)
-                          ? 'bg-slate-600 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => setShowNewTag(true)}
-                    className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center gap-1"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add New
-                  </button>
+            {isEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={editData.title}
+                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
                 </div>
 
-                {showNewTag && (
-                  <div className="flex gap-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Date Taken</label>
+                  <input
+                    type="text"
+                    value={editData.date_taken}
+                    onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Story</label>
+                  <textarea
+                    value={editData.reason}
+                    onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
+                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Tags</label>
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      {availableTags.map(tag => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleTagToggle(tag)}
+                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
+                            editData.tags.includes(tag)
+                              ? 'bg-slate-600 text-white'
+                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => setShowNewTag(true)}
+                        className="px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center gap-1"
+                      >
+                        <Plus className="w-3 h-3" />
+                        Add New
+                      </button>
+                    </div>
+
+                    {showNewTag && (
+                      <div className="flex gap-1">
+                        <input
+                          type="text"
+                          value={newTag}
+                          onChange={(e) => setNewTag(e.target.value)}
+                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
+                          placeholder="Tag name"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleAddNewTag}
+                          className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                        >
+                          Add
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowNewTag(false);
+                            setNewTag('');
+                          }}
+                          className="px-2 py-1 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2">
                     <input
-                      type="text"
-                      value={newTag}
-                      onChange={(e) => setNewTag(e.target.value)}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                      placeholder="Tag name"
+                      type="checkbox"
+                      checked={editData.is_public}
+                      onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
+                      className="w-3 h-3 text-slate-600 bg-gray-100 border-gray-300 rounded focus:ring-slate-500 focus:ring-1"
                     />
+                    <span className="text-xs font-medium text-gray-600">Make this photo public</span>
+                  </label>
+                </div>
+
+                <div className="flex gap-2 pt-3">
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+                  >
+                    <Save className="w-3 h-3" />
+                    Save Changes
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-base font-semibold text-gray-800 mb-1">{photo.title}</h3>
+                  <div className="flex items-center text-gray-500 text-sm mb-3">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {photo.date_taken}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Story</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed">{photo.reason}</p>
+                </div>
+
+                {photo.tags && photo.tags.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1 flex items-center">
+                      <Tag className="w-3 h-3 mr-1" />
+                      Tags
+                    </h4>
+                    <div className="flex flex-wrap gap-1">
+                      {photo.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
+                        <span
+                          key={index}
+                          className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs rounded-md"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {photo.batch_id && batchCount > 1 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-gray-700 mb-1">Gallery</h4>
                     <button
-                      type="button"
-                      onClick={handleAddNewTag}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                      onClick={handleGalleryClick}
+                      className="flex items-center gap-1 px-2 py-1 text-xs bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200 transition-colors"
                     >
-                      Add
+                      <Images className="w-3 h-3" />
+                      View Gallery ({batchCount} photos)
+                    </button>
+                  </div>
+                )}
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-700 mb-1">Visibility</h4>
+                  <div className="flex items-center gap-2">
+                    {photo.is_public ? (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-md text-xs">
+                        <Eye className="w-3 h-3" />
+                        Public
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-xs">
+                        <EyeOff className="w-3 h-3" />
+                        Private
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {!isPublicView && (
+                  <div className="flex gap-2 pt-3 border-t border-gray-200">
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+                    >
+                      <Edit3 className="w-3 h-3" />
+                      Edit Photo
                     </button>
                     <button
-                      type="button"
-                      onClick={() => {
-                        setShowNewTag(false);
-                        setNewTag('');
-                      }}
-                      className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                      onClick={togglePublic}
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
                     >
-                      Cancel
+                      {photo.is_public ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                      Make {photo.is_public ? 'Private' : 'Public'}
+                    </button>
+                    <button
+                      onClick={handleDeletePhoto}
+                      className="flex items-center gap-1 px-2 py-1.5 text-xs bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
                     </button>
                   </div>
                 )}
               </div>
-            </div>
-
-            <div>
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={editData.is_public}
-                  onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
-                  className="w-4 h-4 text-slate-600 bg-gray-100 border-gray-300 rounded focus:ring-slate-500 focus:ring-2"
-                />
-                <span className="text-sm font-medium text-gray-600">Make this photo public</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-4 border-t border-gray-200">
-            <button
-              onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              Save Changes
-            </button>
-            <button
-              onClick={handleCancel}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-            >
-              <X className="w-4 h-4" />
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4 h-full flex flex-col">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-800">{photo.title}</h3>
-            <button
-              onClick={onFlip}
-              className="p-1 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              <X className="w-4 h-4 text-gray-600" />
-            </button>
-          </div>
-
-          <div className="flex-1 space-y-4 overflow-y-auto">
-            <div className="flex items-center text-gray-500 text-sm">
-              <Calendar className="w-4 h-4 mr-2" />
-              Created {photo.date_taken}
-            </div>
-
-            {photo.tags && photo.tags.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
-                  <Tag className="w-4 h-4 mr-1" />
-                  Tags
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {photo.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
-                    <span
-                      key={index}
-                      className="px-2 py-1 bg-slate-100 text-slate-700 text-sm rounded-md"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
             )}
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Visibility</h4>
-              <div className="flex items-center gap-2">
-                {photo.is_public ? (
-                  <span className="flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                    <Eye className="w-4 h-4" />
-                    Public
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
-                    <EyeOff className="w-4 h-4" />
-                    Private
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Story</h4>
-              <p className="text-gray-600 text-sm leading-relaxed">{photo.reason}</p>
-            </div>
-          </div>
-
-          <div className="flex gap-2 pt-4 border-t border-gray-200">
-            <button
-              onClick={() => setIsEditing(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Edit3 className="w-4 h-4" />
-              Edit
-            </button>
-            <button
-              onClick={togglePublic}
-              className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-            >
-              {photo.is_public ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              Make {photo.is_public ? 'Private' : 'Public'}
-            </button>
-            <button
-              onClick={handleDeletePhoto}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete
-            </button>
           </div>
         </div>
-      )}
+
+        <PhotoGalleryModal
+          isOpen={isGalleryOpen}
+          onClose={() => setIsGalleryOpen(false)}
+          photos={batchPhotos}
+          initialIndex={galleryIndex}
+        />
+      </div>
+    );
+  }
+
+  // Regular card view - NO FLIP FUNCTIONALITY
+  return (
+    <div className="group cursor-pointer transition-all duration-500 hover:shadow-2xl overflow-hidden rounded-2xl bg-white" onClick={handleExpand}>
+      <div className="aspect-square relative rounded-2xl overflow-hidden">
+        <img
+          src={photo.imageUrl || photo.image_url}
+          alt={photo.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        
+        {/* Gradient overlay - only visible on hover */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        
+        {/* Photo info overlay - only visible on hover */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500">
+          <h3 className="font-semibold text-white text-lg leading-tight mb-2">{photo.title}</h3>
+          <div className="flex items-center text-white/90 text-sm mb-3">
+            <Calendar className="w-4 h-4 mr-2" />
+            {photo.date_taken}
+          </div>
+        </div>
+        
+        {/* Privacy toggle button - only visible on hover for non-public view */}
+        {!isPublicView && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePublic();
+            }}
+            className={`absolute top-4 right-4 p-2.5 rounded-xl transition-all duration-500 opacity-0 group-hover:opacity-100 transform group-hover:scale-110 ${
+              photo.is_public
+                ? 'bg-green-500/80 text-white hover:bg-green-600/80'
+                : 'bg-gray-500/80 text-white hover:bg-gray-600/80'
+            } backdrop-blur-sm shadow-lg`}
+            title={photo.is_public ? 'Make private' : 'Make public'}
+          >
+            {photo.is_public ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+          </button>
+        )}
+        
+        {/* Gallery indicator - only visible if part of a batch */}
+        {photo.batch_id && batchCount > 1 && (
+          <div className="absolute top-4 left-4 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-3 py-1.5 rounded-full text-xs flex items-center gap-1 shadow-lg backdrop-blur-sm">
+            <Images className="w-3 h-3" />
+            {batchCount}
+          </div>
+        )}
+        
+        {/* Expand icon - only visible on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500">
+          <div className="p-4 bg-white/20 backdrop-blur-sm rounded-2xl text-white transform group-hover:scale-110 transition-transform duration-300 shadow-lg">
+            <Maximize2 className="w-5 h-5" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
