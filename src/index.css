@@ -1,225 +1,75 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
-import { supabase } from '../utils/supabase';
-import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { AddPhotoModal } from './AddPhotoModal';
-import { TagFilter } from './TagFilter';
-import type { Photo, ViewMode } from '../types';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-interface PhotoGalleryProps {
-  onReload?: () => void;
+/* Custom styles for the photo gallery */
+.flip-card {
+  background-color: transparent;
+  perspective: 1000px;
 }
 
-export function PhotoGallery({ onReload }: PhotoGalleryProps) {
-  const { user } = useSupabaseAuth();
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
 
-  // Expose reload function to parent
-        setFlippedCards(new Set());
-        fetchPhotos();
-      };
-    }
-  }, [onReload]);
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
 
-  useEffect(() => {
-    if (user) {
-      fetchPhotos();
-    }
-  }, [user]);
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  overflow: hidden;
+}
 
-  useEffect(() => {
-    filterPhotos();
-  }, [photos, selectedTag]);
+.flip-card-back {
+  transform: rotateY(180deg);
+}
 
-  const fetchPhotos = async () => {
-    if (!user) return;
+.floating {
+  animation: float 3s ease-in-out infinite;
+}
 
-    setLoading(true);
-    try {
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
 
-      if (error) throw error;
+.gradient-text {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
-      // Get tags for each photo
-      const photosWithTags = await Promise.all(
-        (data || []).map(async (photo) => {
-          const { data: tags } = await supabase
-            .from('photo_tags')
-            .select('tag_name')
-            .eq('photo_id', photo.id);
-          
-          return {
-            ...photo,
-            tags: tags?.map(t => t.tag_name) || []
-          };
-        })
-      );
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
 
-      setPhotos(photosWithTags);
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+}
 
-      // Extract unique tags
-      const tags = new Set<string>();
-      photosWithTags.forEach(photo => {
-        photo.tags?.forEach(tag => {
-          if (!tag.startsWith('gallery_')) {
-            tags.add(tag);
-          }
-        });
-      });
-      setAvailableTags(Array.from(tags).sort());
+.btn-hover-effect {
+  transition: all 0.3s ease;
+}
 
-    } catch (error) {
-      console.error('Error fetching photos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterPhotos = () => {
-          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
-        </div>
-
-        <div className="relative z-10">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
-              <Camera className="w-full h-full text-white" />
-            </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
-              <Heart className="w-full h-full text-white" />
-            </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
-              <Users className="w-full h-full text-white" />
-            </div>
-          </div>
-
-          <h2 className="text-4xl font-bold gradient-text mb-4">
-            Welcome to Taleshot
-          </h2>
-          
-          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
-            Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
-          </p>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
-          >
-            <Plus className="w-6 h-6" />
-            Add Your First Photo
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-gray-600">Loading your photos...</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (photos.length === 0) {
-    return (
-      <>
-        <EmptyState />
-        <AddPhotoModal
-          isOpen={isAddModalOpen}
-          onClose={() => setIsAddModalOpen(false)}
-          onPhotoAdded={fetchPhotos}
-        />
-      </>
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-              <Camera className="w-4 h-4" />
-              {photos.length} photos
-            </p>
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <TagFilter
-            availableTags={availableTags}
-            selectedTag={selectedTag}
-            onTagChange={setSelectedTag}
-          />
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Add Photo
-          </button>
-        </div>
-      </div>
-
-      {/* Photo Grid */}
-      {filteredPhotos.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">No photos match your current filters</div>
-          <button
-            onClick={() => {
-              setSelectedTag('all');
-            }}
-            className="text-blue-600 hover:text-blue-700 font-medium"
-          >
-            Clear filters
-          </button>
-        </div>
-      ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
-          {filteredPhotos.map(photo => 
-            photo.is_gallery_tile ? (
-              <PhotoTile
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-                onPhotoAdded={fetchPhotos}
-              />
-            ) : (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-              />
-            )
-          )}
-        </div>
-      )}
-
-      <AddPhotoModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onPhotoAdded={fetchPhotos}
-      />
-    </div>
-  );
+.btn-hover-effect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
