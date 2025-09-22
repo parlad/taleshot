@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
+import { Plus, Camera, Heart, Users, Gift, Calendar } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
 import { TagFilter } from './TagFilter';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
+import { AddPhotoModal } from './AddPhotoModal';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoGalleryProps {
@@ -22,12 +23,14 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Expose reload function to parent
   React.useEffect(() => {
+    if (onReload) {
         setFlippedCards(new Set());
         fetchPhotos();
-      };
     }
   }, [onReload]);
 
@@ -49,6 +52,39 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       const { data, error } = await supabase
         .from('photos')
         .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const photosWithTags = data || [];
+      
+      // Group photos by gallery_id
+      const photoGroups = new Map<string, Photo[]>();
+      const individualPhotos: Photo[] = [];
+
+      photosWithTags.forEach(photo => {
+        const galleryId = photo.tags?.find((tag: string) => tag.startsWith('gallery_'))?.replace('gallery_', '');
+        if (galleryId) {
+          if (!photoGroups.has(galleryId)) {
+            photoGroups.set(galleryId, []);
+          }
+          photoGroups.get(galleryId)!.push(photo);
+        } else {
+          individualPhotos.push(photo);
+        }
+      });
+
+      // Create display photos array
+      const displayPhotos: Photo[] = [...individualPhotos];
+
+      // Add gallery tiles for groups with multiple photos
+      photoGroups.forEach((groupPhotos, galleryId) => {
+        if (groupPhotos.length > 1) {
+          // Create a representative tile for the gallery
+          const representative = {
+            ...groupPhotos[0],
+            is_gallery_tile: true,
             gallery_photos: groupPhotos
           };
           displayPhotos.push(representative);
