@@ -1,420 +1,225 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import React, { useState, useEffect } from 'react';
+import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
+import { supabase } from '../utils/supabase';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { AddPhotoModal } from './AddPhotoModal';
+import { TagFilter } from './TagFilter';
+import type { Photo, ViewMode } from '../types';
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+interface PhotoGalleryProps {
+  onReload?: () => void;
+}
 
-@layer base {
-  * {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+export function PhotoGallery({ onReload }: PhotoGalleryProps) {
+  const { user } = useSupabaseAuth();
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+
+  // Expose reload function to parent
+        setFlippedCards(new Set());
+        fetchPhotos();
+      };
+    }
+  }, [onReload]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPhotos();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    filterPhotos();
+  }, [photos, selectedTag]);
+
+  const fetchPhotos = async () => {
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('photos')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Get tags for each photo
+      const photosWithTags = await Promise.all(
+        (data || []).map(async (photo) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+          
+          return {
+            ...photo,
+            tags: tags?.map(t => t.tag_name) || []
+          };
+        })
+      );
+
+      setPhotos(photosWithTags);
+
+      // Extract unique tags
+      const tags = new Set<string>();
+      photosWithTags.forEach(photo => {
+        photo.tags?.forEach(tag => {
+          if (!tag.startsWith('gallery_')) {
+            tags.add(tag);
+          }
+        });
+      });
+      setAvailableTags(Array.from(tags).sort());
+
+    } catch (error) {
+      console.error('Error fetching photos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filterPhotos = () => {
+          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
+        </div>
+
+        <div className="relative z-10">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
+              <Camera className="w-full h-full text-white" />
+            </div>
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
+              <Heart className="w-full h-full text-white" />
+            </div>
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
+              <Users className="w-full h-full text-white" />
+            </div>
+          </div>
+
+          <h2 className="text-4xl font-bold gradient-text mb-4">
+            Welcome to Taleshot
+          </h2>
+          
+          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+            Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
+          </p>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
+          >
+            <Plus className="w-6 h-6" />
+            Add Your First Photo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-gray-600">Loading your photos...</div>
+        </div>
+      </div>
+    );
   }
-}
 
-@layer utilities {
-  .perspective {
-    perspective: 1000px;
-  }
-  
-  .preserve-3d {
-    transform-style: preserve-3d;
-  }
-  
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
-  
-  .rotate-y-180 {
-    transform: rotateY(180deg);
+  if (photos.length === 0) {
+    return (
+      <>
+        <EmptyState />
+        <AddPhotoModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onPhotoAdded={fetchPhotos}
+        />
+      </>
+    );
   }
 
-  .glass-effect {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-  }
+  return (
+    <div className="space-y-3">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
+            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <Camera className="w-4 h-4" />
+              {photos.length} photos
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <TagFilter
+            availableTags={availableTags}
+            selectedTag={selectedTag}
+            onTagChange={setSelectedTag}
+          />
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Add Photo
+          </button>
+        </div>
+      </div>
 
-  .gradient-text {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+      {/* Photo Grid */}
+      {filteredPhotos.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 mb-4">No photos match your current filters</div>
+          <button
+            onClick={() => {
+              setSelectedTag('all');
+            }}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
+          {filteredPhotos.map(photo => 
+            photo.is_gallery_tile ? (
+              <PhotoTile
+                key={photo.id}
+                photo={photo}
+                isFlipped={flippedCards.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                viewMode={viewMode}
+                onPhotoAdded={fetchPhotos}
+              />
+            ) : (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                isFlipped={flippedCards.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                viewMode={viewMode}
+              />
+            )
+          )}
+        </div>
+      )}
 
-  .gradient-border {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    padding: 2px;
-    border-radius: 12px;
-  }
-
-  .gradient-border-content {
-    background: white;
-    border-radius: 10px;
-  }
-}
-
-@layer components {
-  .input-field {
-    @apply w-full px-4 py-3 border-0 bg-white/80 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:bg-white outline-none transition-all duration-300 shadow-sm hover:shadow-md;
-  }
-
-  .btn-primary {
-    @apply px-6 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl;
-  }
-
-  .btn-secondary {
-    @apply px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 border border-gray-200 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl;
-  }
-
-  .card-modern {
-    @apply bg-white backdrop-blur-sm rounded-2xl shadow-lg hover:shadow-xl border border-gray-100 transition-all duration-500 hover:transform hover:scale-[1.02];
-  }
-}
-
-/* Base styles */
-body {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  min-height: 100vh;
-  position: relative;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
-  pointer-events: none;
-  z-index: -1;
-}
-
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Header styles */
-header {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  position: sticky;
-  top: 0;
-  z-index: 50;
-}
-
-/* Navigation and Dropdown Styles */
-.category-dropdown,
-.view-dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 0.5rem);
-  width: 12rem;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  border-radius: 1rem;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-  z-index: 1000;
-  padding: 0.5rem;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  animation: slideDown 0.3s ease-out;
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.dropdown-menu button {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  text-align: left;
-  transition: all 0.3s;
-  border-radius: 0.75rem;
-  font-weight: 500;
-}
-
-.dropdown-menu button:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
-  transform: translateX(4px);
-}
-
-/* Photo card styles */
-.photo-card {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 1rem;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  width: 100%;
-  max-width: 280px;
-  margin: 0 auto;
-}
-
-.photo-card:hover {
-  transform: translateY(-4px) scale(1.01);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
-}
-
-/* Add photo button animation */
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
-  }
-}
-
-.add-photo-btn {
-  background: #4f46e5;
-  border: none;
-  position: relative;
-  overflow: hidden;
-}
-
-.add-photo-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.add-photo-btn:hover::before {
-  left: 100%;
-}
-
-/* Empty state styles */
-.empty-state {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(20px);
-  border-radius: 2rem;
-  padding: 3rem;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.08);
-  text-align: center;
-  max-width: 600px;
-  margin: 2rem auto;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-/* Modal styles */
-.modal-overlay {
-  backdrop-filter: blur(10px);
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.modal-content {
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  border-radius: 2rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  max-width: 90vw;
-  max-height: 90vh;
-  overflow-y: auto;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-/* Category tags */
-.category-tag {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-weight: 500;
-  transition: all 0.3s;
-  border: 1px solid rgba(99, 102, 241, 0.2);
-}
-
-.category-tag:hover {
-  background: #4f46e5;
-  color: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
-}
-
-/* Fullscreen view animation */
-.fullscreen-enter {
-  opacity: 0;
-  transform: scale(0.9);
-}
-
-.fullscreen-enter-active {
-  opacity: 1;
-  transform: scale(1);
-  transition: opacity 400ms, transform 400ms;
-}
-
-.fullscreen-exit {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.fullscreen-exit-active {
-  opacity: 0;
-  transform: scale(0.9);
-  transition: opacity 400ms, transform 400ms;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #4f46e5;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #4338ca;
-}
-
-/* Loading animations */
-@keyframes shimmer {
-  0% {
-    background-position: -200px 0;
-  }
-  100% {
-    background-position: calc(200px + 100%) 0;
-  }
-}
-
-.loading-shimmer {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-  background-size: 200px 100%;
-  animation: shimmer 1.5s infinite;
-}
-
-/* Floating elements */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-.floating {
-  animation: float 3s ease-in-out infinite;
-}
-
-/* Gradient animations */
-@keyframes gradientShift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-.animated-gradient {
-  background: linear-gradient(-45deg, #4f46e5, #7c3aed, #06b6d4, #10b981);
-  background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
-}
-
-/* Button hover effects */
-.btn-hover-effect {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s;
-}
-
-.btn-hover-effect::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.btn-hover-effect:hover::before {
-  left: 100%;
-}
-
-.btn-hover-effect:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-}
-
-/* Image hover effects */
-.image-hover-effect {
-  position: relative;
-  overflow: hidden;
-}
-
-.image-hover-effect::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-
-.image-hover-effect:hover::after {
-  opacity: 1;
-}
-
-/* Text selection */
-::selection {
-  background: rgba(99, 102, 241, 0.2);
-  color: #1a202c;
-}
-
-/* Focus styles */
-*:focus {
-  outline: 2px solid rgba(99, 102, 241, 0.4);
-  outline-offset: 2px;
-}
-
-/* Responsive improvements */
-@media (max-width: 768px) {
-  .photo-card:hover {
-    transform: translateY(-4px) scale(1.01);
-  }
-  
-  .empty-state {
-    padding: 2rem;
-    margin: 1rem;
-  }
+      <AddPhotoModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onPhotoAdded={fetchPhotos}
+      />
+    </div>
+  );
 }

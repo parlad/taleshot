@@ -5,6 +5,7 @@ import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoGalleryProps {
@@ -21,6 +22,9 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Expose reload function to parent
   React.useEffect(() => {
@@ -70,9 +74,42 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         })
       );
 
-      setPhotos(photosWithTags);
+      // Group photos by batch_id for gallery display
+      const batchGroups = new Map<string, Photo[]>();
+      const individualPhotos: Photo[] = [];
+      
+      photosWithTags.forEach(photo => {
+        if (photo.batch_id && photo.upload_type === 'group') {
+          if (!batchGroups.has(photo.batch_id)) {
+            batchGroups.set(photo.batch_id, []);
+          }
+          batchGroups.get(photo.batch_id)!.push(photo);
+        } else {
+          individualPhotos.push(photo);
+        }
+      });
+      
+      // Create display photos array with gallery tiles
+      const displayPhotos: Photo[] = [...individualPhotos];
+      
+      batchGroups.forEach((groupPhotos, batchId) => {
+        if (groupPhotos.length > 1) {
+          // Create a gallery tile using the first photo as representative
+          const representative: Photo = {
+            ...groupPhotos[0],
+            is_gallery_tile: true,
+            gallery_photos: groupPhotos
+          };
+          displayPhotos.push(representative);
+        } else if (groupPhotos.length === 1) {
+          // Single photo in batch, treat as individual
+          displayPhotos.push(groupPhotos[0]);
+        }
+      });
 
-      // Extract unique tags
+      setPhotos(displayPhotos);
+
+      // Extract unique tags (excluding gallery tags)
       const tags = new Set<string>();
       photosWithTags.forEach(photo => {
         photo.tags?.forEach(tag => {
@@ -130,6 +167,20 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     setPhotos(prev => prev.map(photo => 
       photo.id === updatedPhoto.id ? updatedPhoto : photo
     ));
+  };
+
+  const handlePhotoClick = (photo: Photo, index: number) => {
+    if (photo.is_gallery_tile && photo.gallery_photos) {
+      // Open gallery modal with all photos from the gallery
+      setGalleryPhotos(photo.gallery_photos);
+      setGalleryIndex(0);
+      setIsGalleryOpen(true);
+    } else {
+      // Open single photo in gallery modal
+      setGalleryPhotos([photo]);
+      setGalleryIndex(0);
+      setIsGalleryOpen(true);
+    }
   };
 
   const EmptyState = () => (
@@ -241,16 +292,76 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         </div>
       ) : (
         <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredPhotos.map(photo => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              isFlipped={flippedCards.has(photo.id)}
-              onFlip={() => handleFlip(photo.id)}
-              onDelete={handleDelete}
-              onUpdate={handleUpdate}
-              viewMode={viewMode}
-            />
+          {filteredPhotos.map((photo, index) => (
+            <div key={photo.id} className="perspective">
+              <div 
+                className={`preserve-3d transition-transform duration-700 ${
+                  flippedCards.has(photo.id) ? 'rotate-y-180' : ''
+                }`}
+              >
+                {/* Front of card */}
+                <div className="backface-hidden">
+                  <div className="photo-card group cursor-pointer" onClick={() => handlePhotoClick(photo, index)}>
+                    <div className="aspect-square overflow-hidden rounded-t-xl">
+                      <img
+                        src={photo.image_url || photo.imageUrl}
+                        alt={photo.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      {photo.is_gallery_tile && photo.gallery_photos && (
+                        <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          {photo.gallery_photos.length} photos
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="p-4 bg-white rounded-b-xl">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 flex-1">
+                          {photo.title}
+                        </h3>
+                        <div className="flex items-center gap-1 ml-2">
+                          {photo.is_public ? (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="Public" />
+                          ) : (
+                            <div className="w-2 h-2 bg-gray-400 rounded-full" title="Private" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {photo.date_taken}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFlip(photo.id);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Back of card */}
+                <div className="backface-hidden rotate-y-180 absolute inset-0">
+                  <PhotoCard
+                    photo={photo}
+                    isFlipped={true}
+                    onFlip={() => handleFlip(photo.id)}
+                    onDelete={handleDelete}
+                    onUpdate={handleUpdate}
+                    viewMode={viewMode}
+                  />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       )}
@@ -259,6 +370,13 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onPhotoAdded={fetchPhotos}
+      />
+
+      <PhotoGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        photos={galleryPhotos}
+        initialIndex={galleryIndex}
       />
     </div>
   );
