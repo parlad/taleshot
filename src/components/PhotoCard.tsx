@@ -1,286 +1,280 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff, Edit2, Trash2, Calendar, Tag, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { PhotoCard } from './PhotoCard';
+import { AddPhotoModal } from './AddPhotoModal';
+import { TagFilter } from './TagFilter';
 import type { Photo, ViewMode } from '../types';
 
-interface PhotoCardProps {
-  photo: Photo;
-  isFlipped: boolean;
-  onFlip: () => void;
-  onDelete: (photoId: string) => void;
-  onUpdate: (photo: Photo) => void;
-  viewMode: ViewMode;
+interface PhotoGalleryProps {
+  onReload?: () => void;
 }
 
-export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode }: PhotoCardProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editTitle, setEditTitle] = useState(photo.title || '');
-  const [editDescription, setEditDescription] = useState(photo.description || '');
-  const [isUpdating, setIsUpdating] = useState(false);
+export function PhotoGallery({ onReload }: PhotoGalleryProps) {
+  const { user } = useSupabaseAuth();
+  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
 
-  const togglePublic = async () => {
+  // Expose reload function to parent
+  React.useEffect(() => {
+    if (onReload) {
+      onReload = () => {
+        setFlippedCards(new Set());
+        fetchPhotos();
+      };
+    }
+  }, [onReload]);
+
+  useEffect(() => {
+    if (user) {
+      fetchPhotos();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    filterPhotos();
+  }, [photos, selectedTag]);
+
+  const fetchPhotos = async () => {
+    if (!user) return;
+
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from('photos')
-        .update({ is_public: !photo.is_public })
-        .eq('id', photo.id)
-        .select()
-        .single();
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      onUpdate(data);
-    } catch (error) {
-      console.error('Error updating photo visibility:', error);
-      alert('Failed to update photo visibility. Please try again.');
-    }
-  };
-
-  const handleUpdate = async () => {
-    if (!editTitle.trim()) return;
-
-    setIsUpdating(true);
-    try {
-      const { data, error } = await supabase
-        .from('photos')
-        .update({
-          title: editTitle.trim(),
-          description: editDescription.trim()
+      // Get tags for each photo
+      const photosWithTags = await Promise.all(
+        (data || []).map(async (photo) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+          
+          return {
+            ...photo,
+            tags: tags?.map(t => t.tag_name) || []
+          };
         })
-        .eq('id', photo.id)
-        .select()
-        .single();
+      );
 
-      if (error) throw error;
+      setPhotos(photosWithTags);
 
-      onUpdate({ ...photo, ...data });
-      setIsEditing(false);
+      // Extract unique tags
+      const tags = new Set<string>();
+      photosWithTags.forEach(photo => {
+        photo.tags?.forEach(tag => {
+          if (!tag.startsWith('gallery_')) {
+            tags.add(tag);
+          }
+        });
+      });
+      setAvailableTags(Array.from(tags).sort());
+
     } catch (error) {
-      console.error('Error updating photo:', error);
-      alert('Failed to update photo. Please try again.');
+      console.error('Error fetching photos:', error);
     } finally {
-      setIsUpdating(false);
+      setLoading(false);
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
+  const filterPhotos = () => {
+    if (selectedTag === 'all') {
+      setFilteredPhotos(photos);
+    } else {
+      setFilteredPhotos(photos.filter(photo => {
+        return photo.tags?.includes(selectedTag);
+      }));
+    }
+  };
 
+  const handleFlip = (photoId: string) => {
+    setFlippedCards(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(photoId)) {
+        newSet.delete(photoId);
+      } else {
+        newSet.add(photoId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleDelete = async (photoId: string) => {
     try {
-      const { error } = await supabase
-        .from('photos')
-        .delete()
-        .eq('id', photo.id);
-
-      if (error) throw error;
-
-      onDelete(photo.id);
+      setPhotos(prev => prev.filter(photo => photo.id !== photoId));
+      setFlippedCards(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(photoId);
+        return newSet;
+      });
     } catch (error) {
       console.error('Error deleting photo:', error);
       alert('Failed to delete photo. Please try again.');
     }
   };
 
-  return (
-    <div className="photo-card group">
-      <div className={`photo-card-inner ${isFlipped ? 'flipped' : ''}`}>
-        {/* Front of card */}
-        <div className="photo-card-front">
-          <div className="relative overflow-hidden rounded-xl bg-white shadow-lg hover:shadow-xl transition-all duration-300">
-            <div className="aspect-square overflow-hidden">
-              <img
-                src={photo.image_url}
-                alt={photo.title || 'Photo'}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
-              />
-            </div>
-            
-            <div className="p-4">
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 flex-1">
-                  {photo.title || 'Untitled'}
-                </h3>
-                <div className="flex items-center gap-1 ml-2">
-                  {photo.is_public ? (
-                    <Eye className="w-4 h-4 text-green-600" />
-                  ) : (
-                    <EyeOff className="w-4 h-4 text-gray-400" />
-                  )}
-                </div>
-              </div>
-              
-              {photo.description && (
-                <p className="text-gray-600 text-xs line-clamp-2 mb-3">
-                  {photo.description}
-                </p>
-              )}
-              
-              <div className="flex items-center justify-between text-xs text-gray-500">
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
-                  {new Date(photo.created_at).toLocaleDateString()}
-                </div>
-                <button
-                  onClick={onFlip}
-                  className="text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Details
-                </button>
-              </div>
-            </div>
-          </div>
+  const handleUpdate = (updatedPhoto: Photo) => {
+    setPhotos(prev => prev.map(photo => 
+      photo.id === updatedPhoto.id ? updatedPhoto : photo
+    ));
+  };
+
+  const EmptyState = () => (
+    <div className="min-h-[70vh] flex items-center justify-center px-4">
+      <div className="max-w-2xl w-full empty-state relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-30 floating"></div>
+          <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full opacity-30 floating" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
         </div>
 
-        {/* Back of card */}
-        <div className="photo-card-back">
-          <div className="bg-white rounded-xl shadow-lg p-6 h-full">
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Title
-                  </label>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    placeholder="Enter photo title"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Description
-                  </label>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm resize-none"
-                    placeholder="Enter photo description"
-                  />
-                </div>
-                
-                <div className="flex gap-2 pt-2">
-                  <button
-                    onClick={handleUpdate}
-                    disabled={isUpdating || !editTitle.trim()}
-                    className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium transition-colors"
-                  >
-                    {isUpdating ? 'Saving...' : 'Save'}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setIsEditing(false);
-                      setEditTitle(photo.title || '');
-                      setEditDescription(photo.description || '');
-                    }}
-                    className="flex-1 bg-gray-200 text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-300 text-sm font-medium transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    {photo.title || 'Untitled'}
-                  </h3>
-                  {photo.description && (
-                    <p className="text-gray-600 text-sm mb-4">
-                      {photo.description}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2 text-sm text-gray-500">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4" />
-                    <span>Created {new Date(photo.created_at).toLocaleDateString()}</span>
-                  </div>
-                  
-                  {photo.tags && photo.tags.length > 0 && (
-                    <div className="flex items-start gap-2">
-                      <Tag className="w-4 h-4 mt-0.5" />
-                      <div className="flex flex-wrap gap-1">
-                        {photo.tags.filter(tag => !tag.startsWith('gallery_')).map(tag => (
-                          <span
-                            key={tag}
-                            className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-2">
-                    {photo.is_public ? (
-                      <>
-                        <Eye className="w-4 h-4 text-green-600" />
-                        <span className="text-green-600">Public</span>
-                      </>
-                    ) : (
-                      <>
-                        <EyeOff className="w-4 h-4" />
-                        <span>Private</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex gap-2 pt-4">
-                  <button
-                    onClick={togglePublic}
-                    className="flex items-center gap-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium transition-colors"
-                  >
-                    {photo.is_public ? (
-                      <>
-                        <EyeOff className="w-4 h-4" />
-                        Make Private
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-4 h-4" />
-                        Make Public
-                      </>
-                    )}
-                  </button>
-                  
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium transition-colors"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    Edit
-                  </button>
-                  
-                  <button
-                    onClick={handleDelete}
-                    className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 text-sm font-medium transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                </div>
-              </div>
-            )}
-
-            <div className="flex justify-center pt-4">
-              <button
-                onClick={onFlip}
-                className="text-gray-500 hover:text-gray-700 text-sm"
-              >
-                ← Back to photo
-              </button>
+        <div className="relative z-10">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
+              <Camera className="w-full h-full text-white" />
+            </div>
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
+              <Heart className="w-full h-full text-white" />
+            </div>
+            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
+              <Users className="w-full h-full text-white" />
             </div>
           </div>
+
+          <h2 className="text-4xl font-bold gradient-text mb-4">
+            Welcome to Taleshot
+          </h2>
+          
+          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+            Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
+          </p>
+
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
+          >
+            <Plus className="w-6 h-6" />
+            Add Your First Photo
+          </button>
         </div>
       </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="text-gray-600">Loading your photos...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (photos.length === 0) {
+    return (
+      <>
+        <EmptyState />
+        <AddPhotoModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          onPhotoAdded={fetchPhotos}
+        />
+      </>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Page Header */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
+            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+              <Camera className="w-4 h-4" />
+              {photos.length} photos
+            </p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <TagFilter
+            availableTags={availableTags}
+            selectedTag={selectedTag}
+            onTagChange={setSelectedTag}
+          />
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            <Plus className="w-4 h-4" />
+            Add Photo
+          </button>
+        </div>
+      </div>
+
+      {/* Photo Grid */}
+      {filteredPhotos.length === 0 ? (
+        <div className="text-center py-12">
+          <div className="text-gray-500 mb-4">No photos match your current filters</div>
+          <button
+            onClick={() => {
+              setSelectedTag('all');
+            }}
+            className="text-blue-600 hover:text-blue-700 font-medium"
+          >
+            Clear filters
+          </button>
+        </div>
+      ) : (
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
+          {filteredPhotos.map(photo => 
+            photo.is_gallery_tile ? (
+              <PhotoTile
+                key={photo.id}
+                photo={photo}
+                isFlipped={flippedCards.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                viewMode={viewMode}
+                onPhotoAdded={fetchPhotos}
+              />
+            ) : (
+              <PhotoCard
+                key={photo.id}
+                photo={photo}
+                isFlipped={flippedCards.has(photo.id)}
+                onFlip={() => handleFlip(photo.id)}
+                onDelete={handleDelete}
+                onUpdate={handleUpdate}
+                viewMode={viewMode}
+              />
+            )
+          )}
+        </div>
+      )}
+
+      <AddPhotoModal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onPhotoAdded={fetchPhotos}
+      />
     </div>
   );
 }
