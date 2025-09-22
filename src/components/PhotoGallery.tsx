@@ -20,7 +20,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string>('all');
-  const [viewMode, setViewMode] = useState<ViewMode>('card');
+  const [viewMode, setViewMode] = useState<ViewMode>('flip');
 
   // Expose reload function to parent
   React.useEffect(() => {
@@ -199,20 +199,18 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-              <Camera className="w-4 h-4" />
-              {photos.length} photos
-            </p>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold gradient-text">Your Photos</h1>
+          <p className="text-gray-600 flex items-center gap-2 mt-1">
+            <Camera className="w-4 h-4" />
+            {photos.length} photos in your collection
+          </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <TagFilter
             availableTags={availableTags}
             selectedTag={selectedTag}
@@ -220,9 +218,9 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           />
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+            className="btn-primary inline-flex items-center gap-2 btn-hover-effect"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             Add Photo
           </button>
         </div>
@@ -242,31 +240,18 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
-          {filteredPhotos.map(photo => 
-            photo.is_gallery_tile ? (
-              <PhotoTile
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-                onPhotoAdded={fetchPhotos}
-              />
-            ) : (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-              />
-            )
-          )}
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredPhotos.map(photo => (
+            <PhotoCard
+              key={photo.id}
+              photo={photo}
+              isFlipped={flippedCards.has(photo.id)}
+              onFlip={() => handleFlip(photo.id)}
+              onDelete={handleDelete}
+              onUpdate={handleUpdate}
+              viewMode={viewMode}
+            />
+          ))}
         </div>
       )}
 
