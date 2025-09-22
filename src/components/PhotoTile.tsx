@@ -19,10 +19,13 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('card');
 
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
+      onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -88,7 +91,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-        }
+    if (selectedTag === 'all') {
+      setFilteredPhotos(photos);
+    } else {
+      setFilteredPhotos(photos.filter(photo => {
         return photo.tags?.includes(selectedTag);
       }));
     }
