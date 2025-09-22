@@ -3,7 +3,6 @@ import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
-import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import { PhotoGalleryModal } from './PhotoGalleryModal';
 import type { Photo, ViewMode } from '../types';
@@ -23,13 +22,9 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [selectedTag, setSelectedTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
-  const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Expose reload function to parent
   React.useEffect(() => {
-    if (onReload) {
-      onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
       };
@@ -54,50 +49,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       const { data, error } = await supabase
         .from('photos')
         .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      // Get tags for each photo
-      const photosWithTags = await Promise.all(
-        (data || []).map(async (photo) => {
-          const { data: tags } = await supabase
-            .from('photo_tags')
-            .select('tag_name')
-            .eq('photo_id', photo.id);
-          
-          return {
-            ...photo,
-            tags: tags?.map(t => t.tag_name) || []
-          };
-        })
-      );
-
-      // Group photos by batch_id for gallery display
-      const batchGroups = new Map<string, Photo[]>();
-      const individualPhotos: Photo[] = [];
-      
-      photosWithTags.forEach(photo => {
-        if (photo.batch_id && photo.upload_type === 'group') {
-          if (!batchGroups.has(photo.batch_id)) {
-            batchGroups.set(photo.batch_id, []);
-          }
-          batchGroups.get(photo.batch_id)!.push(photo);
-        } else {
-          individualPhotos.push(photo);
-        }
-      });
-      
-      // Create display photos array with gallery tiles
-      const displayPhotos: Photo[] = [...individualPhotos];
-      
-      batchGroups.forEach((groupPhotos, batchId) => {
-        if (groupPhotos.length > 1) {
-          // Create a gallery tile using the first photo as representative
-          const representative: Photo = {
-            ...groupPhotos[0],
-            is_gallery_tile: true,
             gallery_photos: groupPhotos
           };
           displayPhotos.push(representative);
