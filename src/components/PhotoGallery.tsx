@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
+import { Plus, Camera, Heart, Users, Gift, Calendar } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { PhotoCard } from './PhotoCard';
-import { PhotoTile } from './PhotoTile';
-import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
+import { PhotoGalleryModal } from './PhotoGalleryModal';
+import { AddPhotoModal } from './AddPhotoModal';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoGalleryProps {
@@ -20,17 +20,17 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState('all');
+  const [selectedTag, setSelectedTag] = useState<string>('all');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
+  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [galleryPhotos, setGalleryPhotos] = useState<Photo[]>([]);
+  const [galleryIndex, setGalleryIndex] = useState(0);
 
   // Expose reload function to parent
   React.useEffect(() => {
     if (onReload) {
-      const originalOnReload = onReload;
-      onReload = () => {
         setFlippedCards(new Set());
         fetchPhotos();
-      };
     }
   }, [onReload]);
 
@@ -57,24 +57,46 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
 
       if (error) throw error;
 
-      // Get tags for each photo
-      const photosWithTags = await Promise.all(
-        (data || []).map(async (photo) => {
-          const { data: tags } = await supabase
-            .from('photo_tags')
-            .select('tag_name')
-            .eq('photo_id', photo.id);
-          
-          return {
-            ...photo,
-            tags: tags?.map(t => t.tag_name) || []
+      const photosWithTags = data || [];
+      
+      // Group photos by gallery_id
+      const photoGroups = new Map<string, Photo[]>();
+      const individualPhotos: Photo[] = [];
+
+      photosWithTags.forEach(photo => {
+        const galleryId = photo.tags?.find((tag: string) => tag.startsWith('gallery_'))?.replace('gallery_', '');
+        if (galleryId) {
+          if (!photoGroups.has(galleryId)) {
+            photoGroups.set(galleryId, []);
+          }
+          photoGroups.get(galleryId)!.push(photo);
+        } else {
+          individualPhotos.push(photo);
+        }
+      });
+
+      // Create display photos array
+      const displayPhotos: Photo[] = [...individualPhotos];
+
+      // Add gallery tiles for groups with multiple photos
+      photoGroups.forEach((groupPhotos, galleryId) => {
+        if (groupPhotos.length > 1) {
+          // Create a representative tile for the gallery
+          const representative = {
+            ...groupPhotos[0],
+            is_gallery_tile: true,
+            gallery_photos: groupPhotos
           };
-        })
-      );
+          displayPhotos.push(representative);
+        } else if (groupPhotos.length === 1) {
+          // Single photo in batch, treat as individual
+          displayPhotos.push(groupPhotos[0]);
+        }
+      });
 
-      setPhotos(photosWithTags);
+      setPhotos(displayPhotos);
 
-      // Extract unique tags
+      // Extract unique tags (excluding gallery tags)
       const tags = new Set<string>();
       photosWithTags.forEach(photo => {
         photo.tags?.forEach(tag => {
@@ -93,51 +115,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   };
 
   const filterPhotos = () => {
-    let filtered: Photo[] = [];
-
-    // Group photos by batch_id for gallery functionality
-    const batchGroups = new Map<string, Photo[]>();
-    const individualPhotos: Photo[] = [];
-    
-    photos.forEach(photo => {
-      if (photo.batch_id && photo.upload_type === 'group') {
-        if (!batchGroups.has(photo.batch_id)) {
-          batchGroups.set(photo.batch_id, []);
-        }
-        batchGroups.get(photo.batch_id)!.push(photo);
-      } else {
-        individualPhotos.push(photo);
-      }
-    });
-    
-    // Start with individual photos
-    filtered = [...individualPhotos];
-    
-    // Add gallery tiles for batched photos
-    batchGroups.forEach((groupPhotos, batchId) => {
-      if (groupPhotos.length > 1) {
-        // Create a gallery tile using the first photo as representative
-        const representative: Photo = {
-          ...groupPhotos[0],
-          is_gallery_tile: true,
-          gallery_photos: groupPhotos
-        };
-        filtered.push(representative);
-      } else if (groupPhotos.length === 1) {
-        // Single photo in batch, treat as individual
-        filtered.push(groupPhotos[0]);
-      }
-    });
-
-    // Apply tag filtering
     if (selectedTag === 'all') {
-      setFilteredPhotos(filtered);
+      setFilteredPhotos(photos);
     } else {
-      setFilteredPhotos(filtered.filter(photo => {
-        if (photo.is_gallery_tile && photo.gallery_photos) {
-          // For gallery tiles, check if any photo in the gallery has the tag
-          return photo.gallery_photos.some(p => p.tags?.includes(selectedTag));
-        }
+      setFilteredPhotos(photos.filter(photo => {
         return photo.tags?.includes(selectedTag);
       }));
     }
@@ -173,6 +154,20 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     setPhotos(prev => prev.map(photo => 
       photo.id === updatedPhoto.id ? updatedPhoto : photo
     ));
+  };
+
+  const handlePhotoClick = (photo: Photo, index: number) => {
+    if (photo.is_gallery_tile && photo.gallery_photos) {
+      // Open gallery modal with all photos from the gallery
+      setGalleryPhotos(photo.gallery_photos);
+      setGalleryIndex(0);
+      setIsGalleryOpen(true);
+    } else {
+      // Open single photo in gallery modal
+      setGalleryPhotos([photo]);
+      setGalleryIndex(0);
+      setIsGalleryOpen(true);
+    }
   };
 
   const EmptyState = () => (
@@ -242,20 +237,18 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
-              <Camera className="w-4 h-4" />
-              {photos.length} photos
-            </p>
-          </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold gradient-text">Your Photos</h1>
+          <p className="text-gray-600 flex items-center gap-2 mt-1">
+            <Camera className="w-4 h-4" />
+            {photos.length} photos in your collection
+          </p>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <TagFilter
             availableTags={availableTags}
             selectedTag={selectedTag}
@@ -263,9 +256,9 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           />
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
+            className="btn-primary inline-flex items-center gap-2 btn-hover-effect"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-5 h-5" />
             Add Photo
           </button>
         </div>
@@ -285,31 +278,78 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
-          {filteredPhotos.map(photo => 
-            photo.is_gallery_tile ? (
-              <PhotoTile
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-                onPhotoAdded={fetchPhotos}
-              />
-            ) : (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-              />
-            )
-          )}
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredPhotos.map((photo, index) => (
+            <div key={photo.id} className="perspective">
+              <div 
+                className={`preserve-3d transition-transform duration-700 ${
+                  flippedCards.has(photo.id) ? 'rotate-y-180' : ''
+                }`}
+              >
+                {/* Front of card */}
+                <div className="backface-hidden">
+                  <div className="photo-card group cursor-pointer" onClick={() => handlePhotoClick(photo, index)}>
+                    <div className="aspect-square overflow-hidden rounded-t-xl">
+                      <img
+                        src={photo.image_url || photo.imageUrl}
+                        alt={photo.title}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      {photo.is_gallery_tile && photo.gallery_photos && (
+                        <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium">
+                          {photo.gallery_photos.length} photos
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="p-4 bg-white rounded-b-xl">
+                      <div className="flex items-start justify-between mb-2">
+                        <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 flex-1">
+                          {photo.title}
+                        </h3>
+                        <div className="flex items-center gap-1 ml-2">
+                          {photo.is_public ? (
+                            <div className="w-2 h-2 bg-green-500 rounded-full" title="Public" />
+                          ) : (
+                            <div className="w-2 h-2 bg-gray-400 rounded-full" title="Private" />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          {photo.date_taken}
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleFlip(photo.id);
+                          }}
+                          className="text-blue-600 hover:text-blue-700 font-medium"
+                        >
+                          Details
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Back of card */}
+                <div className="backface-hidden rotate-y-180 absolute inset-0">
+                  <PhotoCard
+                    photo={photo}
+                    isFlipped={true}
+                    onFlip={() => handleFlip(photo.id)}
+                    onDelete={handleDelete}
+                    onUpdate={handleUpdate}
+                    viewMode={viewMode}
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -317,6 +357,13 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onPhotoAdded={fetchPhotos}
+      />
+
+      <PhotoGalleryModal
+        isOpen={isGalleryOpen}
+        onClose={() => setIsGalleryOpen(false)}
+        photos={galleryPhotos}
+        initialIndex={galleryIndex}
       />
     </div>
   );
