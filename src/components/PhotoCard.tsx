@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Tag, X, Edit3, Trash2, Eye, EyeOff, Save, Plus, Lock, Unlock } from 'lucide-react';
+import { Calendar, Tag, X, CreditCard as Edit3, Trash2, Eye, EyeOff, Save, Plus, Lock, Unlock } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { LazyImage } from './LazyImage';
 import type { Photo, ViewMode } from '../types';
