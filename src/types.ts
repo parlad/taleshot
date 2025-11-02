@@ -24,6 +24,7 @@ export interface PhotoCardProps {
   onUpdate?: (updatedPhoto: Photo) => void;
   viewMode?: ViewMode;
   isPublicView?: boolean;
+  onTogglePublic?: () => void;
 }
 
 export interface User {

@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift } from 'lucide-react';
+import { Plus, Camera, Heart, Users, Gift, Lock, Unlock } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { useToast } from '../hooks/useToast';
 import { PhotoCard } from './PhotoCard';
 import { PhotoTile } from './PhotoTile';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
+import { Toast } from './Toast';
+import { SkeletonLoader } from './SkeletonLoader';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoGalleryProps {
@@ -14,6 +17,7 @@ interface PhotoGalleryProps {
 
 export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const { user } = useSupabaseAuth();
+  const { toasts, showToast, hideToast } = useToast();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +25,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
 
   // Expose reload function to parent
@@ -42,7 +47,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
 
   useEffect(() => {
     filterPhotos();
-  }, [photos, selectedTag]);
+  }, [photos, selectedTag, searchQuery]);
 
   const fetchPhotos = async () => {
     if (!user) return;
@@ -85,8 +90,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       });
       setAvailableTags(Array.from(tags).sort());
 
+      showToast('Photos loaded successfully', 'success');
     } catch (error) {
       console.error('Error fetching photos:', error);
+      showToast('Failed to load photos', 'error');
     } finally {
       setLoading(false);
     }
@@ -129,18 +136,42 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       }
     });
 
-    // Apply tag filtering
-    if (selectedTag === 'all') {
-      setFilteredPhotos(filtered);
-    } else {
-      setFilteredPhotos(filtered.filter(photo => {
+    // Apply tag and search filtering
+    let finalFiltered = filtered;
+
+    // Filter by tag
+    if (selectedTag !== 'all') {
+      finalFiltered = finalFiltered.filter(photo => {
         if (photo.is_gallery_tile && photo.gallery_photos) {
           // For gallery tiles, check if any photo in the gallery has the tag
           return photo.gallery_photos.some(p => p.tags?.includes(selectedTag));
         }
         return photo.tags?.includes(selectedTag);
-      }));
+      });
     }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      finalFiltered = finalFiltered.filter(photo => {
+        const matchesTitle = photo.title.toLowerCase().includes(query);
+        const matchesReason = photo.reason.toLowerCase().includes(query);
+        const matchesTags = photo.tags?.some(tag => tag.toLowerCase().includes(query));
+        
+        if (photo.is_gallery_tile && photo.gallery_photos) {
+          const matchesGallery = photo.gallery_photos.some(p => 
+            p.title.toLowerCase().includes(query) ||
+            p.reason.toLowerCase().includes(query) ||
+            p.tags?.some(tag => tag.toLowerCase().includes(query))
+          );
+          return matchesTitle || matchesReason || matchesTags || matchesGallery;
+        }
+        
+        return matchesTitle || matchesReason || matchesTags;
+      });
+    }
+
+    setFilteredPhotos(finalFiltered);
   };
 
   const handleFlip = (photoId: string) => {
@@ -163,9 +194,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         newSet.delete(photoId);
         return newSet;
       });
+      showToast('Photo deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting photo:', error);
-      alert('Failed to delete photo. Please try again.');
+      showToast('Failed to delete photo', 'error');
     }
   };
 
@@ -173,6 +205,33 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     setPhotos(prev => prev.map(photo => 
       photo.id === updatedPhoto.id ? updatedPhoto : photo
     ));
+    showToast('Photo updated successfully', 'success');
+  };
+
+  const togglePhotoPublic = async (photo: Photo) => {
+    try {
+      const newPublicState = !photo.is_public;
+      const { error } = await supabase
+        .from('photos')
+        .update({ is_public: newPublicState })
+        .eq('id', photo.id);
+
+      if (error) throw error;
+
+      const updatedPhoto: Photo = {
+        ...photo,
+        is_public: newPublicState
+      };
+
+      handleUpdate(updatedPhoto);
+      showToast(
+        `Photo made ${newPublicState ? 'public' : 'private'}`,
+        'success'
+      );
+    } catch (error) {
+      console.error('Error updating photo visibility:', error);
+      showToast('Failed to update photo visibility', 'error');
+    }
   };
 
   const EmptyState = () => (
@@ -198,7 +257,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           </div>
 
           <h2 className="text-4xl font-bold gradient-text mb-4">
-            Welcome to Taleshot
+            Upload your first story
           </h2>
           
           <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
@@ -218,14 +277,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   );
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <div className="text-gray-600">Loading your photos...</div>
-        </div>
-      </div>
-    );
+    return <SkeletonLoader count={6} />;
   }
 
   if (photos.length === 0) {
@@ -235,8 +287,23 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         <AddPhotoModal
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)}
-          onPhotoAdded={fetchPhotos}
+          onPhotoAdded={() => {
+            fetchPhotos();
+            showToast('Photo uploaded successfully!', 'success');
+          }}
         />
+        
+        {/* Toast Notifications */}
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {toasts.map(toast => (
+            <Toast
+              key={toast.id}
+              message={toast.message}
+              type={toast.type}
+              onClose={() => hideToast(toast.id)}
+            />
+          ))}
+        </div>
       </>
     );
   }
@@ -247,45 +314,41 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-lg font-semibold text-gray-900">Your Photos</h1>
-            <p className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+            <h1 className="text-2xl font-bold text-gray-900">Your Photos</h1>
+            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
               <Camera className="w-4 h-4" />
               {photos.length} photos
             </p>
           </div>
         </div>
-        
-        <div className="flex items-center gap-2">
-          <TagFilter
-            availableTags={availableTags}
-            selectedTag={selectedTag}
-            onTagChange={setSelectedTag}
-          />
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-sm font-medium rounded-lg hover:from-indigo-700 hover:to-purple-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
-          >
-            <Plus className="w-4 h-4" />
-            Add Photo
-          </button>
-        </div>
       </div>
+
+      {/* Search and Filter */}
+      <TagFilter
+        availableTags={availableTags}
+        selectedTag={selectedTag}
+        onTagChange={setSelectedTag}
+        onSearch={setSearchQuery}
+      />
 
       {/* Photo Grid */}
       {filteredPhotos.length === 0 ? (
         <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">No photos match your current filters</div>
+          <div className="text-gray-500 mb-4">
+            {searchQuery ? `No photos found for "${searchQuery}"` : 'No photos match your current filters'}
+          </div>
           <button
             onClick={() => {
               setSelectedTag('all');
+              setSearchQuery('');
             }}
-            className="text-blue-600 hover:text-blue-700 font-medium"
+            className="text-purple-600 hover:text-purple-700 font-medium"
           >
             Clear filters
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2 relative">
           {filteredPhotos.map(photo => 
             photo.is_gallery_tile ? (
               <PhotoTile
@@ -296,7 +359,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
                 viewMode={viewMode}
-                onPhotoAdded={fetchPhotos}
+                onPhotoAdded={() => {
+                  fetchPhotos();
+                  showToast('Photo added to gallery!', 'success');
+                }}
               />
             ) : (
               <PhotoCard
@@ -307,17 +373,60 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
                 onDelete={handleDelete}
                 onUpdate={handleUpdate}
                 viewMode={viewMode}
+                onTogglePublic={() => togglePhotoPublic(photo)}
               />
             )
           )}
+          
+          {/* Quick Privacy Toggle Buttons */}
+          <div className="fixed bottom-20 right-6 flex flex-col gap-2 z-40">
+            {filteredPhotos.slice(0, 3).map(photo => (
+              <button
+                key={`privacy-${photo.id}`}
+                onClick={() => togglePhotoPublic(photo)}
+                className={`w-12 h-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center ${
+                  photo.is_public 
+                    ? 'bg-blue-600 text-white' 
+                    : 'bg-gray-400 text-white'
+                }`}
+                title={`Make ${photo.is_public ? 'private' : 'public'}`}
+              >
+                {photo.is_public ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+              </button>
+            ))}
+          </div>
         </div>
       )}
+
+      {/* Floating Add Button */}
+      <button
+        onClick={() => setIsAddModalOpen(true)}
+        className="floating-button"
+        title="Add Photo"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       <AddPhotoModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
-        onPhotoAdded={fetchPhotos}
+        onPhotoAdded={() => {
+          fetchPhotos();
+          showToast('Photo uploaded successfully!', 'success');
+        }}
       />
+      
+      {/* Toast Notifications */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {toasts.map(toast => (
+          <Toast
+            key={toast.id}
+            message={toast.message}
+            type={toast.type}
+            onClose={() => hideToast(toast.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

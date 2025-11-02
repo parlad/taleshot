@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Calendar, Tag, X, Edit3, Trash2, Eye, EyeOff, Save, Plus } from 'lucide-react';
+import { Calendar, Tag, X, Edit3, Trash2, Eye, EyeOff, Save, Plus, Lock, Unlock } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { LazyImage } from './LazyImage';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoCardProps {
@@ -10,9 +11,10 @@ interface PhotoCardProps {
   onDelete: (id: string) => void;
   onUpdate: (updatedPhoto: Photo) => void;
   viewMode: ViewMode;
+  onTogglePublic?: () => void;
 }
 
-export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode }: PhotoCardProps) {
+export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onTogglePublic }: PhotoCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({
     title: photo.title,
@@ -163,12 +165,26 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     return (
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="aspect-square relative">
-          <img
+          <LazyImage
             src={photo.imageUrl || photo.image_url}
             alt={photo.title}
             className="w-full h-full object-cover"
           />
           <div className="absolute top-4 right-4 flex gap-2">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onTogglePublic?.();
+              }}
+              className={`p-2 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm ${
+                photo.is_public 
+                  ? 'bg-blue-600 text-white' 
+                  : 'bg-gray-400 text-white'
+              }`}
+              title={`Make ${photo.is_public ? 'private' : 'public'}`}
+            >
+              {photo.is_public ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+            </button>
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -192,18 +208,18 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           </div>
         </div>
         <div className="p-4">
-          <h3 className="text-lg font-semibold mb-2">{photo.title}</h3>
-          <div className="flex items-center text-gray-500 text-sm mb-3">
+          <h3 className="text-base font-semibold mb-2">{photo.title}</h3>
+          <div className="flex items-center text-gray-500 text-xs mb-3">
             <Calendar className="w-4 h-4 mr-2" />
             {photo.date_taken}
           </div>
-          <p className="text-gray-700 text-sm line-clamp-2">{photo.reason}</p>
+          <p className="text-gray-700 text-xs line-clamp-2">{photo.reason}</p>
           {photo.tags && photo.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-3">
               {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 3).map((tag, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                  className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full"
                 >
                   {tag}
                 </span>
@@ -231,14 +247,28 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       >
         {/* Front of card */}
         <div className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden shadow-lg">
-          <img
+          <LazyImage
             src={photo.imageUrl || photo.image_url}
             alt={photo.title}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+          
+          {/* Privacy indicator */}
+          <div className="absolute top-4 right-4">
+            <div className={`p-2 rounded-full ${
+              photo.is_public ? 'bg-blue-600' : 'bg-gray-600'
+            } bg-opacity-80 backdrop-blur-sm`}>
+              {photo.is_public ? (
+                <Unlock className="w-4 h-4 text-white" />
+              ) : (
+                <Lock className="w-4 h-4 text-white" />
+              )}
+            </div>
+          </div>
+          
           <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h3 className="text-xl font-semibold mb-2">{photo.title}</h3>
+            <h3 className="text-lg font-semibold mb-2">{photo.title}</h3>
             <div className="flex items-center text-white/80 text-sm">
               <Calendar className="w-4 h-4 mr-2" />
               {photo.date_taken}
@@ -377,16 +407,16 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           ) : (
             <>
               <div className="flex-1">
-                <h3 className="text-xl font-semibold text-gray-800 mb-3">{photo.title}</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">{photo.title}</h3>
                 <div className="flex items-center text-gray-500 text-sm mb-4">
                   <Calendar className="w-4 h-4 mr-2" />
                   {photo.date_taken}
                 </div>
-                <p className="text-gray-700 text-sm leading-relaxed mb-4">{photo.reason}</p>
+                <p className="text-gray-700 text-xs leading-relaxed mb-4">{photo.reason}</p>
                 
                 {photo.tags && photo.tags.length > 0 && (
                   <div className="mb-4">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center">
+                    <h4 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
                       <Tag className="w-4 h-4 mr-1" />
                       Tags
                     </h4>
@@ -394,7 +424,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                       {photo.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
                         <span
                           key={index}
-                          className="px-2 py-1 bg-slate-100 text-slate-700 text-xs rounded-md"
+                          className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
                         >
                           {tag}
                         </span>
@@ -404,16 +434,16 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 )}
 
                 <div className="mb-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Visibility</h4>
+                  <h4 className="text-xs font-medium text-gray-700 mb-2">Visibility</h4>
                   <div className="flex items-center gap-2">
                     {photo.is_public ? (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-md text-xs">
-                        <Eye className="w-3 h-3" />
+                      <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                        <Unlock className="w-3 h-3" />
                         Public
                       </span>
                     ) : (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-xs">
-                        <EyeOff className="w-3 h-3" />
+                      <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                        <Lock className="w-3 h-3" />
                         Private
                       </span>
                     )}
@@ -427,7 +457,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                     e.stopPropagation();
                     setIsEditing(true);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit
@@ -435,19 +465,23 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    togglePublic();
+                    onTogglePublic?.();
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  className={`flex items-center gap-2 px-3 py-2 text-white rounded-lg transition-colors text-sm ${
+                    photo.is_public 
+                      ? 'bg-blue-600 hover:bg-blue-700' 
+                      : 'bg-gray-500 hover:bg-gray-600'
+                  }`}
                 >
-                  {photo.is_public ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  Make {photo.is_public ? 'Private' : 'Public'}
+                  {photo.is_public ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                  {photo.is_public ? 'Private' : 'Public'}
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     handleDelete();
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
                 >
                   <Trash2 className="w-4 h-4" />
                   Delete
