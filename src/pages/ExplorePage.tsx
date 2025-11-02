@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, TrendingUp, MapPin, Tag } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { LazyImage } from '../components/LazyImage';
 import { PhotoViewerModal } from '../components/PhotoViewerModal';

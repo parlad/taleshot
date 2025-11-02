@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft, ChevronRight, Lock, Unlock, Heart, Share2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useFavorites } from '../hooks/useFavorites';
 import type { Photo } from '../types';
 
 interface PhotoViewerModalProps {
@@ -13,6 +15,8 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const currentPhoto = photos[currentIndex];
+  const { isFavorite, toggleFavorite } = useFavorites(currentPhoto?.id);
 
   const minSwipeDistance = 50;
 
@@ -66,13 +70,16 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
 
   if (!isOpen || photos.length === 0) return null;
 
-  const currentPhoto = photos[currentIndex];
-
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md"
-      onClick={onClose}
-    >
+    <AnimatePresence>
+      <motion.div
+        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md"
+        onClick={onClose}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.3 }}
+      >
       <div
         className="relative w-full h-full max-w-7xl mx-auto flex items-center justify-center p-4"
         onClick={(e) => e.stopPropagation()}
@@ -106,16 +113,23 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
         )}
 
         {/* Image Container */}
-        <div
+        <motion.div
           className="relative max-w-5xl max-h-[80vh] flex flex-col items-center"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          key={currentIndex}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
         >
-          <img
+          <motion.img
             src={currentPhoto.imageUrl || currentPhoto.image_url}
             alt={currentPhoto.title}
             className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.3 }}
           />
 
           {/* Photo Info */}
@@ -126,6 +140,22 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
                 <p className="text-white/80 text-sm">{currentPhoto.date_taken}</p>
               </div>
               <div className="flex items-center gap-2">
+                <motion.button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite();
+                  }}
+                  className={`p-2 rounded-full transition-all ${
+                    isFavorite
+                      ? 'bg-red-600 text-white'
+                      : 'bg-white/20 text-white hover:bg-white/30'
+                  }`}
+                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-current' : ''}`} />
+                </motion.button>
                 <div
                   className={`p-2 rounded-full ${
                     currentPhoto.is_public ? 'bg-blue-600' : 'bg-gray-600'
@@ -165,8 +195,9 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
               {currentIndex + 1} / {photos.length}
             </div>
           )}
-        </div>
+        </motion.div>
       </div>
-    </div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Camera, Heart, Users, Gift, Lock, Unlock } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
 import { useToast } from '../hooks/useToast';
@@ -405,55 +406,82 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           </button>
         </div>
       ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2 relative">
-          {filteredPhotos.map(photo => 
-            photo.is_gallery_tile ? (
-              <PhotoTile
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-                onPhotoAdded={() => {
-                  fetchPhotos();
-                  showToast('Photo added to gallery!', 'success');
-                }}
-              />
-            ) : (
-              <div onClick={() => handlePhotoClick(photo.id)} className="cursor-pointer">
-                <PhotoCard
+        <motion.div
+          className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2 relative"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <AnimatePresence mode="popLayout">
+            {filteredPhotos.map((photo, index) =>
+              photo.is_gallery_tile ? (
+                <motion.div
                   key={photo.id}
-                  photo={photo}
-                  isFlipped={flippedCards.has(photo.id)}
-                  onFlip={() => handleFlip(photo.id)}
-                  onDelete={handleDelete}
-                  onUpdate={handleUpdate}
-                  viewMode={viewMode}
-                  onTogglePublic={() => togglePhotoPublic(photo)}
-                />
-              </div>
-            )
-          )}
-          
-          {/* Quick Privacy Toggle Buttons */}
-          <div className="fixed bottom-20 right-6 flex flex-col gap-2 z-40">
-            {filteredPhotos.slice(0, 3).map(photo => (
-              <button
-                key={`privacy-${photo.id}`}
-                onClick={() => togglePhotoPublic(photo)}
-                className={`w-12 h-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center backdrop-blur-sm border-2 ${
-                  photo.is_public
-                    ? 'bg-blue-600 text-white border-blue-700'
-                    : 'bg-gray-400 text-white border-gray-500'
-                }`}
-                title={photo.is_public ? 'Public - Click to make private' : 'Private - Click to make public'}
-              >
-                {photo.is_public ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
-              </button>
-            ))}
-          </div>
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  layout
+                >
+                  <PhotoTile
+                    photo={photo}
+                    isFlipped={flippedCards.has(photo.id)}
+                    onFlip={() => handleFlip(photo.id)}
+                    onDelete={handleDelete}
+                    onUpdate={handleUpdate}
+                    viewMode={viewMode}
+                    onPhotoAdded={() => {
+                      fetchPhotos();
+                      showToast('Photo added to gallery!', 'success');
+                    }}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={photo.id}
+                  onClick={() => handlePhotoClick(photo.id)}
+                  className="cursor-pointer"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  layout
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <PhotoCard
+                    photo={photo}
+                    isFlipped={flippedCards.has(photo.id)}
+                    onFlip={() => handleFlip(photo.id)}
+                    onDelete={handleDelete}
+                    onUpdate={handleUpdate}
+                    viewMode={viewMode}
+                    onTogglePublic={() => togglePhotoPublic(photo)}
+                  />
+                </motion.div>
+              )
+            )}
+          </AnimatePresence>
+        </motion.div>
+      )}
+
+      {/* Quick Privacy Toggle Buttons */}
+      {filteredPhotos.length > 0 && (
+        <div className="fixed bottom-20 right-6 flex flex-col gap-2 z-40">
+          {filteredPhotos.slice(0, 3).map(photo => (
+            <button
+              key={`privacy-${photo.id}`}
+              onClick={() => togglePhotoPublic(photo)}
+              className={`w-12 h-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center backdrop-blur-sm border-2 ${
+                photo.is_public
+                  ? 'bg-blue-600 text-white border-blue-700'
+                  : 'bg-gray-400 text-white border-gray-500'
+              }`}
+              title={photo.is_public ? 'Public - Click to make private' : 'Private - Click to make public'}
+            >
+              {photo.is_public ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+            </button>
+          ))}
         </div>
       )}
 
