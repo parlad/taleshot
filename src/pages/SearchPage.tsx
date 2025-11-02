@@ -61,25 +61,27 @@ export function SearchPage() {
             })
           );
 
-          // Group photos by batch_id
-          const batchGroups = new Map<string, Photo[]>();
+          // Group photos by gallery_ tags
+          const galleryGroups = new Map<string, Photo[]>();
           const individualPhotos: Photo[] = [];
-          
+
           photosWithTags.forEach(photo => {
-            if (photo.batch_id && photo.upload_type === 'group') {
-              if (!batchGroups.has(photo.batch_id)) {
-                batchGroups.set(photo.batch_id, []);
+            const galleryTag = photo.tags?.find(tag => tag.startsWith('gallery_'));
+
+            if (galleryTag) {
+              if (!galleryGroups.has(galleryTag)) {
+                galleryGroups.set(galleryTag, []);
               }
-              batchGroups.get(photo.batch_id)!.push(photo);
+              galleryGroups.get(galleryTag)!.push(photo);
             } else {
               individualPhotos.push(photo);
             }
           });
-          
+
           // Create display photos array with gallery tiles
           const displayPhotos: Photo[] = [...individualPhotos];
-          
-          batchGroups.forEach((groupPhotos, batchId) => {
+
+          galleryGroups.forEach((groupPhotos, galleryTag) => {
             if (groupPhotos.length > 1) {
               // Create a gallery tile using the first photo as representative
               const representative: Photo = {
@@ -89,7 +91,7 @@ export function SearchPage() {
               };
               displayPhotos.push(representative);
             } else if (groupPhotos.length === 1) {
-              // Single photo in batch, treat as individual
+              // Single photo in group, treat as individual
               displayPhotos.push(groupPhotos[0]);
             }
           });
@@ -145,7 +147,7 @@ export function SearchPage() {
   };
 
   const handleGalleryClick = async (photo: Photo) => {
-    if (!photo.batch_id || !photo.gallery_photos) return;
+    if (!photo.is_gallery_tile || !photo.gallery_photos) return;
 
     setSelectedUserPhotos(photo.gallery_photos);
     setGalleryIndex(0);

@@ -622,7 +622,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             setIsAddModalOpen(false);
             onPhotoAdded?.();
           }}
-          existingGalleryId={photo.batch_id || undefined}
+          existingGalleryId={photo.tags?.find(tag => tag.startsWith('gallery_'))?.replace('gallery_', '') || undefined}
           galleryTitle={photo.title}
         />
       </div>

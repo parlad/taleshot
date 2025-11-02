@@ -108,26 +108,29 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const filterPhotos = () => {
     let filtered: Photo[] = [];
 
-    // Group photos by batch_id for gallery functionality
-    const batchGroups = new Map<string, Photo[]>();
+    // Group photos by gallery_ tags for gallery functionality
+    const galleryGroups = new Map<string, Photo[]>();
     const individualPhotos: Photo[] = [];
-    
+
     photos.forEach(photo => {
-      if (photo.batch_id && photo.upload_type === 'group') {
-        if (!batchGroups.has(photo.batch_id)) {
-          batchGroups.set(photo.batch_id, []);
+      // Check if photo has a gallery_ tag
+      const galleryTag = photo.tags?.find(tag => tag.startsWith('gallery_'));
+
+      if (galleryTag) {
+        if (!galleryGroups.has(galleryTag)) {
+          galleryGroups.set(galleryTag, []);
         }
-        batchGroups.get(photo.batch_id)!.push(photo);
+        galleryGroups.get(galleryTag)!.push(photo);
       } else {
         individualPhotos.push(photo);
       }
     });
-    
+
     // Start with individual photos
     filtered = [...individualPhotos];
-    
-    // Add gallery tiles for batched photos
-    batchGroups.forEach((groupPhotos, batchId) => {
+
+    // Add gallery tiles for grouped photos
+    galleryGroups.forEach((groupPhotos, galleryTag) => {
       if (groupPhotos.length > 1) {
         // Create a gallery tile using the first photo as representative
         const representative: Photo = {
@@ -137,7 +140,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
         };
         filtered.push(representative);
       } else if (groupPhotos.length === 1) {
-        // Single photo in batch, treat as individual
+        // Single photo in group, treat as individual
         filtered.push(groupPhotos[0]);
       }
     });
