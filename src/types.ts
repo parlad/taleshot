@@ -12,6 +12,12 @@ export interface Photo {
   gallery_photos?: Photo[];
   is_gallery_tile?: boolean;
   upload_type?: 'individual' | 'group';
+  ai_description?: string;
+  ai_tags?: string[];
+  color_palette?: string[];
+  color_tone?: string;
+  ai_analyzed?: boolean;
+  ai_analyzed_at?: string;
 }
 
 export type ViewMode = 'flip' | 'slide';

@@ -27,6 +27,29 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
   const [newTag, setNewTag] = useState('');
   const [showNewTag, setShowNewTag] = useState(false);
 
+  const analyzePhotoInBackground = async (photoId: string, imageUrl: string) => {
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const apiUrl = `${supabaseUrl}/functions/v1/analyze-photo`;
+
+      await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          photoId,
+          imageUrl
+        })
+      });
+    } catch (error) {
+      console.error('Background photo analysis error:', error);
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
     if (files.length > 0) {
@@ -156,6 +179,8 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
 
           if (tagError) throw tagError;
         }
+
+        analyzePhotoInBackground(photo.id, imageUrl);
       }
 
       onPhotoAdded();

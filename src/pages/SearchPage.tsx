@@ -1,308 +1,331 @@
-import React, { useState } from 'react';
-import { Search, Users, Camera, Eye, Calendar, Tag, Images } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Sparkles, Loader, Camera } from 'lucide-react';
 import { supabase } from '../utils/supabase';
-import { PhotoGalleryModal } from '../components/PhotoGalleryModal';
-import type { Photo, User } from '../types';
+import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
+import { AdvancedSearchFilters } from '../components/AdvancedSearchFilters';
+import { PhotoGridItem } from '../components/PhotoGridItem';
+import { PhotoDetailModal } from '../components/PhotoDetailModal';
+import { MasonryGrid } from '../components/MasonryGrid';
+import { SkeletonLoader } from '../components/SkeletonLoader';
+import type { Photo } from '../types';
 
-interface SearchResult {
-  user_id: string;
-  user_email: string;
-  first_name?: string;
-  last_name?: string;
-  photo_count: number;
-  sample_photos: Photo[];
+interface SearchFilters {
+  tags?: string[];
+  dateRange?: { start?: string; end?: string };
+  colorTone?: string;
+  isPublic?: boolean;
+  storyId?: string;
 }
 
 export function SearchPage() {
+  const { user } = useSupabaseAuth();
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedUserPhotos, setSelectedUserPhotos] = useState<Photo[]>([]);
-  const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [galleryIndex, setGalleryIndex] = useState(0);
+  const [filters, setFilters] = useState<SearchFilters>({});
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchMetadata, setSearchMetadata] = useState<any>(null);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!searchQuery.trim()) return;
+  useEffect(() => {
+    fetchAvailableTags();
+  }, [user]);
+
+  const fetchAvailableTags = async () => {
+    try {
+      const { data: tags } = await supabase
+        .from('photo_tags')
+        .select('tag_name')
+        .order('tag_name');
+
+      if (tags) {
+        const uniqueTags = Array.from(new Set(tags.map(t => t.tag_name)))
+          .filter(tag => !tag.startsWith('gallery_'));
+        setAvailableTags(uniqueTags);
+      }
+    } catch (error) {
+      console.error('Error fetching tags:', error);
+    }
+  };
+
+  const handleAISearch = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     setLoading(true);
     try {
-      // Search for users with public photos
-      const { data: users, error } = await supabase
-        .rpc('search_public_photos_with_profile', { search_query: searchQuery });
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      if (error) throw error;
+      const apiUrl = `${supabaseUrl}/functions/v1/ai-search`;
 
-      // Group photos by batch_id for each user
-      const processedResults = await Promise.all(
-        (users || []).map(async (user) => {
-          // Get all public photos for this user
-          const { data: allPhotos, error: photosError } = await supabase
-            .from('photos')
-            .select('*')
-            .eq('user_id', user.user_id)
-            .eq('is_public', true)
-            .order('created_at', { ascending: false });
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      };
 
-          if (photosError) throw photosError;
-
-          // Get tags for each photo
-          const photosWithTags = await Promise.all(
-            (allPhotos || []).map(async (photo) => {
-              const { data: tags } = await supabase
-                .from('photo_tags')
-                .select('tag_name')
-                .eq('photo_id', photo.id);
-              
-              return {
-                ...photo,
-                tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
-              };
-            })
-          );
-
-          // Group photos by gallery_ tags
-          const galleryGroups = new Map<string, Photo[]>();
-          const individualPhotos: Photo[] = [];
-
-          photosWithTags.forEach(photo => {
-            const galleryTag = photo.tags?.find(tag => tag.startsWith('gallery_'));
-
-            if (galleryTag) {
-              if (!galleryGroups.has(galleryTag)) {
-                galleryGroups.set(galleryTag, []);
-              }
-              galleryGroups.get(galleryTag)!.push(photo);
-            } else {
-              individualPhotos.push(photo);
-            }
-          });
-
-          // Create display photos array with gallery tiles
-          const displayPhotos: Photo[] = [...individualPhotos];
-
-          galleryGroups.forEach((groupPhotos, galleryTag) => {
-            if (groupPhotos.length > 1) {
-              // Create a gallery tile using the first photo as representative
-              const representative: Photo = {
-                ...groupPhotos[0],
-                is_gallery_tile: true,
-                gallery_photos: groupPhotos
-              };
-              displayPhotos.push(representative);
-            } else if (groupPhotos.length === 1) {
-              // Single photo in group, treat as individual
-              displayPhotos.push(groupPhotos[0]);
-            }
-          });
-
-          return {
-            ...user,
-            sample_photos: displayPhotos.slice(0, 6) // Show up to 6 photos/tiles
-          };
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          query: searchQuery,
+          filters,
+          userId: user?.id
         })
-      );
+      });
 
-      setSearchResults(processedResults);
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      setSearchResults(data.photos || []);
+      setSearchMetadata(data.metadata);
     } catch (error) {
-      console.error('Error searching photos:', error);
+      console.error('AI search error:', error);
+      await fallbackSearch();
     } finally {
       setLoading(false);
     }
   };
 
-  const handlePhotoClick = async (userId: string, photoIndex: number) => {
+  const fallbackSearch = async () => {
     try {
-      // Get all public photos for this user
-      const { data: allPhotos, error } = await supabase
+      let query = supabase
         .from('photos')
         .select('*')
-        .eq('user_id', userId)
-        .eq('is_public', true)
         .order('created_at', { ascending: false });
+
+      if (user) {
+        query = query.eq('user_id', user.id);
+      }
+
+      if (filters.isPublic !== undefined) {
+        query = query.eq('is_public', filters.isPublic);
+      }
+
+      if (filters.colorTone) {
+        query = query.eq('color_tone', filters.colorTone);
+      }
+
+      if (filters.dateRange?.start) {
+        query = query.gte('created_at', filters.dateRange.start);
+      }
+      if (filters.dateRange?.end) {
+        query = query.lte('created_at', filters.dateRange.end);
+      }
+
+      const { data: photos, error } = await query;
 
       if (error) throw error;
 
-      // Get tags for each photo
       const photosWithTags = await Promise.all(
-        (allPhotos || []).map(async (photo) => {
+        (photos || []).map(async (photo) => {
           const { data: tags } = await supabase
             .from('photo_tags')
             .select('tag_name')
             .eq('photo_id', photo.id);
-          
+
           return {
             ...photo,
-            tags: tags?.map(t => t.tag_name).filter(tag => !tag.startsWith('gallery_')) || []
+            tags: tags?.map(t => t.tag_name) || []
           };
         })
       );
 
-      setSelectedUserPhotos(photosWithTags);
-      setGalleryIndex(photoIndex);
-      setIsGalleryOpen(true);
+      let filtered = photosWithTags;
+
+      if (filters.tags && filters.tags.length > 0) {
+        filtered = filtered.filter(photo =>
+          filters.tags!.some(tag => photo.tags?.includes(tag))
+        );
+      }
+
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        filtered = filtered.filter(photo => {
+          const searchableText = [
+            photo.title,
+            photo.reason,
+            photo.ai_description,
+            ...(photo.tags || [])
+          ].join(' ').toLowerCase();
+          return searchableText.includes(query);
+        });
+      }
+
+      setSearchResults(filtered);
     } catch (error) {
-      console.error('Error loading user photos:', error);
+      console.error('Fallback search error:', error);
     }
   };
 
-  const handleGalleryClick = async (photo: Photo) => {
-    if (!photo.is_gallery_tile || !photo.gallery_photos) return;
-
-    setSelectedUserPhotos(photo.gallery_photos);
-    setGalleryIndex(0);
-    setIsGalleryOpen(true);
+  const handlePhotoClick = (photo: Photo) => {
+    setSelectedPhoto(photo);
+    setIsModalOpen(true);
   };
 
+  const handlePhotoUpdate = async (updatedPhoto: Photo) => {
+    try {
+      const { error } = await supabase
+        .from('photos')
+        .update({
+          title: updatedPhoto.title,
+          date_taken: updatedPhoto.date_taken,
+          reason: updatedPhoto.reason
+        })
+        .eq('id', updatedPhoto.id);
+
+      if (error) throw error;
+
+      if (updatedPhoto.tags) {
+        await supabase.from('photo_tags').delete().eq('photo_id', updatedPhoto.id);
+
+        if (updatedPhoto.tags.length > 0) {
+          const tagInserts = updatedPhoto.tags.map(tagName => ({
+            photo_id: updatedPhoto.id,
+            tag_name: tagName
+          }));
+          await supabase.from('photo_tags').insert(tagInserts);
+        }
+      }
+
+      setSearchResults(results =>
+        results.map(p => p.id === updatedPhoto.id ? updatedPhoto : p)
+      );
+      setSelectedPhoto(updatedPhoto);
+    } catch (error) {
+      console.error('Error updating photo:', error);
+    }
+  };
+
+  const handlePhotoDelete = async (photoId: string) => {
+    try {
+      const photo = searchResults.find(p => p.id === photoId);
+      if (photo?.image_url) {
+        const fileName = photo.image_url.split('/').pop();
+        if (fileName) {
+          await supabase.storage.from('photos').remove([fileName]);
+        }
+      }
+
+      await supabase.from('photo_tags').delete().eq('photo_id', photoId);
+      await supabase.from('photos').delete().eq('id', photoId);
+
+      setSearchResults(results => results.filter(p => p.id !== photoId));
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (Object.keys(filters).length > 0 || searchQuery.trim()) {
+      handleAISearch();
+    }
+  }, [filters]);
+
   return (
-    <div className="space-y-6">
-      {/* Search Header */}
-      <div className="text-center">
-        <h1 className="text-3xl font-bold gradient-text mb-2">Discover Photos</h1>
-        <p className="text-gray-600">Search for users and explore their public photo collections</p>
+    <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold gradient-text mb-2">AI-Powered Search</h1>
+        <p className="text-gray-600 dark:text-gray-400">
+          Search naturally: "mountains in Japan", "blue ocean photos", "family vacation"
+        </p>
       </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleSearch} className="max-w-2xl mx-auto">
+      <form onSubmit={handleAISearch} className="mb-6">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <Sparkles className="w-5 h-5 text-sky-500" />
+          </div>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors text-lg"
-            placeholder="Search by email or name..."
+            placeholder="Try: 'sunset photos', 'pictures from last summer', 'blue images'..."
+            className="w-full pl-12 pr-12 py-4 text-lg border-2 border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all"
+            aria-label="AI search query"
           />
           <button
             type="submit"
-            disabled={loading || !searchQuery.trim()}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+            disabled={loading}
+            className="absolute inset-y-0 right-0 px-6 bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 text-white rounded-r-xl hover:from-sky-600 hover:via-cyan-600 hover:to-teal-600 transition-all disabled:opacity-50 flex items-center gap-2"
+            aria-label="Search"
           >
-            {loading ? 'Searching...' : 'Search'}
+            {loading ? (
+              <Loader className="w-5 h-5 animate-spin" />
+            ) : (
+              <Search className="w-5 h-5" />
+            )}
           </button>
         </div>
       </form>
 
-      {/* Search Results */}
-      {searchResults.length > 0 && (
-        <div className="space-y-8">
-          {searchResults.map((result) => (
-            <div key={result.user_id} className="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-              {/* User Info */}
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    {result.first_name && result.last_name 
-                      ? `${result.first_name} ${result.last_name}` 
-                      : result.user_email
-                    }
-                  </h3>
-                  <p className="text-gray-600 text-sm flex items-center gap-2">
-                    <Camera className="w-4 h-4" />
-                    {result.photo_count} public photos shared
-                  </p>
-                </div>
-              </div>
-
-              {/* Photo Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                {result.sample_photos.map((photo, index) => (
-                  <div
-                    key={photo.id}
-                    className="aspect-square rounded-xl overflow-hidden cursor-pointer hover:shadow-lg transition-shadow relative group"
-                    onClick={() => {
-                      if (photo.is_gallery_tile && photo.gallery_photos) {
-                        handleGalleryClick(photo);
-                      } else {
-                        handlePhotoClick(result.user_id, index);
-                      }
-                    }}
-                  >
-                    <img
-                      src={photo.image_url || photo.imageUrl}
-                      alt={photo.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                    
-                    {/* Gallery indicator */}
-                    {photo.is_gallery_tile && photo.gallery_photos && (
-                      <div className="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1">
-                        <Images className="w-3 h-3" />
-                        {photo.gallery_photos.length}
-                      </div>
-                    )}
-                    
-                    {/* Hover overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="absolute bottom-2 left-2 right-2 text-white">
-                        <h4 className="font-medium text-sm truncate">{photo.title}</h4>
-                        <div className="flex items-center text-xs text-white/80 mt-1">
-                          <Calendar className="w-3 h-3 mr-1" />
-                          {photo.date_taken}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Public indicator */}
-                    <div className="absolute top-2 left-2 bg-green-500 text-white p-1 rounded-full">
-                      <Eye className="w-3 h-3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* View All Button */}
-              {result.photo_count > 6 && (
-                <div className="mt-4 text-center">
-                  <button
-                    onClick={() => handlePhotoClick(result.user_id, 0)}
-                    className="text-purple-600 hover:text-purple-700 font-medium"
-                  >
-                    View all {result.photo_count} photos →
-                  </button>
-                </div>
+      {searchMetadata && (
+        <div className="mb-4 p-3 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-sky-700 dark:text-sky-300">
+            <Sparkles className="w-4 h-4" />
+            <span>
+              AI found: {searchMetadata.extractedTags?.length > 0 && (
+                <>tags: {searchMetadata.extractedTags.join(', ')}</>
               )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Empty State */}
-      {searchQuery && !loading && searchResults.length === 0 && (
-        <div className="text-center py-12">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Search className="w-8 h-8 text-gray-400" />
+              {searchMetadata.colorHints?.length > 0 && (
+                <> • colors: {searchMetadata.colorHints.join(', ')}</>
+              )}
+            </span>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No results found</h3>
-          <p className="text-gray-600">
-            No users found matching "{searchQuery}". Try searching with a different email or name.
-          </p>
         </div>
       )}
 
-      {/* Initial State */}
-      {!searchQuery && searchResults.length === 0 && (
-        <div className="text-center py-16">
-          <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Search className="w-10 h-10 text-purple-600" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">Start Exploring</h3>
-          <p className="text-gray-600 max-w-md mx-auto">
-            Search for users by their email address or name to discover their public photo collections.
-          </p>
-        </div>
-      )}
-
-      {/* Photo Gallery Modal */}
-      <PhotoGalleryModal
-        isOpen={isGalleryOpen}
-        onClose={() => setIsGalleryOpen(false)}
-        photos={selectedUserPhotos}
-        initialIndex={galleryIndex}
+      <AdvancedSearchFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        availableTags={availableTags}
       />
+
+      {loading ? (
+        <SkeletonLoader count={8} variant="masonry" />
+      ) : searchResults.length === 0 ? (
+        <div className="text-center py-16">
+          <Camera className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            No photos found
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400">
+            {searchQuery.trim() || Object.keys(filters).length > 0
+              ? 'Try adjusting your search or filters'
+              : 'Start searching with AI-powered natural language'}
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-gray-600 dark:text-gray-400">
+              Found {searchResults.length} photo{searchResults.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+
+          <MasonryGrid>
+            {searchResults.map((photo) => (
+              <PhotoGridItem
+                key={photo.id}
+                photo={photo}
+                onClick={() => handlePhotoClick(photo)}
+              />
+            ))}
+          </MasonryGrid>
+        </div>
+      )}
+
+      {selectedPhoto && (
+        <PhotoDetailModal
+          photo={selectedPhoto}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onUpdate={handlePhotoUpdate}
+          onDelete={handlePhotoDelete}
+        />
+      )}
     </div>
   );
 }
