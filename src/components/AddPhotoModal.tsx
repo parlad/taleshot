@@ -246,9 +246,9 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-purple-300 border-dashed rounded-xl cursor-pointer glass-effect hover:bg-white/30 transition-all duration-300">
+              <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-blue-300 border-dashed rounded-xl cursor-pointer glass-effect hover:bg-white/30 transition-all duration-300">
                 <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                  <Camera className="w-12 h-12 text-purple-400 mb-4" />
+                  <Camera className="w-12 h-12 text-blue-400 mb-4" />
                   <p className="mb-2 text-sm text-white/80">
                     <span className="font-semibold">Click to upload</span> multiple photos or drag and drop
                   </p>
@@ -339,7 +339,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
                     onClick={() => handleTagToggle(tag)}
                     className={`px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                       formData.tags.includes(tag)
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                        ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
                     }`}
                   >
@@ -398,7 +398,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
                 type="checkbox"
                 checked={formData.is_public}
                 onChange={(e) => setFormData(prev => ({ ...prev, is_public: e.target.checked }))}
-                className="w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500 focus:ring-2"
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
               />
               <span className="text-sm font-medium text-gray-700">
                 Make {imageFiles.length > 1 ? 'these photos' : 'this photo'} public (others can discover {imageFiles.length > 1 ? 'them' : 'it'})

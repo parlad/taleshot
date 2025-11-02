@@ -238,29 +238,29 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="max-w-2xl w-full empty-state relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-purple-400 to-blue-400 rounded-full opacity-30 floating"></div>
-          <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-blue-400 to-indigo-400 rounded-full opacity-30 floating" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-indigo-400 to-purple-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
+          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-30 floating"></div>
+          <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-30 floating" style={{animationDelay: '1s'}}></div>
+          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-sky-400 to-cyan-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
         </div>
 
         <div className="relative z-10">
           <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-purple-500 to-blue-600 p-4 shadow-lg floating">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 p-4 shadow-lg floating">
               <Camera className="w-full h-full text-white" />
             </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
               <Heart className="w-full h-full text-white" />
             </div>
-            <div className="aspect-square rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
               <Users className="w-full h-full text-white" />
             </div>
           </div>
 
-          <h2 className="text-4xl font-bold gradient-text mb-4">
+          <h2 className="text-4xl font-bold gradient-text mb-4" style={{lineHeight: '1.2'}}>
             Upload your first story
           </h2>
-          
-          <p className="text-gray-600 text-lg mb-8 leading-relaxed max-w-xl mx-auto">
+
+          <p className="text-gray-600 text-base mb-8 leading-relaxed max-w-xl mx-auto" style={{lineHeight: '1.5'}}>
             Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
           </p>
 
@@ -311,13 +311,13 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   return (
     <div className="space-y-3">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Your Photos</h1>
-            <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+            <h1 className="text-3xl font-semibold text-gray-900 mb-1" style={{lineHeight: '1.2'}}>Your Photos</h1>
+            <p className="text-sm text-gray-500 flex items-center gap-1.5 font-medium">
               <Camera className="w-4 h-4" />
-              {photos.length} photos
+              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
             </p>
           </div>
         </div>
@@ -342,7 +342,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               setSelectedTag('all');
               setSearchQuery('');
             }}
-            className="text-purple-600 hover:text-purple-700 font-medium"
+            className="text-blue-600 hover:text-blue-700 font-medium"
           >
             Clear filters
           </button>
@@ -384,12 +384,12 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               <button
                 key={`privacy-${photo.id}`}
                 onClick={() => togglePhotoPublic(photo)}
-                className={`w-12 h-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center ${
-                  photo.is_public 
-                    ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-400 text-white'
+                className={`w-12 h-12 rounded-full shadow-lg transition-all duration-300 hover:scale-110 flex items-center justify-center backdrop-blur-sm border-2 ${
+                  photo.is_public
+                    ? 'bg-blue-600 text-white border-blue-700'
+                    : 'bg-gray-400 text-white border-gray-500'
                 }`}
-                title={`Make ${photo.is_public ? 'private' : 'public'}`}
+                title={photo.is_public ? 'Public - Click to make private' : 'Private - Click to make public'}
               >
                 {photo.is_public ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
               </button>

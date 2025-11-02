@@ -1,20 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   * {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
-}
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  h1 {
+    font-size: 1.875rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
 
-@layer base {
-  * {
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+
+  p {
+    line-height: 1.5;
+  }
+
+  body {
+    font-weight: 400;
+    line-height: 1.5;
   }
 }
 
@@ -42,14 +61,14 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .gradient-border {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
     padding: 2px;
     border-radius: 12px;
   }
@@ -108,15 +127,15 @@
 
 @layer components {
   .input-field {
-    @apply w-full px-4 py-3 border-0 bg-white/80 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:bg-white outline-none transition-all duration-300 shadow-sm hover:shadow-md;
+    @apply w-full px-4 py-3 border-0 bg-white/80 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:bg-white outline-none transition-all duration-300 shadow-sm hover:shadow-md;
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold rounded-xl hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl;
+    @apply px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg hover:shadow-xl;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 border border-gray-200 transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl;
+    @apply px-6 py-3 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 border border-gray-200 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg hover:shadow-xl;
   }
 
   .card-modern {
@@ -124,19 +143,19 @@
   }
 
   .floating-button {
-    @apply fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transform hover:scale-110 transition-all duration-300 z-50 flex items-center justify-center;
+    @apply fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl transform hover:scale-110 active:scale-95 transition-all duration-300 z-50 flex items-center justify-center;
   }
 
   .tag-button {
-    @apply px-3 py-2 rounded-full text-sm font-medium transition-all duration-300 border;
+    @apply px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 border flex items-center gap-2 hover:scale-105 active:scale-95;
   }
 
   .tag-button-active {
-    @apply bg-gradient-to-r from-purple-600 to-blue-600 text-white border-transparent shadow-md;
+    @apply bg-gradient-to-r from-blue-600 to-cyan-600 text-white border-transparent shadow-md;
   }
 
   .tag-button-inactive {
-    @apply bg-white text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50;
+    @apply bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50;
   }
 }
 
@@ -145,6 +164,8 @@ body {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   min-height: 100vh;
   position: relative;
+  line-height: 1.5;
+  font-weight: 400;
 }
 
 body::before {
@@ -154,10 +175,10 @@ body::before {
   left: 0;
   width: 100%;
   height: 100%;
-  background: 
-    radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.05) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+  background:
+    radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(6, 182, 212, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(14, 165, 233, 0.03) 0%, transparent 50%);
   pointer-events: none;
   z-index: -1;
 }
@@ -222,8 +243,8 @@ header {
 }
 
 .dropdown-menu button:hover {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
   transform: translateX(4px);
 }
 
@@ -257,6 +278,18 @@ header {
   border-left: 4px solid #10b981;
   z-index: 1000;
   max-width: 400px;
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .toast.error {
@@ -270,18 +303,18 @@ header {
 /* Add photo button animation */
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.3);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.3);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(99, 102, 241, 0);
+    box-shadow: 0 0 0 10px rgba(37, 99, 235, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(99, 102, 241, 0);
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
   }
 }
 
 .add-photo-btn {
-  background: #4f46e5;
+  background: #2563eb;
   border: none;
   position: relative;
   overflow: hidden;
@@ -334,20 +367,20 @@ header {
 
 /* Category tags */
 .category-tag {
-  background: rgba(99, 102, 241, 0.1);
-  color: #4f46e5;
+  background: rgba(37, 99, 235, 0.1);
+  color: #2563eb;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   font-weight: 500;
   transition: all 0.3s;
-  border: 1px solid rgba(99, 102, 241, 0.2);
+  border: 1px solid rgba(37, 99, 235, 0.2);
 }
 
 .category-tag:hover {
-  background: #4f46e5;
+  background: #2563eb;
   color: white;
   transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.2);
 }
 
 /* Fullscreen view animation */
@@ -384,12 +417,12 @@ header {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4f46e5;
+  background: #2563eb;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #4338ca;
+  background: #1d4ed8;
 }
 
 /* Loading animations */
@@ -433,7 +466,7 @@ header {
 }
 
 .animated-gradient {
-  background: linear-gradient(-45deg, #4f46e5, #7c3aed, #06b6d4, #10b981);
+  background: linear-gradient(-45deg, #2563eb, #06b6d4, #0ea5e9, #0891b2);
   background-size: 400% 400%;
   animation: gradientShift 15s ease infinite;
 }
@@ -489,13 +522,13 @@ header {
 
 /* Text selection */
 ::selection {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(37, 99, 235, 0.2);
   color: #1a202c;
 }
 
 /* Focus styles */
 *:focus {
-  outline: 2px solid rgba(99, 102, 241, 0.4);
+  outline: 2px solid rgba(37, 99, 235, 0.4);
   outline-offset: 2px;
 }
 
@@ -511,6 +544,10 @@ header {
   }
 
   .floating-button {
-    @apply bottom-4 right-4 w-12 h-12;
+    @apply bottom-20 right-4 w-14 h-14;
+  }
+
+  .modal-content {
+    max-width: 95vw;
   }
 }

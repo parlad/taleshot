@@ -176,12 +176,12 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                 e.stopPropagation();
                 onTogglePublic?.();
               }}
-              className={`p-2 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm ${
-                photo.is_public 
-                  ? 'bg-blue-600 text-white' 
-                  : 'bg-gray-400 text-white'
+              className={`p-2.5 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm border-2 ${
+                photo.is_public
+                  ? 'bg-blue-600 text-white border-blue-700'
+                  : 'bg-gray-500 text-white border-gray-600'
               }`}
-              title={`Make ${photo.is_public ? 'private' : 'public'}`}
+              title={photo.is_public ? 'Public - Click to make private' : 'Private - Click to make public'}
             >
               {photo.is_public ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
             </button>
@@ -219,7 +219,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
               {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 3).map((tag, index) => (
                 <span
                   key={index}
-                  className="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full"
+                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"
                 >
                   {tag}
                 </span>
@@ -256,9 +256,11 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
           
           {/* Privacy indicator */}
           <div className="absolute top-4 right-4">
-            <div className={`p-2 rounded-full ${
-              photo.is_public ? 'bg-blue-600' : 'bg-gray-600'
-            } bg-opacity-80 backdrop-blur-sm`}>
+            <div className={`p-2.5 rounded-full border-2 shadow-lg backdrop-blur-sm transition-all duration-300 ${
+              photo.is_public
+                ? 'bg-blue-600 border-blue-700'
+                : 'bg-gray-500 border-gray-600'
+            }`} title={photo.is_public ? 'Public' : 'Private'}>
               {photo.is_public ? (
                 <Unlock className="w-4 h-4 text-white" />
               ) : (
@@ -424,7 +426,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                       {photo.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
                         <span
                           key={index}
-                          className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full"
+                          className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium"
                         >
                           {tag}
                         </span>
@@ -457,7 +459,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                     e.stopPropagation();
                     setIsEditing(true);
                   }}
-                  className="flex items-center gap-2 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                 >
                   <Edit3 className="w-4 h-4" />
                   Edit
@@ -467,14 +469,14 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                     e.stopPropagation();
                     onTogglePublic?.();
                   }}
-                  className={`flex items-center gap-2 px-3 py-2 text-white rounded-lg transition-colors text-sm ${
-                    photo.is_public 
-                      ? 'bg-blue-600 hover:bg-blue-700' 
-                      : 'bg-gray-500 hover:bg-gray-600'
+                  className={`flex items-center gap-2 px-3 py-2 text-white rounded-lg transition-colors text-sm font-medium ${
+                    photo.is_public
+                      ? 'bg-gray-500 hover:bg-gray-600'
+                      : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
                   {photo.is_public ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                  {photo.is_public ? 'Private' : 'Public'}
+                  {photo.is_public ? 'Make Private' : 'Make Public'}
                 </button>
                 <button
                   onClick={(e) => {

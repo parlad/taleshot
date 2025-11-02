@@ -45,16 +45,16 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
   const displayText = selectedTag === 'all' ? 'All Tags' : selectedTag;
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex items-center gap-3 flex-wrap">
       {/* Search Input */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <div className="relative flex-1 min-w-[250px]">
+        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
         <input
           type="text"
-          placeholder="Search photos..."
+          placeholder="Search photos, tags, or stories..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 pr-4 py-2 border border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300 w-64"
+          className="pl-12 pr-4 py-3 border border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 w-full shadow-sm hover:shadow-md"
         />
       </div>
 
@@ -62,12 +62,12 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`tag-button ${
+          className={`tag-button shadow-sm hover:shadow-md ${
             selectedTag === 'all' ? 'tag-button-inactive' : 'tag-button-active'
           }`}
         >
           <Tag className="w-4 h-4" />
-          <span>{displayText}</span>
+          <span className="font-medium">{displayText}</span>
           <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
         </button>
 
@@ -80,9 +80,9 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg mx-2 ${
-                  selectedTag === 'all' 
-                    ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white' 
-                    : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                  selectedTag === 'all'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
+                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                 }`}
               >
                 All Tags
@@ -95,9 +95,9 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
                     setIsOpen(false);
                   }}
                   className={`w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg mx-2 ${
-                    selectedTag === tag 
-                      ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white' 
-                      : 'text-gray-700 hover:bg-purple-50 hover:text-purple-600'
+                    selectedTag === tag
+                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
+                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
                   }`}
                 >
                   {tag}
