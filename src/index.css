@@ -110,7 +110,7 @@
   }
 
   .gradient-text {
-    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #10b981 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -150,9 +150,9 @@
   }
 
   .skeleton {
-    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
     background-size: 200% 100%;
-    animation: loading 1.5s infinite;
+    animation: loading 1.5s ease-in-out infinite;
   }
 
   @keyframes loading {
@@ -180,7 +180,7 @@
   }
 
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-cyan-700 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg hover:shadow-xl;
+    @apply px-6 py-3 bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 text-white font-semibold rounded-xl hover:from-sky-600 hover:via-cyan-600 hover:to-teal-600 transform hover:scale-105 active:scale-95 transition-all duration-300 shadow-lg hover:shadow-xl;
   }
 
   .btn-secondary {
@@ -192,7 +192,7 @@
   }
 
   .floating-button {
-    @apply fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-full shadow-lg hover:shadow-2xl transform hover:scale-110 active:scale-95 transition-all duration-300 z-50 flex items-center justify-center;
+    @apply fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-sky-500 via-cyan-500 to-teal-500 text-white rounded-full shadow-lg hover:shadow-2xl transform hover:scale-110 active:scale-95 transition-all duration-300 z-50 flex items-center justify-center;
   }
 
   .tag-button {
