@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Camera, Search, LogOut } from 'lucide-react';
+import { Camera, Search, LogOut, Compass, Book } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface MainLayoutProps {
@@ -51,9 +51,33 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
             {/* Navigation */}
             <div className="flex items-center gap-3">
               <Link
+                to="/explore"
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                  location.pathname === '/explore'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200'
+                }`}
+              >
+                <Compass className="w-4 h-4" />
+                Explore
+              </Link>
+
+              <Link
+                to="/stories"
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
+                  location.pathname === '/stories'
+                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
+                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200'
+                }`}
+              >
+                <Book className="w-4 h-4" />
+                Stories
+              </Link>
+
+              <Link
                 to="/search"
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                  !isHomePage
+                  location.pathname === '/search'
                     ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
                     : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200'
                 }`}

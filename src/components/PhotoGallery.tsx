@@ -9,6 +9,7 @@ import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import { Toast } from './Toast';
 import { SkeletonLoader } from './SkeletonLoader';
+import { PhotoViewerModal } from './PhotoViewerModal';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoGalleryProps {
@@ -27,6 +28,10 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [selectedTag, setSelectedTag] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('flip');
+  const [sortBy, setSortBy] = useState<'date' | 'tag' | 'privacy'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
 
   // Expose reload function to parent
   React.useEffect(() => {
@@ -47,7 +52,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
 
   useEffect(() => {
     filterPhotos();
-  }, [photos, selectedTag, searchQuery]);
+  }, [photos, selectedTag, searchQuery, sortBy, sortOrder]);
 
   const fetchPhotos = async () => {
     if (!user) return;
@@ -171,7 +176,30 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       });
     }
 
-    setFilteredPhotos(finalFiltered);
+    // Apply sorting
+    let sorted = [...finalFiltered];
+
+    if (sortBy === 'date') {
+      sorted.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+      });
+    } else if (sortBy === 'tag') {
+      sorted.sort((a, b) => {
+        const tagA = (a.tags?.[0] || '').toLowerCase();
+        const tagB = (b.tags?.[0] || '').toLowerCase();
+        return sortOrder === 'asc' ? tagA.localeCompare(tagB) : tagB.localeCompare(tagA);
+      });
+    } else if (sortBy === 'privacy') {
+      sorted.sort((a, b) => {
+        const privacyA = a.is_public ? 1 : 0;
+        const privacyB = b.is_public ? 1 : 0;
+        return sortOrder === 'asc' ? privacyA - privacyB : privacyB - privacyA;
+      });
+    }
+
+    setFilteredPhotos(sorted);
   };
 
   const handleFlip = (photoId: string) => {
@@ -184,6 +212,14 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       }
       return newSet;
     });
+  };
+
+  const handlePhotoClick = (photoId: string) => {
+    const index = filteredPhotos.findIndex(p => p.id === photoId);
+    if (index !== -1) {
+      setViewerPhotoIndex(index);
+      setViewerOpen(true);
+    }
   };
 
   const handleDelete = async (photoId: string) => {
@@ -311,7 +347,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   return (
     <div className="space-y-3">
       {/* Page Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <div>
             <h1 className="text-3xl font-semibold text-gray-900 mb-1" style={{lineHeight: '1.2'}}>Your Photos</h1>
@@ -320,6 +356,27 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
               {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
             </p>
           </div>
+        </div>
+
+        {/* Sort Controls */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600 font-medium">Sort by:</span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as 'date' | 'tag' | 'privacy')}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+          >
+            <option value="date">Date</option>
+            <option value="tag">Tag</option>
+            <option value="privacy">Privacy</option>
+          </select>
+          <button
+            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-all"
+            title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </button>
         </div>
       </div>
 
@@ -365,16 +422,18 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
                 }}
               />
             ) : (
-              <PhotoCard
-                key={photo.id}
-                photo={photo}
-                isFlipped={flippedCards.has(photo.id)}
-                onFlip={() => handleFlip(photo.id)}
-                onDelete={handleDelete}
-                onUpdate={handleUpdate}
-                viewMode={viewMode}
-                onTogglePublic={() => togglePhotoPublic(photo)}
-              />
+              <div onClick={() => handlePhotoClick(photo.id)} className="cursor-pointer">
+                <PhotoCard
+                  key={photo.id}
+                  photo={photo}
+                  isFlipped={flippedCards.has(photo.id)}
+                  onFlip={() => handleFlip(photo.id)}
+                  onDelete={handleDelete}
+                  onUpdate={handleUpdate}
+                  viewMode={viewMode}
+                  onTogglePublic={() => togglePhotoPublic(photo)}
+                />
+              </div>
             )
           )}
           
@@ -427,6 +486,14 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           />
         ))}
       </div>
+
+      {/* Photo Viewer Modal */}
+      <PhotoViewerModal
+        photos={filteredPhotos}
+        initialIndex={viewerPhotoIndex}
+        isOpen={viewerOpen}
+        onClose={() => setViewerOpen(false)}
+      />
     </div>
   );
 }

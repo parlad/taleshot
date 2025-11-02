@@ -5,6 +5,9 @@ import { Auth } from './components/Auth';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { SearchPage } from './pages/SearchPage';
+import { ExplorePage } from './pages/ExplorePage';
+import { ProfilePage } from './pages/ProfilePage';
+import { StoriesPage } from './pages/StoriesPage';
 
 function AppContent() {
   const { user, loading } = useSupabaseAuth();
@@ -31,6 +34,9 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<HomePage key={reloadTrigger} />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/explore" element={<ExplorePage />} />
+        <Route path="/stories" element={<StoriesPage />} />
+        <Route path="/:username" element={<ProfilePage />} />
       </Routes>
     </MainLayout>
   );
