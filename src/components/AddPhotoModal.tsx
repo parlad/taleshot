@@ -131,9 +131,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
             date_taken: formData.date_taken,
             reason: formData.reason,
             image_url: imageUrl,
-            is_public: formData.is_public,
-            batch_id: galleryId,
-            upload_type: galleryId ? 'group' : 'individual'
+            is_public: formData.is_public
           }])
           .select()
           .single();
