@@ -21,22 +21,49 @@ export function Auth() {
         if (password !== confirmPassword) {
           throw new Error('Passwords do not match');
         }
-        
-        const { error } = await supabase.auth.signUp({
+
+        if (password.length < 6) {
+          throw new Error('Password must be at least 6 characters');
+        }
+
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: window.location.origin,
+          }
         });
-        
+
         if (error) throw error;
+
+        // Check if email confirmation is disabled (auto-confirm)
+        if (data?.user && data?.session) {
+          // User is auto-confirmed and logged in
+          console.log('User signed up and auto-logged in');
+        } else if (data?.user && !data?.session) {
+          // Email confirmation required
+          setError('Please check your email to confirm your account before signing in.');
+          setLoading(false);
+          return;
+        }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
-        
-        if (error) throw error;
+
+        if (error) {
+          // More helpful error messages
+          if (error.message.includes('Invalid login credentials')) {
+            throw new Error('Invalid email or password. Please check your credentials or sign up if you don\'t have an account.');
+          }
+          throw error;
+        }
+
+        console.log('User signed in successfully:', data.user?.email);
       }
     } catch (error) {
+      console.error('Auth error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred');
     } finally {
       setLoading(false);
@@ -44,22 +71,27 @@ export function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
               <User className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {isSignUp ? 'Create Account' : 'Welcome Back'}
             </h1>
             <p className="text-gray-600">
-              {isSignUp 
-                ? 'Sign up to start your photo journey' 
+              {isSignUp
+                ? 'Sign up to start your photo journey'
                 : 'Sign in to access your photos'
               }
             </p>
+            {isSignUp && (
+              <p className="text-sm text-gray-500 mt-2">
+                Password must be at least 6 characters
+              </p>
+            )}
           </div>
 
           <form onSubmit={handleAuth} className="space-y-6">
@@ -80,7 +112,7 @@ export function Auth() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="Enter your email"
                   required
                 />
@@ -98,7 +130,7 @@ export function Auth() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                   placeholder="Enter your password"
                   required
                 />
@@ -124,7 +156,7 @@ export function Auth() {
                     type={showPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
                     placeholder="Confirm your password"
                     required
                   />
@@ -135,7 +167,7 @@ export function Auth() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-cyan-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <div className="flex items-center justify-center">
@@ -157,7 +189,7 @@ export function Auth() {
                 setPassword('');
                 setConfirmPassword('');
               }}
-              className="text-purple-600 hover:text-purple-700 font-medium transition-colors"
+              className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               {isSignUp 
                 ? 'Already have an account? Sign in' 
