@@ -18,6 +18,10 @@ export interface Photo {
   color_tone?: string;
   ai_analyzed?: boolean;
   ai_analyzed_at?: string;
+  gps_latitude?: number;
+  gps_longitude?: number;
+  capture_date?: string;
+  created_at: string;
 }
 
 export type ViewMode = 'flip' | 'slide';

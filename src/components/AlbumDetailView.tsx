@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, MapPin, Calendar, Users, Edit2, Trash2, Eye, Share2 } from 'lucide-react';
+import { X, MapPin, Calendar, Users, Edit2, Trash2, Eye, Share2, LayoutGrid, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { AlbumEditor } from './AlbumEditor';
 import { PhotoGridItem } from './PhotoGridItem';
 import { PhotoDetailModal } from './PhotoDetailModal';
+import { AlbumTimeline } from './AlbumTimeline';
+import { AlbumMapView } from './AlbumMapView';
+import { AlbumThemeSelector, AlbumThemeLayout, type AlbumTheme } from './AlbumThemeSelector';
+import { AlbumStatistics } from './AlbumStatistics';
+import { AlbumExportOptions } from './AlbumExportOptions';
 import type { Photo } from '../types';
 
 interface Album {
@@ -18,8 +23,11 @@ interface Album {
   is_public: boolean;
   photo_count: number;
   view_count: number;
+  like_count: number;
   cover_photo_id: string | null;
   auto_cover: boolean;
+  theme: AlbumTheme;
+  music_url: string | null;
   created_at: string;
 }
 
@@ -44,6 +52,8 @@ export function AlbumDetailView({
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [activeView, setActiveView] = useState<'photos' | 'timeline' | 'map' | 'stats' | 'export'>('photos');
+  const [currentTheme, setCurrentTheme] = useState<AlbumTheme>('grid');
 
   useEffect(() => {
     if (isOpen && albumId) {
@@ -63,6 +73,7 @@ export function AlbumDetailView({
 
       if (albumError) throw albumError;
       setAlbum(albumData);
+      setCurrentTheme(albumData.theme || 'grid');
 
       const { data: collectionPhotos, error: photosError } = await supabase
         .from('collection_photos')
@@ -132,6 +143,19 @@ export function AlbumDetailView({
   const handlePhotoClick = (photo: Photo) => {
     setSelectedPhoto(photo);
     setIsPhotoModalOpen(true);
+  };
+
+  const handleThemeChange = async (theme: AlbumTheme) => {
+    setCurrentTheme(theme);
+    try {
+      await supabase
+        .from('collections')
+        .update({ theme })
+        .eq('id', albumId);
+      onUpdate();
+    } catch (error) {
+      console.error('Error updating theme:', error);
+    }
   };
 
   const formatDate = (dateStr: string | null) => {
@@ -250,34 +274,84 @@ export function AlbumDetailView({
                   </div>
                 )}
 
-                {isEditing ? (
+{isEditing ? (
                   <AlbumEditor albumId={albumId} onUpdate={fetchAlbumDetails} />
                 ) : (
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
-                      Photos ({photos.length})
-                    </h3>
-
-                    {photos.length > 0 ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {photos.map((photo, index) => (
-                          <motion.div
-                            key={photo.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
+                  <div className="space-y-6">
+                    <div className="flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700">
+                      {[
+                        { id: 'photos' as const, label: 'Photos', icon: LayoutGrid },
+                        { id: 'timeline' as const, label: 'Timeline', icon: Calendar },
+                        { id: 'map' as const, label: 'Map', icon: MapPin },
+                        { id: 'stats' as const, label: 'Statistics', icon: Eye },
+                        { id: 'export' as const, label: 'Export', icon: Share2 }
+                      ].map((tab) => {
+                        const Icon = tab.icon;
+                        return (
+                          <button
+                            key={tab.id}
+                            onClick={() => setActiveView(tab.id)}
+                            className={`flex items-center gap-2 px-4 py-3 border-b-2 transition-colors ${
+                              activeView === tab.id
+                                ? 'border-teal-500 text-teal-600 dark:text-teal-400 font-semibold'
+                                : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                            }`}
                           >
-                            <PhotoGridItem
-                              photo={photo}
-                              onClick={() => handlePhotoClick(photo)}
-                            />
-                          </motion.div>
-                        ))}
+                            <Icon className="w-4 h-4" />
+                            {tab.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {activeView === 'photos' && (
+                      <div className="space-y-6">
+                        <AlbumThemeSelector
+                          currentTheme={currentTheme}
+                          onChange={handleThemeChange}
+                        />
+                        <AlbumThemeLayout
+                          theme={currentTheme}
+                          photos={photos}
+                          onPhotoClick={handlePhotoClick}
+                        />
                       </div>
-                    ) : (
-                      <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-                        No photos in this album yet
-                      </div>
+                    )}
+
+                    {activeView === 'timeline' && (
+                      <AlbumTimeline
+                        photos={photos}
+                        onPhotoClick={handlePhotoClick}
+                      />
+                    )}
+
+                    {activeView === 'map' && (
+                      <AlbumMapView
+                        photos={photos}
+                        onPhotoClick={handlePhotoClick}
+                      />
+                    )}
+
+                    {activeView === 'stats' && (
+                      <AlbumStatistics
+                        photoCount={photos.length}
+                        viewCount={album.view_count || 0}
+                        likeCount={album.like_count || 0}
+                        isPublic={album.is_public}
+                        location={album.location}
+                        dateRange={{
+                          start: album.date_range_start,
+                          end: album.date_range_end
+                        }}
+                        collaboratorCount={album.collaborators.length}
+                      />
+                    )}
+
+                    {activeView === 'export' && (
+                      <AlbumExportOptions
+                        albumName={album.name}
+                        photos={photos}
+                      />
                     )}
                   </div>
                 )}
