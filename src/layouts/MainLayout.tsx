@@ -38,12 +38,12 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
             {/* Logo */}
             <button onClick={handleLogoClick} className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl blur-sm opacity-30"></div>
-                <div className="relative p-2 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-xl shadow-lg">
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-blue-500 rounded-xl blur-sm opacity-40"></div>
+                <div className="relative p-2 bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 rounded-xl shadow-lg">
                   <Camera className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+              <span className="text-2xl font-bold gradient-text">
                 Taleshot
               </span>
             </button>
@@ -54,8 +54,8 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
                 to="/explore"
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                   location.pathname === '/explore'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200'
+                    ? 'bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 text-white shadow-lg shadow-teal-500/30'
+                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50 border border-gray-200 hover:border-teal-300'
                 }`}
               >
                 <Compass className="w-4 h-4" />
@@ -66,8 +66,8 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
                 to="/stories"
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                   location.pathname === '/stories'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200'
+                    ? 'bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 text-white shadow-lg shadow-teal-500/30'
+                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50 border border-gray-200 hover:border-teal-300'
                 }`}
               >
                 <Book className="w-4 h-4" />
@@ -78,8 +78,8 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
                 to="/search"
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
                   location.pathname === '/search'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-lg shadow-blue-500/25'
-                    : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50 border border-gray-200 hover:border-blue-200'
+                    ? 'bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 text-white shadow-lg shadow-teal-500/30'
+                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50 border border-gray-200 hover:border-teal-300'
                 }`}
               >
                 <Search className="w-4 h-4" />
