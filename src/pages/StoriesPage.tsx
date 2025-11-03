@@ -154,9 +154,9 @@ export function StoriesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
               onClick={() => setSelectedAlbumId(album.id)}
-              className="card-glass overflow-hidden cursor-pointer group"
+              className="relative overflow-hidden rounded-2xl cursor-pointer group shadow-lg hover:shadow-2xl transition-all duration-300"
             >
-              <div className="relative aspect-video bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
+              <div className="relative aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
                 {album.cover_photo_url ? (
                   <img
                     src={album.cover_photo_url}
@@ -169,48 +169,53 @@ export function StoriesPage() {
                   </div>
                 )}
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-                {album.is_public && (
-                  <div className="absolute top-3 right-3 px-3 py-1 bg-blue-500 text-white text-xs font-semibold rounded-full">
-                    Public
-                  </div>
-                )}
-              </div>
+                <div className="absolute inset-0 flex flex-col justify-between p-5">
+                  <div className="flex items-start justify-between">
+                    {album.photo_count > 1 && (
+                      <div className="px-3 py-1.5 bg-white/90 dark:bg-black/70 backdrop-blur-sm text-gray-900 dark:text-white text-sm font-semibold rounded-full shadow-lg">
+                        +{album.photo_count} photos
+                      </div>
+                    )}
 
-              <div className="p-5">
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">
-                  {album.name}
-                </h3>
-
-                {album.description && (
-                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3 line-clamp-2">
-                    {album.description}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <ImageIcon className="w-3.5 h-3.5" />
-                    <span>{album.photo_count} photo{album.photo_count !== 1 ? 's' : ''}</span>
+                    {album.is_public && (
+                      <div className="ml-auto px-3 py-1.5 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full shadow-lg">
+                        Public
+                      </div>
+                    )}
                   </div>
 
-                  {album.location && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" />
-                      <span className="truncate max-w-[120px]">{album.location}</span>
-                    </div>
-                  )}
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-white drop-shadow-lg line-clamp-2">
+                      {album.name}
+                    </h3>
 
-                  {(album.date_range_start || album.date_range_end) && (
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>
-                        {formatDate(album.date_range_start)}
-                        {album.date_range_end && ` - ${formatDate(album.date_range_end)}`}
-                      </span>
+                    <div className="flex flex-wrap gap-3 text-xs text-white/90">
+                      {album.location && (
+                        <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                          <MapPin className="w-3.5 h-3.5" />
+                          <span className="truncate max-w-[120px]">{album.location}</span>
+                        </div>
+                      )}
+
+                      {(album.date_range_start || album.date_range_end) && (
+                        <div className="flex items-center gap-1 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full">
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>
+                            {formatDate(album.date_range_start)}
+                            {album.date_range_end && album.date_range_start !== album.date_range_end && ` - ${formatDate(album.date_range_end)}`}
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  )}
+
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 pt-2">
+                      <button className="w-full py-2.5 bg-white/95 dark:bg-white/90 text-gray-900 font-semibold rounded-lg hover:bg-white transition-colors shadow-lg">
+                        View Album
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </motion.div>
