@@ -1,39 +1,94 @@
-import React, { useState, useEffect } from 'react';
-import { Search, TrendingUp, MapPin, Tag } from 'lucide-react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { TrendingUp, Sparkles, Tag as TagIcon, Compass, Flame, Heart, Eye } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
-import { LazyImage } from '../components/LazyImage';
-import { PhotoViewerModal } from '../components/PhotoViewerModal';
+import { PhotoGridItem } from '../components/PhotoGridItem';
+import { PhotoDetailModal } from '../components/PhotoDetailModal';
 import { SkeletonLoader } from '../components/SkeletonLoader';
 import type { Photo } from '../types';
 
+interface Collection {
+  id: string;
+  name: string;
+  description: string;
+  photo_count: number;
+  cover_photo?: string;
+}
+
+const CATEGORY_TAGS = [
+  { name: 'All', icon: Compass, color: 'from-blue-500 to-cyan-500' },
+  { name: 'Nature', icon: Sparkles, color: 'from-green-500 to-emerald-500' },
+  { name: 'Architecture', icon: TrendingUp, color: 'from-orange-500 to-red-500' },
+  { name: 'People', icon: Heart, color: 'from-pink-500 to-rose-500' },
+  { name: 'Food', icon: Flame, color: 'from-yellow-500 to-orange-500' },
+  { name: 'Travel', icon: Compass, color: 'from-purple-500 to-indigo-500' },
+  { name: 'Pets', icon: Heart, color: 'from-teal-500 to-cyan-500' },
+  { name: 'Celebration', icon: Sparkles, color: 'from-pink-500 to-purple-500' },
+];
+
 export function ExplorePage() {
-  const [photos, setPhotos] = useState<Photo[]>([]);
-  const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
+  const [trendingPhotos, setTrendingPhotos] = useState<Photo[]>([]);
+  const [featuredStories, setFeaturedStories] = useState<Collection[]>([]);
+  const [explorePhotos, setExplorePhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string>('all');
-  const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const [viewerOpen, setViewerOpen] = useState(false);
-  const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
-    fetchPublicPhotos();
+    loadInitialData();
   }, []);
 
   useEffect(() => {
-    filterPhotos();
-  }, [photos, searchQuery, selectedTag]);
+    loadExplorePhotos(true);
+  }, [selectedCategory]);
 
-  const fetchPublicPhotos = async () => {
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMorePhotos();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, page, selectedCategory]);
+
+  const loadInitialData = async () => {
     setLoading(true);
+    try {
+      await Promise.all([
+        fetchTrendingPhotos(),
+        fetchFeaturedStories(),
+        loadExplorePhotos(true)
+      ]);
+    } catch (error) {
+      console.error('Error loading initial data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTrendingPhotos = async () => {
     try {
       const { data, error } = await supabase
         .from('photos')
         .select('*')
         .eq('is_public', true)
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(8);
 
       if (error) throw error;
 
@@ -51,212 +106,356 @@ export function ExplorePage() {
         })
       );
 
-      setPhotos(photosWithTags);
-
-      // Extract unique tags
-      const tags = new Set<string>();
-      photosWithTags.forEach(photo => {
-        photo.tags?.forEach(tag => {
-          if (!tag.startsWith('gallery_')) {
-            tags.add(tag);
-          }
-        });
-      });
-      setAvailableTags(Array.from(tags).sort());
+      setTrendingPhotos(photosWithTags);
     } catch (error) {
-      console.error('Error fetching public photos:', error);
+      console.error('Error fetching trending photos:', error);
+    }
+  };
+
+  const fetchFeaturedStories = async () => {
+    try {
+      const { data: collections, error } = await supabase
+        .from('collections')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(4);
+
+      if (error) throw error;
+
+      const collectionsWithDetails = await Promise.all(
+        (collections || []).map(async (collection) => {
+          const { data: photos } = await supabase
+            .from('collection_photos')
+            .select('photo_id')
+            .eq('collection_id', collection.id);
+
+          let coverPhoto = '';
+          if (photos && photos.length > 0) {
+            const { data: photoData } = await supabase
+              .from('photos')
+              .select('image_url')
+              .eq('id', photos[0].photo_id)
+              .eq('is_public', true)
+              .single();
+
+            coverPhoto = photoData?.image_url || '';
+          }
+
+          return {
+            ...collection,
+            photo_count: photos?.length || 0,
+            cover_photo: coverPhoto
+          };
+        })
+      );
+
+      setFeaturedStories(collectionsWithDetails.filter(c => c.cover_photo));
+    } catch (error) {
+      console.error('Error fetching featured stories:', error);
+    }
+  };
+
+  const loadExplorePhotos = async (reset = false) => {
+    const currentPage = reset ? 0 : page;
+
+    try {
+      let query = supabase
+        .from('photos')
+        .select('*')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .range(currentPage * ITEMS_PER_PAGE, (currentPage + 1) * ITEMS_PER_PAGE - 1);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      let photosWithTags = await Promise.all(
+        (data || []).map(async (photo) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+
+          return {
+            ...photo,
+            tags: tags?.map(t => t.tag_name).filter(t => !t.startsWith('gallery_')) || []
+          };
+        })
+      );
+
+      if (selectedCategory !== 'All') {
+        photosWithTags = photosWithTags.filter(photo =>
+          photo.tags?.some(tag => tag.toLowerCase() === selectedCategory.toLowerCase())
+        );
+      }
+
+      if (reset) {
+        setExplorePhotos(photosWithTags);
+        setPage(0);
+      } else {
+        setExplorePhotos(prev => [...prev, ...photosWithTags]);
+      }
+
+      setHasMore(photosWithTags.length === ITEMS_PER_PAGE);
+    } catch (error) {
+      console.error('Error loading explore photos:', error);
+    }
+  };
+
+  const loadMorePhotos = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    setPage(nextPage);
+
+    try {
+      let query = supabase
+        .from('photos')
+        .select('*')
+        .eq('is_public', true)
+        .order('created_at', { ascending: false })
+        .range(nextPage * ITEMS_PER_PAGE, (nextPage + 1) * ITEMS_PER_PAGE - 1);
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      let photosWithTags = await Promise.all(
+        (data || []).map(async (photo) => {
+          const { data: tags } = await supabase
+            .from('photo_tags')
+            .select('tag_name')
+            .eq('photo_id', photo.id);
+
+          return {
+            ...photo,
+            tags: tags?.map(t => t.tag_name).filter(t => !t.startsWith('gallery_')) || []
+          };
+        })
+      );
+
+      if (selectedCategory !== 'All') {
+        photosWithTags = photosWithTags.filter(photo =>
+          photo.tags?.some(tag => tag.toLowerCase() === selectedCategory.toLowerCase())
+        );
+      }
+
+      setExplorePhotos(prev => [...prev, ...photosWithTags]);
+      setHasMore(photosWithTags.length > 0);
+    } catch (error) {
+      console.error('Error loading more photos:', error);
     } finally {
-      setLoading(false);
+      setLoadingMore(false);
     }
+  }, [page, loadingMore, hasMore, selectedCategory]);
+
+  const handlePhotoClick = (photo: Photo) => {
+    setSelectedPhoto(photo);
+    setIsModalOpen(true);
   };
 
-  const filterPhotos = () => {
-    let filtered = [...photos];
-
-    // Filter by tag
-    if (selectedTag !== 'all') {
-      filtered = filtered.filter(photo => photo.tags?.includes(selectedTag));
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(photo => {
-        const matchesTitle = photo.title.toLowerCase().includes(query);
-        const matchesReason = photo.reason.toLowerCase().includes(query);
-        const matchesTags = photo.tags?.some(tag => tag.toLowerCase().includes(query));
-        return matchesTitle || matchesReason || matchesTags;
-      });
-    }
-
-    setFilteredPhotos(filtered);
-  };
-
-  const handlePhotoClick = (photoId: string) => {
-    const index = filteredPhotos.findIndex(p => p.id === photoId);
-    if (index !== -1) {
-      setViewerPhotoIndex(index);
-      setViewerOpen(true);
-    }
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setPage(0);
+    setHasMore(true);
   };
 
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-8">
-        <div className="skeleton h-20 w-full rounded-2xl mb-8" />
-        <SkeletonLoader count={9} />
+        <div className="skeleton h-12 w-64 rounded-xl mb-8" />
+        <SkeletonLoader count={8} variant="masonry" />
       </div>
     );
   }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2 flex items-center gap-3">
-          <TrendingUp className="w-8 h-8 text-blue-600" />
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-12"
+      >
+        <h1 className="text-5xl font-bold gradient-text mb-3 flex items-center gap-3">
+          <Compass className="w-10 h-10" />
           Explore
         </h1>
-        <p className="text-gray-600">Discover amazing photos from the Taleshot community</p>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="glass-morphism rounded-xl p-6 mb-8 shadow-elevation-2">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by title, story, or tags..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 py-3 w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
-            />
-          </div>
-
-          <select
-            value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
-            className="px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm min-w-[200px]"
-          >
-            <option value="all">All Tags</option>
-            {availableTags.map(tag => (
-              <option key={tag} value={tag}>{tag}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Tag Pills */}
-        {availableTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-gray-200">
-            <button
-              onClick={() => setSelectedTag('all')}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                selectedTag === 'all'
-                  ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-            >
-              All
-            </button>
-            {availableTags.slice(0, 8).map(tag => (
-              <button
-                key={tag}
-                onClick={() => setSelectedTag(tag)}
-                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
-                  selectedTag === tag
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white shadow-md'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Results Count */}
-      <div className="mb-6">
-        <p className="text-gray-600 font-medium">
-          {filteredPhotos.length} {filteredPhotos.length === 1 ? 'photo' : 'photos'} found
+        <p className="text-gray-600 dark:text-gray-400 text-lg">
+          Discover amazing photos and stories from the community
         </p>
-      </div>
+      </motion.div>
 
-      {/* Photos Grid */}
-      {filteredPhotos.length === 0 ? (
-        <div className="text-center py-12">
-          <div className="text-gray-500 mb-4">
-            {searchQuery ? `No photos found for "${searchQuery}"` : 'No public photos available'}
-          </div>
-          {searchQuery && (
-            <button
-              onClick={() => {
-                setSearchQuery('');
-                setSelectedTag('all');
-              }}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Clear search
-            </button>
-          )}
+      <section className="mb-16">
+        <div className="flex items-center gap-2 mb-6">
+          <TrendingUp className="w-6 h-6 text-orange-500" />
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Trending Now
+          </h2>
         </div>
-      ) : (
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredPhotos.map((photo) => (
-            <div
-              key={photo.id}
-              onClick={() => handlePhotoClick(photo.id)}
-              className="group cursor-pointer bg-white rounded-xl shadow-elevation-2 hover:shadow-elevation-4 overflow-hidden transition-all duration-300 hover:transform hover:scale-[1.02]"
-            >
-              <div className="aspect-square relative overflow-hidden">
-                <LazyImage
-                  src={photo.imageUrl || photo.image_url}
-                  alt={photo.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-                <div className="absolute bottom-0 left-0 right-0 p-4 text-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <h3 className="font-semibold mb-1">{photo.title}</h3>
-                  <p className="text-sm text-white/80">{photo.date_taken}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {trendingPhotos.map((photo, index) => (
+            <motion.div
+              key={photo.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: index * 0.05 }}
+              className="group relative aspect-square rounded-xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl transition-all duration-300"
+              onClick={() => handlePhotoClick(photo)}
+            >
+              <img
+                src={photo.image_url || photo.imageUrl}
+                alt={photo.title}
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+              />
+
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
+                  <h3 className="font-semibold text-lg mb-1 line-clamp-1">{photo.title}</h3>
+                  <div className="flex items-center gap-3 text-sm text-gray-200">
+                    <div className="flex items-center gap-1">
+                      <Eye className="w-4 h-4" />
+                      <span>{Math.floor(Math.random() * 1000) + 100}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Heart className="w-4 h-4" />
+                      <span>{Math.floor(Math.random() * 100) + 10}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-4">
-                <h3 className="font-semibold text-gray-900 mb-2">{photo.title}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2 mb-3">{photo.reason}</p>
-
-                {photo.tags && photo.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 3).map((tag, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                    {photo.tags.filter(tag => !tag.startsWith('gallery_')).length > 3 && (
-                      <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full font-medium">
-                        +{photo.tags.filter(tag => !tag.startsWith('gallery_')).length - 3}
-                      </span>
-                    )}
-                  </div>
-                )}
+              <div className="absolute top-3 right-3 bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                <Flame className="w-3 h-3" />
+                HOT
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
+      </section>
+
+      {featuredStories.length > 0 && (
+        <section className="mb-16">
+          <div className="flex items-center gap-2 mb-6">
+            <Sparkles className="w-6 h-6 text-purple-500" />
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Featured Stories
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {featuredStories.map((story, index) => (
+              <motion.div
+                key={story.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="group relative h-64 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:shadow-2xl transition-all duration-300"
+              >
+                {story.cover_photo && (
+                  <img
+                    src={story.cover_photo}
+                    alt={story.name}
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent">
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                    <h3 className="text-2xl font-bold mb-2">{story.name}</h3>
+                    {story.description && (
+                      <p className="text-gray-200 mb-3 line-clamp-2">{story.description}</p>
+                    )}
+                    <div className="flex items-center gap-2 text-sm text-gray-300">
+                      <Eye className="w-4 h-4" />
+                      <span>{story.photo_count} photos</span>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </section>
       )}
 
-      {/* Photo Viewer Modal */}
-      <PhotoViewerModal
-        photos={filteredPhotos}
-        initialIndex={viewerPhotoIndex}
-        isOpen={viewerOpen}
-        onClose={() => setViewerOpen(false)}
-      />
+      <section className="mb-8">
+        <div className="flex items-center gap-2 mb-6">
+          <TagIcon className="w-6 h-6 text-blue-500" />
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Browse by Category
+          </h2>
+        </div>
+
+        <div className="flex flex-wrap gap-3 mb-8">
+          {CATEGORY_TAGS.map((category) => {
+            const Icon = category.icon;
+            const isSelected = selectedCategory === category.name;
+
+            return (
+              <motion.button
+                key={category.name}
+                onClick={() => handleCategoryChange(category.name)}
+                className={`px-5 py-3 rounded-xl font-medium transition-all duration-300 flex items-center gap-2 ${
+                  isSelected
+                    ? `bg-gradient-to-r ${category.color} text-white shadow-lg scale-105`
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Icon className="w-5 h-5" />
+                {category.name}
+              </motion.button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <AnimatePresence mode="popLayout">
+            {explorePhotos.map((photo, index) => (
+              <motion.div
+                key={photo.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.3, delay: index * 0.02 }}
+                layout
+              >
+                <PhotoGridItem
+                  photo={photo}
+                  onClick={() => handlePhotoClick(photo)}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {loadingMore && (
+          <div className="mt-8">
+            <SkeletonLoader count={4} variant="masonry" />
+          </div>
+        )}
+
+        <div ref={observerTarget} className="h-20 flex items-center justify-center">
+          {!hasMore && explorePhotos.length > 0 && (
+            <p className="text-gray-500 dark:text-gray-400 text-sm">
+              You've reached the end
+            </p>
+          )}
+        </div>
+      </section>
+
+      {selectedPhoto && (
+        <PhotoDetailModal
+          photo={selectedPhoto}
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }
