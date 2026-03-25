@@ -188,21 +188,14 @@ export function AlbumDetailView({
             className="relative w-full max-w-6xl card-glass p-8"
             onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors z-10"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
                     <h1 className="text-4xl font-bold gradient-text mb-3">{album.name}</h1>
                     {album.description && (
                       <p className="text-gray-700 dark:text-gray-300 text-lg mb-4 leading-relaxed">
@@ -242,10 +235,10 @@ export function AlbumDetailView({
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => setIsEditing(!isEditing)}
-                      className={`p-3 rounded-xl transition-colors ${
+                      className={`p-2.5 rounded-xl transition-colors ${
                         isEditing
                           ? 'bg-teal-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
@@ -257,10 +250,18 @@ export function AlbumDetailView({
 
                     <button
                       onClick={handleDelete}
-                      className="p-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                      className="p-2.5 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                       title="Delete album"
                     >
                       <Trash2 className="w-5 h-5" />
+                    </button>
+
+                    <button
+                      onClick={onClose}
+                      className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      title="Close"
+                    >
+                      <X className="w-5 h-5" />
                     </button>
                   </div>
                 </div>

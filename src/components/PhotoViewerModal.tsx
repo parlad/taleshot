@@ -74,134 +74,153 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
 
   return (
     <AnimatePresence>
-      <motion.div
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/92 backdrop-blur-sm"
-        onClick={onClose}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25 }}
-      >
-        <div
-          className="relative w-full h-full flex flex-col items-center justify-center px-16 py-8 gap-5"
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 py-8">
+        {/* Backdrop */}
+        <motion.div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+        />
+
+        {/* Modal card — light, centered, scrollable */}
+        <motion.div
+          className="relative w-full max-w-4xl card-glass overflow-hidden"
+          initial={{ opacity: 0, scale: 0.95, y: 16 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 16 }}
+          transition={{ type: 'spring', duration: 0.4 }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Close */}
-          <button
-            onClick={onClose}
-            className="absolute top-5 right-5 z-20 p-2.5 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all"
-          >
-            <X className="w-5 h-5" />
-          </button>
-
-          {/* Counter */}
-          {photos.length > 1 && (
-            <div className="absolute top-5 left-1/2 -translate-x-1/2 text-white/50 text-xs font-medium tracking-widest uppercase">
-              {currentIndex + 1} &nbsp;/&nbsp; {photos.length}
-            </div>
-          )}
-
-          {/* Prev */}
-          {photos.length > 1 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); handlePrevious(); }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          )}
-
-          {/* Next */}
-          {photos.length > 1 && (
-            <button
-              onClick={(e) => { e.stopPropagation(); handleNext(); }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-3 bg-white/10 backdrop-blur-md rounded-full text-white hover:bg-white/20 transition-all"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          )}
-
-          {/* Image */}
-          <motion.div
-            key={currentIndex}
-            className="flex-shrink-0"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25 }}
-          >
-            <img
-              src={currentPhoto.image_url ?? ''}
-              alt={currentPhoto.title}
-              className="max-h-[62vh] max-w-full object-contain rounded-xl shadow-2xl"
-            />
-          </motion.div>
-
-          {/* Info panel */}
-          <motion.div
-            key={`info-${currentIndex}`}
-            className="w-full max-w-2xl"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25, delay: 0.05 }}
-          >
+          {/* ── Header: title + meta + actions ── */}
+          <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700/50">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
-                <h2 className="text-white font-semibold text-xl leading-snug truncate">
+                <motion.h2
+                  key={`title-${currentIndex}`}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-2xl font-bold gradient-text leading-snug"
+                >
                   {currentPhoto.title}
-                </h2>
-                {currentPhoto.date_taken && (
-                  <p className="text-white/50 text-sm mt-0.5">{currentPhoto.date_taken}</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0 mt-0.5">
-                <motion.button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(); }}
-                  className={`p-2 rounded-full transition-colors ${
-                    isFavorite ? 'bg-rose-500 text-white' : 'bg-white/10 text-white hover:bg-white/20'
-                  }`}
-                  title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.9 }}
-                >
-                  <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
-                </motion.button>
-                <div
-                  className={`p-2 rounded-full ${currentPhoto.is_public ? 'bg-blue-600/80' : 'bg-white/10'}`}
-                  title={currentPhoto.is_public ? 'Public' : 'Private'}
-                >
-                  {currentPhoto.is_public ? (
-                    <Unlock className="w-4 h-4 text-white" />
-                  ) : (
-                    <Lock className="w-4 h-4 text-white/60" />
+                </motion.h2>
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  {currentPhoto.date_taken && (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{currentPhoto.date_taken}</span>
+                  )}
+                  {currentPhoto.is_public !== undefined && (
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                      currentPhoto.is_public
+                        ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
+                    }`}>
+                      {currentPhoto.is_public ? <Unlock className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
+                      {currentPhoto.is_public ? 'Public' : 'Private'}
+                    </span>
+                  )}
+                  {photos.length > 1 && (
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                      {currentIndex + 1} / {photos.length}
+                    </span>
                   )}
                 </div>
               </div>
+
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <motion.button
+                  onClick={(e) => { e.stopPropagation(); toggleFavorite(); }}
+                  className={`p-2.5 rounded-xl transition-colors ${
+                    isFavorite
+                      ? 'bg-rose-500 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-900/20 dark:hover:text-rose-400'
+                  }`}
+                  title={isFavorite ? 'Unfavorite' : 'Favorite'}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+                </motion.button>
+                <button
+                  onClick={onClose}
+                  className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
+            {/* Story */}
             {currentPhoto.reason && (
-              <p className="text-white/70 text-sm leading-relaxed mt-3 line-clamp-3">
+              <motion.p
+                key={`reason-${currentIndex}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2"
+              >
                 {currentPhoto.reason}
-              </p>
+              </motion.p>
             )}
 
+            {/* Tags */}
             {visibleTags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {visibleTags.map((tag, i) => (
                   <span
                     key={i}
-                    className="px-2.5 py-1 bg-white/10 text-white/80 text-xs rounded-full font-medium border border-white/15"
+                    className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full font-medium border border-gray-200 dark:border-gray-700"
                   >
                     {tag}
                   </span>
                 ))}
               </div>
             )}
-          </motion.div>
-        </div>
-      </motion.div>
+          </div>
+
+          {/* ── Image ── */}
+          <div className="relative bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[300px]">
+            {/* Prev */}
+            {photos.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handlePrevious(); }}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full text-gray-600 dark:text-gray-300 shadow-sm transition-all"
+                aria-label="Previous"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
+
+            <motion.div
+              key={currentIndex}
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.2 }}
+              className="w-full"
+            >
+              <img
+                src={currentPhoto.image_url ?? ''}
+                alt={currentPhoto.title}
+                className="w-full max-h-[60vh] object-contain"
+              />
+            </motion.div>
+
+            {/* Next */}
+            {photos.length > 1 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); handleNext(); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full text-gray-600 dark:text-gray-300 shadow-sm transition-all"
+                aria-label="Next"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </motion.div>
+      </div>
     </AnimatePresence>
   );
 }

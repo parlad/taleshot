@@ -254,361 +254,234 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     }
   }, [currentPhotoIndex, currentPhoto, isEditing]);
 
-  // Fullscreen expanded view - 60% photo, 40% info
+  // ─── Gallery lightbox view ──────────────────────────────────────────
   if (isExpanded) {
+    const visibleTags = currentPhoto.tags?.filter(t => !t.startsWith('gallery_')) ?? [];
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-95 z-50 flex">
-        {/* Photo Section - 60% */}
-        <div className="w-[70%] h-full flex items-center justify-center bg-black relative">
-          <img
-            src={currentPhoto.image_url ?? ''}
-            alt={currentPhoto.title}
-            className="w-full h-full object-contain"
-          />
-          
-          {/* Edit and Delete icons overlay on photo */}
-          {!isEditing && (
-            <div className="absolute top-4 right-4 flex gap-2">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsEditing(true);
-                }}
-                className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-blue-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-                title="Edit photo"
-              >
-                <Edit3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDeletePhoto();
-                }}
-                className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-red-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-                title="Delete photo"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+      <div className="fixed inset-0 z-50 overflow-y-auto" onClick={handleClose}>
+        {/* Backdrop */}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" />
 
-          {/* Navigation arrows for gallery */}
-          {photoCount > 1 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 p-3 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-              <button
-                onClick={goToNext}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 p-3 bg-black bg-opacity-50 text-white rounded-full hover:bg-opacity-70 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-            </>
-          )}
+        <div className="relative min-h-screen flex items-start justify-center p-4 py-8">
+          <div
+            className="relative w-full max-w-4xl card-glass"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* ── Header: title + meta + actions ── */}
+            <div className="px-8 pt-8 pb-5 border-b border-gray-100 dark:border-gray-700/50">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={editData.title}
+                      onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full text-3xl font-bold bg-transparent border-b-2 border-teal-400 focus:outline-none text-gray-900 dark:text-white pb-1"
+                      autoFocus
+                    />
+                  ) : (
+                    <h1 className="text-3xl font-bold gradient-text leading-snug">{currentPhoto.title}</h1>
+                  )}
 
-          {/* Photo counter */}
-          {photoCount > 1 && (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-4 py-2 rounded-full text-sm">
-              {currentPhotoIndex + 1} of {photoCount}
-            </div>
-          )}
-        </div>
+                  {/* Meta row */}
+                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        value={editData.date_taken}
+                        onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
+                        placeholder="Date taken (e.g. Jan 2025)"
+                        className="text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400/50 text-gray-700 dark:text-gray-300 placeholder-gray-400"
+                      />
+                    ) : (
+                      currentPhoto.date_taken && (
+                        <span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
+                          <Calendar className="w-3.5 h-3.5" />
+                          {currentPhoto.date_taken}
+                        </span>
+                      )
+                    )}
+                    <button
+                      onClick={togglePublic}
+                      className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full transition-colors ${
+                        currentPhoto.is_public
+                          ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100'
+                          : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 hover:bg-gray-200'
+                      }`}
+                    >
+                      {currentPhoto.is_public ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                      {currentPhoto.is_public ? 'Public' : 'Private'}
+                    </button>
+                    {photoCount > 1 && (
+                      <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                        {currentPhotoIndex + 1} / {photoCount}
+                      </span>
+                    )}
+                  </div>
 
-        {/* Info Section - 30% */}
-        <div className="w-[30%] h-full bg-white overflow-y-auto">
-          <div className="p-4">
-            {/* Header with close button */}
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-gray-800">Gallery Photo</h2>
-              <button
-                onClick={handleClose}
-                className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
-              >
-                <X className="w-4 h-4 text-gray-600" />
-              </button>
-            </div>
+                  {/* Story */}
+                  <div className="mt-4">
+                    {isEditing ? (
+                      <textarea
+                        value={editData.reason}
+                        onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
+                        rows={3}
+                        placeholder="Add a story…"
+                        className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400/50 text-gray-700 dark:text-gray-300 placeholder-gray-400 resize-none"
+                      />
+                    ) : (
+                      currentPhoto.reason && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{currentPhoto.reason}</p>
+                      )
+                    )}
+                  </div>
 
-            {isEditing ? (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={editData.title}
-                    onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Date Taken</label>
-                  <input
-                    type="text"
-                    value={editData.date_taken}
-                    onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Story</label>
-                  <textarea
-                    value={editData.reason}
-                    onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-                    className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Tags</label>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1">
-                      {availableTags.map(tag => (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => handleTagToggle(tag)}
-                          className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                            editData.tags.includes(tag)
-                              ? 'bg-slate-600 text-white'
-                              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => setShowNewTag(true)}
-                        className="px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center gap-1"
+                  {/* Tags */}
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {visibleTags.map((tag, i) => (
+                      <span
+                        key={i}
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full font-medium border border-gray-200 dark:border-gray-700"
                       >
-                        <Plus className="w-3 h-3" />
-                        Add New
-                      </button>
-                    </div>
-
-                    {showNewTag && (
-                      <div className="flex gap-1">
+                        {tag}
+                        {isEditing && (
+                          <button
+                            onClick={() => setEditData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tag) }))}
+                            className="hover:text-red-500 transition-colors ml-0.5"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        )}
+                      </span>
+                    ))}
+                    {isEditing && (
+                      <div className="flex items-center gap-1">
                         <input
                           type="text"
                           value={newTag}
                           onChange={(e) => setNewTag(e.target.value)}
-                          className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
-                          placeholder="Tag name"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const t = newTag.trim();
+                              if (t && !editData.tags.includes(t)) {
+                                setEditData(prev => ({ ...prev, tags: [...prev.tags, t] }));
+                              }
+                              setNewTag('');
+                            }
+                          }}
+                          placeholder="Add tag"
+                          className="w-24 px-2.5 py-1 text-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full focus:outline-none focus:ring-1 focus:ring-teal-400"
                         />
                         <button
-                          type="button"
                           onClick={handleAddNewTag}
-                          className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                          className="p-1 bg-teal-500 hover:bg-teal-600 text-white rounded-full transition-colors"
                         >
-                          Add
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setShowNewTag(false);
-                            setNewTag('');
-                          }}
-                          className="px-2 py-1 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                        >
-                          Cancel
+                          <Plus className="w-3 h-3" />
                         </button>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div>
-                  <label className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={editData.is_public}
-                      onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
-                      className="w-3 h-3 text-slate-600 bg-gray-100 border-gray-300 rounded focus:ring-slate-500 focus:ring-1"
-                    />
-                    <span className="text-xs font-medium text-gray-600">Make this photo public</span>
-                  </label>
-                </div>
-
-                <div className="flex gap-2 pt-3">
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {!isEditing ? (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                      title="Edit"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={handleSave}
+                        className="p-2.5 bg-teal-500 text-white rounded-xl hover:bg-teal-600 transition-colors"
+                        title="Save"
+                      >
+                        <Save className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={handleCancel}
+                        className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-xl hover:bg-gray-200 transition-colors"
+                        title="Cancel"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                   <button
-                    onClick={handleSave}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-slate-600 text-white rounded-md hover:bg-slate-700 transition-colors"
+                    onClick={(e) => { e.stopPropagation(); handleDeletePhoto(); }}
+                    className="p-2.5 bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 rounded-xl hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                    title="Delete"
                   >
-                    <Save className="w-3 h-3" />
-                    Save Changes
+                    <Trash2 className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={handleCancel}
-                    className="flex items-center gap-1 px-3 py-1.5 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
+                    onClick={handleClose}
+                    className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    title="Close"
                   >
-                    <X className="w-3 h-3" />
-                    Cancel
+                    <X className="w-4 h-4" />
                   </button>
                 </div>
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-base font-semibold text-gray-800 mb-1">{currentPhoto.title}</h3>
-                  <div className="flex items-center text-gray-500 text-sm mb-3">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    {currentPhoto.date_taken}
-                  </div>
-                </div>
+            </div>
 
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Story</h4>
-                  <p className="text-sm text-gray-600 leading-relaxed">{currentPhoto.reason}</p>
-                </div>
+            {/* ── Image with prev/next ── */}
+            <div className="relative bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl overflow-hidden">
+              {photoCount > 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full text-gray-600 dark:text-gray-300 shadow-sm transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+              <img
+                src={currentPhoto.image_url ?? ''}
+                alt={currentPhoto.title}
+                className="w-full max-h-[65vh] object-contain"
+              />
+              {photoCount > 1 && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); goToNext(); }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 bg-white/90 dark:bg-gray-800/90 hover:bg-white dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-full text-gray-600 dark:text-gray-300 shadow-sm transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              )}
+            </div>
 
-                {currentPhoto.tags && currentPhoto.tags.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-1 flex items-center">
-                      <Tag className="w-3 h-3 mr-1" />
-                      Tags
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {currentPhoto.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-0.5 bg-slate-100 text-slate-700 text-xs rounded-md"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div>
-                  <h4 className="text-sm font-medium text-gray-700 mb-1">Visibility</h4>
-                  <div className="flex items-center gap-2">
-                    {currentPhoto.is_public ? (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-md text-xs">
-                        <Eye className="w-3 h-3" />
-                        Public
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-md text-xs">
-                        <EyeOff className="w-3 h-3" />
-                        Private
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Gallery thumbnails */}
-                {photoCount > 1 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">Gallery ({photoCount} photos)</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {/* Add Photo Button */}
-                      <div className="aspect-square rounded-xl border-2 border-dashed border-gray-300 hover:border-indigo-400 transition-colors flex items-center justify-center bg-gray-50 hover:bg-indigo-50 cursor-pointer group">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsAddModalOpen(true);
-                          }}
-                          className="flex flex-col items-center gap-2 text-gray-400 group-hover:text-indigo-600 transition-colors"
-                        >
-                          <div className="w-8 h-8 rounded-full bg-gray-200 group-hover:bg-indigo-200 flex items-center justify-center transition-colors">
-                            <Plus className="w-4 h-4" />
-                          </div>
-                          <span className="text-xs font-medium">Add Photo</span>
-                        </button>
-                      </div>
-                      
-                      {photo.gallery_photos?.map((galleryPhoto, index) => (
-                        <div
-                          key={galleryPhoto.id}
-                          className={`aspect-square rounded-xl overflow-hidden border-3 transition-colors relative group ${
-                            index === currentPhotoIndex
-                              ? 'border-slate-500'
-                              : 'border-transparent hover:border-gray-300'
-                          }`}
-                        >
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentPhotoIndex(index);
-                            }}
-                            className="w-full h-full"
-                          >
-                            <img
-                              src={galleryPhoto.image_url ?? ''}
-                              alt={galleryPhoto.title}
-                              className={`w-full h-full object-cover hover:scale-110 transition-transform duration-300 ${
-                                index === currentPhotoIndex ? 'ring-2 ring-slate-500 ring-inset' : ''
-                              }`}
-                            />
-                          </button>
-                          
-                          {/* Edit and Delete icons on hover */}
-                          <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentPhotoIndex(index);
-                                setIsEditing(true);
-                              }}
-                              className="p-1.5 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-blue-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-                              title="Edit photo"
-                            >
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCurrentPhotoIndex(index);
-                                handleDeletePhoto();
-                              }}
-                              className="p-1.5 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-red-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-                              title="Delete photo"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                          
-                          {/* Selected indicator */}
-                          {index === currentPhotoIndex && (
-                            <div className="absolute top-2 left-2 w-5 h-5 bg-slate-500 rounded-full flex items-center justify-center">
-                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {/* Gallery info */}
-                    <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center">
-                      <p className="text-sm text-gray-600">
-                        Viewing: Photo {currentPhotoIndex + 1} of {photoCount}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex justify-center pt-3 border-t border-gray-200 mt-4">
+            {/* ── Thumbnail strip + add button ── */}
+            {photoCount > 1 && (
+              <div className="px-8 py-4 border-t border-gray-100 dark:border-gray-700/50 flex gap-2 items-center overflow-x-auto">
+                {photo.gallery_photos?.map((gp, idx) => (
                   <button
-                    onClick={togglePublic}
-                    className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    key={gp.id}
+                    onClick={() => setCurrentPhotoIndex(idx)}
+                    className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden transition-all border-2 ${
+                      idx === currentPhotoIndex
+                        ? 'border-teal-500 opacity-100'
+                        : 'border-transparent opacity-50 hover:opacity-80'
+                    }`}
                   >
-                    {currentPhoto.is_public ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    Make {currentPhoto.is_public ? 'Private' : 'Public'}
+                    <img src={gp.image_url ?? ''} alt={gp.title} className="w-full h-full object-cover" />
                   </button>
-                </div>
+                ))}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIsAddModalOpen(true); }}
+                  className="flex-shrink-0 w-14 h-14 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-teal-500 hover:border-teal-400 transition-all"
+                  title="Add photo"
+                >
+                  <Plus className="w-5 h-5" />
+                </button>
               </div>
             )}
           </div>
