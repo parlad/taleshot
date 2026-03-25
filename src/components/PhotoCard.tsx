@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Calendar, Tag, X, CreditCard as Edit3, Trash2, Eye, EyeOff, Save, Plus, Lock, Unlock } from 'lucide-react';
+import { Calendar, Tag, X, CreditCard as Edit3, Trash2, Save, Plus, Lock, Unlock } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { LazyImage } from './LazyImage';
+import { useToast } from '../context/ToastContext';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoCardProps {
@@ -15,7 +16,9 @@ interface PhotoCardProps {
 }
 
 export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onTogglePublic }: PhotoCardProps) {
+  const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [editData, setEditData] = useState({
     title: photo.title,
     date_taken: photo.date_taken || '',
@@ -76,9 +79,10 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
       onUpdate(updatedPhoto);
       setIsEditing(false);
+      showToast('Photo updated successfully');
     } catch (error) {
       console.error('Error updating photo:', error);
-      alert('Failed to update photo. Please try again.');
+      showToast('Failed to update photo. Please try again.', 'error');
     }
   };
 
@@ -121,31 +125,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     setShowNewTag(false);
   };
 
-  const togglePublic = async () => {
-    try {
-      const newPublicState = !photo.is_public;
-      const { error } = await supabase
-        .from('photos')
-        .update({ is_public: newPublicState })
-        .eq('id', photo.id);
-
-      if (error) throw error;
-
-      const updatedPhoto: Photo = {
-        ...photo,
-        is_public: newPublicState
-      };
-
-      onUpdate(updatedPhoto);
-    } catch (error) {
-      console.error('Error updating photo visibility:', error);
-      alert('Failed to update photo visibility. Please try again.');
-    }
-  };
-
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
-
     try {
       const { error } = await supabase
         .from('photos')
@@ -155,9 +135,10 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       if (error) throw error;
 
       onDelete(photo.id);
+      showToast('Photo deleted');
     } catch (error) {
       console.error('Error deleting photo:', error);
-      alert('Failed to delete photo. Please try again.');
+      showToast('Failed to delete photo. Please try again.', 'error');
     }
   };
 
@@ -166,7 +147,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <div className="aspect-square relative">
           <LazyImage
-            src={photo.imageUrl || photo.image_url}
+            src={photo.image_url}
             alt={photo.title}
             className="w-full h-full object-cover"
           />
@@ -195,16 +176,31 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             >
               <Edit3 className="w-4 h-4" />
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-red-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-              title="Delete photo"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {confirmingDelete ? (
+              <div className="flex gap-1 items-center bg-white rounded-xl px-2 py-1 shadow-lg">
+                <span className="text-xs text-gray-700 font-medium">Delete?</span>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false); }}
+                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
+                className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-red-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
+                title="Delete photo"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
         <div className="p-4">
@@ -248,7 +244,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         {/* Front of card */}
         <div className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden shadow-lg">
           <LazyImage
-            src={photo.imageUrl || photo.image_url}
+            src={photo.image_url}
             alt={photo.title}
             className="w-full h-full object-cover"
           />
@@ -478,16 +474,31 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                   {photo.is_public ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                   {photo.is_public ? 'Make Private' : 'Make Public'}
                 </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDelete();
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete
-                </button>
+                {confirmingDelete ? (
+                  <div className="flex gap-1 items-center">
+                    <span className="text-xs text-gray-700 font-medium">Delete?</span>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                      className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      Yes, delete
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false); }}
+                      className="px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
+                    className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Delete
+                  </button>
+                )}
               </div>
             </>
           )}

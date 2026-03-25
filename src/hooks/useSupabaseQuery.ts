@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 
+/** @deprecated - use direct supabase queries instead */
 export function useSupabaseQuery<T>(
-  queryFn: () => Promise<{ data: T | null; error: any }>,
-  deps: any[] = []
+  queryFn: () => Promise<{ data: T | null; error: Error | null }>,
+  deps: unknown[] = []
 ) {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -27,7 +28,7 @@ export function useSupabaseQuery<T>(
         }
       } catch (err) {
         if (isMounted) {
-          setError(err);
+          setError(err instanceof Error ? err : new Error(String(err)));
           setData(null);
         }
       } finally {

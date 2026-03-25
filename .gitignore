@@ -92,4 +92,4 @@ jspm_packages/
 .tern-port
 
 # Bolt specific
-.bolt/
+.bolt/.env

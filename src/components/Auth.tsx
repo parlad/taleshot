@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Camera, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 export function Auth() {
@@ -75,8 +75,16 @@ export function Auth() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <User className="w-8 h-8 text-white" />
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-blue-500 rounded-xl blur-sm opacity-40"></div>
+                <div className="relative p-2 bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 rounded-xl shadow-lg">
+                  <Camera className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <span className="text-2xl font-bold bg-gradient-to-r from-teal-500 via-cyan-500 to-blue-600 bg-clip-text text-transparent">
+                Taleshot
+              </span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {isSignUp ? 'Create Account' : 'Welcome Back'}

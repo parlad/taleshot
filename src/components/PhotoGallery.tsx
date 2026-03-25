@@ -3,12 +3,11 @@ import { Plus, Camera, Heart, Users, Gift, Lock, Unlock } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { useToast } from '../hooks/useToast';
+import { useToast } from '../context/ToastContext';
 import { PhotoCard } from './PhotoCard';
 import { PhotoTile } from './PhotoTile';
 import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
-import { Toast } from './Toast';
 import { SkeletonLoader } from './SkeletonLoader';
 import { PhotoViewerModal } from './PhotoViewerModal';
 import type { Photo, ViewMode } from '../types';
@@ -19,7 +18,7 @@ interface PhotoGalleryProps {
 
 export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const { user } = useSupabaseAuth();
-  const { toasts, showToast, hideToast } = useToast();
+  const { showToast } = useToast();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -332,18 +331,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
             showToast('Photo uploaded successfully!', 'success');
           }}
         />
-        
-        {/* Toast Notifications */}
-        <div className="fixed top-4 right-4 z-50 space-y-2">
-          {toasts.map(toast => (
-            <Toast
-              key={toast.id}
-              message={toast.message}
-              type={toast.type}
-              onClose={() => hideToast(toast.id)}
-            />
-          ))}
-        </div>
       </>
     );
   }
@@ -485,18 +472,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           showToast('Photo uploaded successfully!', 'success');
         }}
       />
-      
-      {/* Toast Notifications */}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
-        {toasts.map(toast => (
-          <Toast
-            key={toast.id}
-            message={toast.message}
-            type={toast.type}
-            onClose={() => hideToast(toast.id)}
-          />
-        ))}
-      </div>
 
       {/* Photo Viewer Modal */}
       <PhotoViewerModal

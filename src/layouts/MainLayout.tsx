@@ -116,7 +116,7 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
               <span className="text-base font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Taleshot</span>
             </div>
             <p className="text-gray-600 text-sm">
-              © 2025 Taleshot. Capturing memories, one story at a time.
+              © {new Date().getFullYear()} Taleshot. Capturing memories, one story at a time.
             </p>
           </div>
         </div>

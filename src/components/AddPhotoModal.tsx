@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Camera, Plus } from 'lucide-react';
 import { supabase } from '../utils/supabase';
+import { useToast } from '../context/ToastContext';
 
 interface AddPhotoModalProps {
   isOpen: boolean;
@@ -11,6 +12,7 @@ interface AddPhotoModalProps {
 }
 
 export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId, galleryTitle }: AddPhotoModalProps) {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState({
     title: galleryTitle || '',
     date_taken: '',
@@ -107,7 +109,7 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
 
   const uploadImage = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
+    const fileName = `${crypto.randomUUID()}.${fileExt}`;
     const filePath = `${fileName}`;
 
     const { error: uploadError } = await supabase.storage
@@ -185,8 +187,10 @@ export function AddPhotoModal({ isOpen, onClose, onPhotoAdded, existingGalleryId
 
       onPhotoAdded();
       handleClose();
+      showToast('Photo added successfully');
     } catch (error) {
       console.error('Error adding photo:', error);
+      showToast('Failed to add photo. Please try again.', 'error');
     } finally {
       setLoading(false);
     }

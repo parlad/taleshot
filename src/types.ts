@@ -1,6 +1,5 @@
 export interface Photo {
   id: string;
-  imageUrl?: string;
   image_url?: string;
   title: string;
   date_taken?: string;
