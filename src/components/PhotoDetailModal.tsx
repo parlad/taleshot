@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Tag as TagIcon, Edit3, Save, Heart, Share2, Download, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Calendar, Tag as TagIcon, Edit3, Save, Trash2, ChevronLeft, ChevronRight, Eye, EyeOff } from 'lucide-react';
 import { LazyImage } from './LazyImage';
 import type { Photo } from '../types';
 
@@ -99,73 +99,78 @@ export function PhotoDetailModal({
         />
 
         <motion.div
-          className="relative w-full max-w-6xl h-[90vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl overflow-hidden flex"
-          initial={{ scale: 0.9, opacity: 0 }}
+          className="relative w-full max-w-6xl h-[90vh] bg-[#0d0d0d] rounded-2xl shadow-2xl overflow-hidden flex"
+          initial={{ scale: 0.93, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: 'spring', duration: 0.5 }}
+          exit={{ scale: 0.93, opacity: 0 }}
+          transition={{ type: 'spring', duration: 0.4 }}
         >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-            aria-label="Close modal"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          {hasPrevious && (
-            <button
-              onClick={onPrevious}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-              aria-label="Previous photo"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-          )}
-
-          {hasNext && (
-            <button
-              onClick={onNext}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 p-3 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-              aria-label="Next photo"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          )}
-
-          <div className="flex-1 relative bg-black flex items-center justify-center">
+          {/* Left: image */}
+          <div className="flex-1 relative bg-[#0a0a0a] flex items-center justify-center overflow-hidden">
+            {hasPrevious && (
+              <button
+                onClick={onPrevious}
+                className="absolute left-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white transition-colors"
+                aria-label="Previous photo"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+            )}
             <LazyImage
               src={photo.image_url || photo.imageUrl || ''}
               alt={photo.title}
               className="max-w-full max-h-full object-contain"
             />
+            {hasNext && (
+              <button
+                onClick={onNext}
+                className="absolute right-3 top-1/2 -translate-y-1/2 z-10 p-2.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/10 text-white transition-colors"
+                aria-label="Next photo"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
-          <div className="w-96 bg-white dark:bg-gray-900 p-6 overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold gradient-text">Details</h2>
-              {!isEditing ? (
+          {/* Right: dark info panel */}
+          <div className="w-80 bg-[#111] border-l border-white/8 flex flex-col overflow-hidden">
+            {/* Panel header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 shrink-0">
+              <span className="text-white/40 text-xs font-medium tracking-widest uppercase">Details</span>
+              <div className="flex items-center gap-2">
+                {!isEditing ? (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white/90 transition-colors"
+                    aria-label="Edit photo"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSave}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/15 hover:bg-white/25 border border-white/20 rounded-full text-white text-xs font-medium transition-colors"
+                  >
+                    <Save className="w-3.5 h-3.5" />
+                    Save
+                  </button>
+                )}
                 <button
-                  onClick={() => setIsEditing(true)}
-                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                  aria-label="Edit photo"
+                  onClick={onClose}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-white/70 hover:text-white text-xs font-medium transition-colors"
+                  aria-label="Close modal"
                 >
-                  <Edit3 className="w-5 h-5" />
+                  <X className="w-3.5 h-3.5" />
+                  Close
                 </button>
-              ) : (
-                <button
-                  onClick={handleSave}
-                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-teal-500 text-white rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
-                >
-                  <Save className="w-4 h-4" />
-                  Save
-                </button>
-              )}
+              </div>
             </div>
 
-            <div className="space-y-6">
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-white/40 text-xs font-medium uppercase tracking-wider mb-1.5">
                   Title
                 </label>
                 {isEditing ? (
@@ -173,16 +178,17 @@ export function PhotoDetailModal({
                     type="text"
                     value={editData.title}
                     onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white/8 border border-white/12 rounded-lg text-white text-sm placeholder-white/30 focus:outline-none focus:border-white/30"
                   />
                 ) : (
-                  <p className="text-lg font-semibold">{photo.title}</p>
+                  <p className="text-white font-semibold text-base leading-snug">{photo.title}</p>
                 )}
               </div>
 
+              {/* Date */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <Calendar className="w-4 h-4" />
+                <label className="block text-white/40 text-xs font-medium uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
                   Date Taken
                 </label>
                 {isEditing ? (
@@ -191,15 +197,16 @@ export function PhotoDetailModal({
                     value={editData.date_taken}
                     onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
                     placeholder="e.g., December 2024"
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white/8 border border-white/12 rounded-lg text-white text-sm placeholder-white/30 focus:outline-none focus:border-white/30"
                   />
                 ) : (
-                  <p className="text-gray-700 dark:text-gray-300">{photo.date_taken || 'Not specified'}</p>
+                  <p className="text-white/65 text-sm">{photo.date_taken || 'Not specified'}</p>
                 )}
               </div>
 
+              {/* Story */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label className="block text-white/40 text-xs font-medium uppercase tracking-wider mb-1.5">
                   Story
                 </label>
                 {isEditing ? (
@@ -207,50 +214,54 @@ export function PhotoDetailModal({
                     value={editData.reason}
                     onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 bg-white/8 border border-white/12 rounded-lg text-white text-sm placeholder-white/30 focus:outline-none focus:border-white/30 resize-none"
                   />
                 ) : (
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{photo.reason}</p>
+                  <p className="text-white/65 text-sm leading-relaxed whitespace-pre-wrap">{photo.reason || <span className="text-white/25 italic">No story added</span>}</p>
                 )}
               </div>
 
+              {/* Tags */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                  <TagIcon className="w-4 h-4" />
+                <label className="block text-white/40 text-xs font-medium uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <TagIcon className="w-3.5 h-3.5" />
                   Tags
                 </label>
-                <div className="flex flex-wrap gap-2 mb-3">
+                <div className="flex flex-wrap gap-1.5 mb-2">
                   {editData.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-500/10 to-teal-500/10 text-blue-600 dark:text-blue-400 rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-white/10 border border-white/10 text-white/70 rounded-full text-xs"
                     >
                       {tag}
                       {isEditing && (
                         <button
                           onClick={() => handleRemoveTag(tag)}
-                          className="hover:text-red-500 transition-colors"
+                          className="hover:text-red-400 transition-colors ml-0.5"
                           aria-label={`Remove tag ${tag}`}
                         >
-                          <X className="w-3.5 h-3.5" />
+                          <X className="w-3 h-3" />
                         </button>
                       )}
                     </span>
                   ))}
+                  {editData.tags.length === 0 && !isEditing && (
+                    <span className="text-white/25 text-xs italic">No tags</span>
+                  )}
                 </div>
                 {isEditing && (
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 mt-2">
                     <input
                       type="text"
                       value={newTag}
                       onChange={(e) => setNewTag(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                      placeholder="Add new tag"
-                      className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Add tag…"
+                      className="flex-1 px-3 py-1.5 bg-white/8 border border-white/12 rounded-lg text-white text-xs placeholder-white/30 focus:outline-none focus:border-white/30"
                     />
                     <button
                       onClick={handleAddTag}
-                      className="px-4 py-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                      className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/12 rounded-lg text-white/70 text-xs transition-colors"
                     >
                       Add
                     </button>
@@ -258,37 +269,37 @@ export function PhotoDetailModal({
                 )}
               </div>
 
-              <div className="pt-6 border-t border-gray-200 dark:border-gray-700 flex gap-3">
-                <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
-                  <Heart className="w-4 h-4" />
-                  Favorite
-                </button>
-                <button className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
-                  <Share2 className="w-4 h-4" />
-                  Share
-                </button>
-              </div>
-
-              <div className="flex gap-3">
-                <button className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center gap-2">
-                  <Download className="w-4 h-4" />
-                  Download
-                </button>
-                {onDelete && (
-                  <button
-                    onClick={() => {
-                      if (confirm('Are you sure you want to delete this photo?')) {
-                        onDelete(photo.id);
-                        onClose();
-                      }
-                    }}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+              {/* Visibility */}
+              <div className="flex items-center gap-2 pt-1">
+                {photo.is_public ? (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 border border-white/10 text-white/55 rounded-full text-xs">
+                    <Eye className="w-3 h-3" /> Public
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/10 border border-white/10 text-white/55 rounded-full text-xs">
+                    <EyeOff className="w-3 h-3" /> Private
+                  </span>
                 )}
               </div>
             </div>
+
+            {/* Delete footer */}
+            {onDelete && (
+              <div className="px-5 py-4 border-t border-white/8 shrink-0">
+                <button
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this photo?')) {
+                      onDelete(photo.id);
+                      onClose();
+                    }
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500/15 hover:bg-red-500/25 border border-red-500/20 text-red-400 hover:text-red-300 rounded-lg text-sm transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Photo
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
       </div>
