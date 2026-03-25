@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Calendar, Tag, X, CreditCard as Edit3, Trash2, Save, Plus, Lock, Unlock } from 'lucide-react';
+import { Calendar, Pencil, Trash2, Save, Plus, Lock, Unlock, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { LazyImage } from './LazyImage';
 import { useToast } from '../context/ToastContext';
@@ -7,18 +7,19 @@ import type { Photo, ViewMode } from '../types';
 
 interface PhotoCardProps {
   photo: Photo;
-  isFlipped: boolean;
-  onFlip: () => void;
+  isFlipped: boolean;      // kept for API compatibility
+  onFlip: () => void;      // kept for API compatibility
   onDelete: (id: string) => void;
   onUpdate: (updatedPhoto: Photo) => void;
-  viewMode: ViewMode;
+  viewMode: ViewMode;      // kept for API compatibility
   onTogglePublic?: () => void;
 }
 
-export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onTogglePublic }: PhotoCardProps) {
+export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCardProps) {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [editData, setEditData] = useState({
     title: photo.title,
     date_taken: photo.date_taken || '',
@@ -33,6 +34,7 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
   const [showNewTag, setShowNewTag] = useState(false);
 
   const handleSave = async () => {
+    setSaving(true);
     try {
       const { error } = await supabase
         .from('photos')
@@ -46,7 +48,6 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
       if (error) throw error;
 
-      // Delete existing photo tags
       const { error: deleteTagsError } = await supabase
         .from('photo_tags')
         .delete()
@@ -54,7 +55,6 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
       if (deleteTagsError) throw deleteTagsError;
 
-      // Insert new photo tags
       if (editData.tags.length > 0) {
         const tagInserts = editData.tags.map(tagName => ({
           photo_id: photo.id,
@@ -83,6 +83,8 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     } catch (error) {
       console.error('Error updating photo:', error);
       showToast('Failed to update photo. Please try again.', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -110,22 +112,23 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
 
   const handleAddNewTag = () => {
     if (!newTag.trim()) return;
-    
+
     const trimmedTag = newTag.trim();
     if (!availableTags.includes(trimmedTag)) {
       setAvailableTags(prev => [...prev, trimmedTag].sort());
     }
-    
+
     setEditData(prev => ({
       ...prev,
       tags: prev.tags.includes(trimmedTag) ? prev.tags : [...prev.tags, trimmedTag]
     }));
-    
+
     setNewTag('');
     setShowNewTag(false);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     try {
       const { error } = await supabase
         .from('photos')
@@ -142,368 +145,240 @@ export function PhotoCard({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     }
   };
 
-  if (viewMode === 'slide') {
+  // ─── Edit view ─────────────────────────────────────────────────────
+  if (isEditing) {
     return (
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-        <div className="aspect-square relative">
-          <LazyImage
-            src={photo.image_url}
-            alt={photo.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-4 right-4 flex gap-2">
+      <div
+        className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-5 space-y-4 max-h-[480px] overflow-y-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-gray-900 text-sm">Edit photo</h3>
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onTogglePublic?.();
-              }}
-              className={`p-2.5 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm border-2 ${
-                photo.is_public
-                  ? 'bg-blue-600 text-white border-blue-700'
-                  : 'bg-gray-500 text-white border-gray-600'
-              }`}
-              title={photo.is_public ? 'Public - Click to make private' : 'Private - Click to make public'}
+              onClick={handleCancel}
+              className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
             >
-              {photo.is_public ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+              <X className="w-4 h-4" />
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsEditing(true);
-              }}
-              className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-blue-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-              title="Edit photo"
-            >
-              <Edit3 className="w-4 h-4" />
-            </button>
-            {confirmingDelete ? (
-              <div className="flex gap-1 items-center bg-white rounded-xl px-2 py-1 shadow-lg">
-                <span className="text-xs text-gray-700 font-medium">Delete?</span>
-                <button
-                  onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                  className="px-2 py-1 text-xs bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Yes
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false); }}
-                  className="px-2 py-1 text-xs bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  No
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
-                className="p-2 bg-white bg-opacity-90 hover:bg-opacity-100 text-gray-700 hover:text-red-600 rounded-full transition-all duration-300 hover:scale-110 shadow-lg backdrop-blur-sm"
-                title="Delete photo"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            )}
           </div>
-        </div>
-        <div className="p-4">
-          <h3 className="text-base font-semibold mb-2">{photo.title}</h3>
-          <div className="flex items-center text-gray-500 text-xs mb-3">
-            <Calendar className="w-4 h-4 mr-2" />
-            {photo.date_taken}
+
+          {/* Title */}
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Title</label>
+            <input
+              type="text"
+              value={editData.title}
+              onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-500/30 focus:border-slate-400 outline-none transition-all"
+            />
           </div>
-          <p className="text-gray-700 text-xs line-clamp-2">{photo.reason}</p>
-          {photo.tags && photo.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
-              {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 3).map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full font-medium"
+
+          {/* Date */}
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Date taken</label>
+            <input
+              type="text"
+              value={editData.date_taken}
+              onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-500/30 focus:border-slate-400 outline-none transition-all"
+              placeholder="e.g. Jan 2025"
+            />
+          </div>
+
+          {/* Story */}
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Story</label>
+            <textarea
+              value={editData.reason}
+              onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
+              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-500/30 focus:border-slate-400 outline-none transition-all resize-none"
+              rows={3}
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Tags</label>
+            <div className="flex flex-wrap gap-1.5">
+              {availableTags.map(tag => (
+                <button
+                  key={tag}
+                  type="button"
+                  onClick={() => handleTagToggle(tag)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    editData.tags.includes(tag)
+                      ? 'bg-slate-800 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
                 >
                   {tag}
-                </span>
+                </button>
               ))}
-              {photo.tags.filter(tag => !tag.startsWith('gallery_')).length > 3 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  +{photo.tags.filter(tag => !tag.startsWith('gallery_')).length - 3}
-                </span>
-              )}
+              <button
+                type="button"
+                onClick={() => setShowNewTag(true)}
+                className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" /> New
+              </button>
             </div>
-          )}
+            {showNewTag && (
+              <div className="flex gap-1.5 mt-2">
+                <input
+                  type="text"
+                  value={newTag}
+                  onChange={(e) => setNewTag(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddNewTag()}
+                  className="flex-1 px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400"
+                  placeholder="Tag name"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddNewTag}
+                  className="px-2.5 py-1.5 text-xs bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                >
+                  Add
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowNewTag(false); setNewTag(''); }}
+                  className="px-2.5 py-1.5 text-xs bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Visibility */}
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={editData.is_public}
+              onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
+              className="w-4 h-4 rounded text-slate-700 border-gray-300 focus:ring-slate-500"
+            />
+            <span className="text-sm text-gray-700">Make this photo public</span>
+          </label>
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors disabled:opacity-50"
+          >
+            <Save className="w-3.5 h-3.5" />
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button
+            onClick={handleCancel}
+            className="px-4 py-2 text-sm text-gray-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+          >
+            Cancel
+          </button>
         </div>
       </div>
     );
   }
 
-  // Flip card view
+  // ─── Photo card view ────────────────────────────────────────────────
+  const visibleTags = photo.tags?.filter(t => !t.startsWith('gallery_')) ?? [];
+
   return (
-    <div className="w-full h-96">
-      <div
-        className={`relative w-full h-full cursor-pointer transition-transform duration-700 transform-style-preserve-3d ${
-          isFlipped ? 'rotate-y-180' : ''
-        }`}
-        onClick={onFlip}
-      >
-        {/* Front of card */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rounded-xl overflow-hidden shadow-lg">
-          <LazyImage
-            src={photo.image_url}
-            alt={photo.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          
-          {/* Privacy indicator */}
-          <div className="absolute top-4 right-4">
-            <div className={`p-2.5 rounded-full border-2 shadow-lg backdrop-blur-sm transition-all duration-300 ${
-              photo.is_public
-                ? 'bg-blue-600 border-blue-700'
-                : 'bg-gray-500 border-gray-600'
-            }`} title={photo.is_public ? 'Public' : 'Private'}>
-              {photo.is_public ? (
-                <Unlock className="w-4 h-4 text-white" />
-              ) : (
-                <Lock className="w-4 h-4 text-white" />
-              )}
-            </div>
+    <div className="group relative rounded-2xl overflow-hidden shadow-md bg-gray-900 aspect-[4/3]">
+      <LazyImage
+        src={photo.image_url ?? ''}
+        alt={photo.title}
+        className="w-full h-full transition-transform duration-500 group-hover:scale-[1.04]"
+      />
+
+      {/* Gradient overlay for text readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+
+      {/* Top-right actions — revealed on hover */}
+      <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+        <button
+          onClick={(e) => { e.stopPropagation(); onTogglePublic?.(); }}
+          className={`p-2 rounded-full backdrop-blur-sm text-white transition-all ${
+            photo.is_public
+              ? 'bg-blue-500/90 hover:bg-blue-600'
+              : 'bg-black/50 border border-white/20 hover:bg-black/70'
+          }`}
+          title={photo.is_public ? 'Public' : 'Private'}
+        >
+          {photo.is_public ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+        </button>
+
+        <button
+          onClick={(e) => { e.stopPropagation(); setIsEditing(true); setConfirmingDelete(false); }}
+          className="p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all"
+          title="Edit"
+        >
+          <Pencil className="w-3.5 h-3.5" />
+        </button>
+
+        {confirmingDelete ? (
+          <div
+            className="flex items-center gap-1 bg-black/75 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="text-white/90 text-xs font-medium">Delete?</span>
+            <button onClick={handleDelete} className="text-xs text-red-400 hover:text-red-300 font-bold ml-1">
+              Yes
+            </button>
+            <span className="text-white/30 mx-0.5">·</span>
+            <button
+              onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false); }}
+              className="text-xs text-white/70 hover:text-white"
+            >
+              No
+            </button>
           </div>
-          
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h3 className="text-lg font-semibold mb-2">{photo.title}</h3>
-            <div className="flex items-center text-white/80 text-sm">
-              <Calendar className="w-4 h-4 mr-2" />
-              {photo.date_taken}
-            </div>
+        ) : (
+          <button
+            onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
+            className="p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-red-500/80 hover:border-red-400 transition-all"
+            title="Delete"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {/* Bottom info — always visible */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
+        <h3 className="text-white font-semibold text-sm leading-snug truncate drop-shadow">
+          {photo.title}
+        </h3>
+        {photo.date_taken && (
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <Calendar className="w-3 h-3 text-white/50 flex-shrink-0" />
+            <span className="text-white/60 text-xs">{photo.date_taken}</span>
           </div>
-        </div>
-
-        {/* Back of card */}
-        <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 bg-white rounded-xl shadow-lg p-6 flex flex-col">
-          {isEditing ? (
-            <div className="flex-1 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                <input
-                  type="text"
-                  value={editData.title}
-                  onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date Taken</label>
-                <input
-                  type="text"
-                  value={editData.date_taken}
-                  onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Story</label>
-                <textarea
-                  value={editData.reason}
-                  onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                <div className="space-y-2">
-                  <div className="flex flex-wrap gap-1">
-                    {availableTags.map(tag => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => handleTagToggle(tag)}
-                        className={`px-2 py-1 rounded-md text-xs font-medium transition-colors ${
-                          editData.tags.includes(tag)
-                            ? 'bg-slate-600 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => setShowNewTag(true)}
-                      className="px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-600 hover:bg-green-200 transition-colors flex items-center gap-1"
-                    >
-                      <Plus className="w-3 h-3" />
-                      Add New
-                    </button>
-                  </div>
-
-                  {showNewTag && (
-                    <div className="flex gap-1">
-                      <input
-                        type="text"
-                        value={newTag}
-                        onChange={(e) => setNewTag(e.target.value)}
-                        className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-transparent outline-none"
-                        placeholder="Tag name"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddNewTag}
-                        className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
-                      >
-                        Add
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowNewTag(false);
-                          setNewTag('');
-                        }}
-                        className="px-2 py-1 text-xs bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={editData.is_public}
-                    onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
-                    className="w-4 h-4 text-slate-600 bg-gray-100 border-gray-300 rounded focus:ring-slate-500 focus:ring-2"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Make this photo public</span>
-                </label>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleSave();
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  Save Changes
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCancel();
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">{photo.title}</h3>
-                <div className="flex items-center text-gray-500 text-sm mb-4">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  {photo.date_taken}
-                </div>
-                <p className="text-gray-700 text-xs leading-relaxed mb-4">{photo.reason}</p>
-                
-                {photo.tags && photo.tags.length > 0 && (
-                  <div className="mb-4">
-                    <h4 className="text-xs font-medium text-gray-700 mb-2 flex items-center">
-                      <Tag className="w-4 h-4 mr-1" />
-                      Tags
-                    </h4>
-                    <div className="flex flex-wrap gap-1">
-                      {photo.tags.filter(tag => !tag.startsWith('gallery_')).map((tag, index) => (
-                        <span
-                          key={index}
-                          className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="mb-4">
-                  <h4 className="text-xs font-medium text-gray-700 mb-2">Visibility</h4>
-                  <div className="flex items-center gap-2">
-                    {photo.is_public ? (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
-                        <Unlock className="w-3 h-3" />
-                        Public
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
-                        <Lock className="w-3 h-3" />
-                        Private
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  <Edit3 className="w-4 h-4" />
-                  Edit
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onTogglePublic?.();
-                  }}
-                  className={`flex items-center gap-2 px-3 py-2 text-white rounded-lg transition-colors text-sm font-medium ${
-                    photo.is_public
-                      ? 'bg-gray-500 hover:bg-gray-600'
-                      : 'bg-blue-600 hover:bg-blue-700'
-                  }`}
-                >
-                  {photo.is_public ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                  {photo.is_public ? 'Make Private' : 'Make Public'}
-                </button>
-                {confirmingDelete ? (
-                  <div className="flex gap-1 items-center">
-                    <span className="text-xs text-gray-700 font-medium">Delete?</span>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                      className="px-3 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                    >
-                      Yes, delete
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setConfirmingDelete(false); }}
-                      className="px-3 py-2 text-sm bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
-                    className="flex items-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </button>
-                )}
-              </div>
-            </>
-          )}
-        </div>
+        )}
+        {visibleTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {visibleTags.slice(0, 2).map((tag, i) => (
+              <span
+                key={i}
+                className="px-1.5 py-0.5 bg-white/15 backdrop-blur-sm text-white/85 text-[10px] rounded-full font-medium border border-white/10"
+              >
+                {tag}
+              </span>
+            ))}
+            {visibleTags.length > 2 && (
+              <span className="px-1.5 py-0.5 bg-white/15 text-white/55 text-[10px] rounded-full">
+                +{visibleTags.length - 2}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

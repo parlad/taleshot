@@ -261,7 +261,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
         {/* Photo Section - 60% */}
         <div className="w-[70%] h-full flex items-center justify-center bg-black relative">
           <img
-            src={currentPhoto.imageUrl || currentPhoto.image_url}
+            src={currentPhoto.image_url ?? ''}
             alt={currentPhoto.title}
             className="w-full h-full object-contain"
           />
@@ -545,7 +545,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
                             className="w-full h-full"
                           >
                             <img
-                              src={galleryPhoto.image_url || galleryPhoto.imageUrl}
+                              src={galleryPhoto.image_url ?? ''}
                               alt={galleryPhoto.title}
                               className={`w-full h-full object-cover hover:scale-110 transition-transform duration-300 ${
                                 index === currentPhotoIndex ? 'ring-2 ring-slate-500 ring-inset' : ''
@@ -630,89 +630,45 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
   }
 
   // Regular tile view showing just the representative photo with gallery indicator
-  if (viewMode === 'slide') {
-    return (
-      <div 
-        className="bg-white rounded-xl shadow-lg overflow-hidden cursor-pointer hover:shadow-xl transition-shadow"
-        onClick={handleExpand}
-      >
-        <div className="aspect-square relative">
-          <img
-            src={photo.imageUrl || photo.image_url}
-            alt={photo.title}
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-            <Images className="w-4 h-4" />
-            {photoCount}
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity" />
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-            <button className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-full text-white hover:bg-opacity-30 transition-colors">
-              <Maximize2 className="w-6 h-6" />
-            </button>
-          </div>
-          <div className="absolute bottom-4 left-4 right-4 text-white">
-            <h3 className="text-lg font-semibold mb-1">{photo.title}</h3>
-            <div className="flex items-center text-white/80 text-sm">
-              <Calendar className="w-4 h-4 mr-2" />
-              {photo.date_taken}
-            </div>
-          </div>
-        </div>
-        <div className="p-4">
-          <p className="text-gray-700 text-sm line-clamp-2">{photo.reason}</p>
-          {photo.tags && photo.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-3">
-              {photo.tags.filter(tag => !tag.startsWith('gallery_')).slice(0, 3).map((tag, index) => (
-                <span
-                  key={index}
-                  className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                >
-                  {tag}
-                </span>
-              ))}
-              {photo.tags.filter(tag => !tag.startsWith('gallery_')).length > 3 && (
-                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
-                  +{photo.tags.filter(tag => !tag.startsWith('gallery_')).length - 3}
-                </span>
-              )}
-            </div>
-          )}
+  // Gallery tile view
+  return (
+    <div
+      className="group relative rounded-2xl overflow-hidden shadow-md bg-gray-900 aspect-[4/3] cursor-pointer"
+      onClick={handleExpand}
+    >
+      <img
+        src={photo.image_url ?? ''}
+        alt={photo.title}
+        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+      />
+
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+
+      {/* Gallery badge */}
+      <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1.5 rounded-full border border-white/20">
+        <Images className="w-3.5 h-3.5" />
+        {photoCount} photos
+      </div>
+
+      {/* Expand hint on hover */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        <div className="p-3 bg-white/15 backdrop-blur-sm rounded-full border border-white/20">
+          <Maximize2 className="w-5 h-5 text-white" />
         </div>
       </div>
-    );
-  }
 
-  // Flip card gallery tile view (simplified, no actual flipping)
-  return (
-    <div className="w-full h-96">
-      <div
-        className="relative w-full h-full cursor-pointer rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow"
-        onClick={handleExpand}
-      >
-        <img
-          src={photo.imageUrl || photo.image_url}
-          alt={photo.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1">
-          <Images className="w-4 h-4" />
-          {photoCount}
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity" />
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-          <button className="p-3 bg-white bg-opacity-20 backdrop-blur-sm rounded-full text-white hover:bg-opacity-30 transition-colors">
-            <Maximize2 className="w-6 h-6" />
-          </button>
-        </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-          <h3 className="text-xl font-semibold mb-2">{photo.title}</h3>
-          <div className="flex items-center text-white/80 text-sm">
-            <Calendar className="w-4 h-4 mr-2" />
-            {photo.date_taken}
+      {/* Bottom info */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+        <h3 className="text-white font-semibold text-sm leading-snug truncate drop-shadow">
+          {photo.title}
+        </h3>
+        {photo.date_taken && (
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <Calendar className="w-3 h-3 text-white/50 flex-shrink-0" />
+            <span className="text-white/60 text-xs">{photo.date_taken}</span>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

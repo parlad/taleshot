@@ -27,7 +27,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('flip');
+  const [viewMode, setViewMode] = useState<ViewMode>('slide');
   const [sortBy, setSortBy] = useState<'date' | 'tag' | 'privacy'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewerOpen, setViewerOpen] = useState(false);
