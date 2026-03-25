@@ -93,3 +93,4 @@ jspm_packages/
 
 # Bolt specific
 .bolt/.env
+vite.config.ts.timestamp-*
