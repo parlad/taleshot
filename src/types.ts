@@ -1,13 +1,18 @@
 export interface Photo {
   id: string;
-  imageUrl?: string;
-  image_url?: string;
+  image_url: string;
   title: string;
   date_taken?: string;
   reason: string;
   tags?: string[];
   user_id?: string;
   is_public?: boolean;
+  created_at?: string;
+}
+
+export interface SamplePhoto {
+  image_url: string;
+  title: string;
 }
 
 export type ViewMode = 'flip' | 'slide';

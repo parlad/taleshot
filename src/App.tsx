@@ -1,18 +1,20 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useSupabaseAuth } from './hooks/useSupabaseAuth';
+import { ToastProvider } from './context/ToastContext';
 import { Auth } from './components/Auth';
+import { LoadingSpinner } from './components/LoadingSpinner';
 import { MainLayout } from './layouts/MainLayout';
 import { HomePage } from './pages/HomePage';
 import { SearchPage } from './pages/SearchPage';
 
-export default function App() {
+function AppContent() {
   const { user, loading } = useSupabaseAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-green-50">
-        <div className="text-gray-500">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50">
+        <LoadingSpinner size="lg" message="Loading…" />
       </div>
     );
   }
@@ -30,5 +32,13 @@ export default function App() {
         </Routes>
       </MainLayout>
     </Router>
+  );
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }

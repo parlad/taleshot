@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from '../utils/supabase';
+import { Camera } from 'lucide-react';
 import { Eye, EyeOff } from 'lucide-react';
+import { supabase } from '../utils/supabase';
 
 export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,11 +14,13 @@ export function Auth() {
     lastName: ''
   });
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
     setLoading(true);
 
     try {
@@ -26,12 +29,9 @@ export function Auth() {
           email: formData.email,
           password: formData.password,
         });
-        
-        if (signInError) {
-          throw signInError;
-        }
+
+        if (signInError) throw signInError;
       } else {
-        // Validate signup form
         if (!formData.firstName.trim() || !formData.lastName.trim()) {
           throw new Error('First name and last name are required');
         }
@@ -42,7 +42,6 @@ export function Auth() {
           throw new Error('Password must be at least 6 characters long');
         }
 
-        // Sign up the user
         const { data: { user }, error: signUpError } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
@@ -51,51 +50,70 @@ export function Auth() {
           }
         });
 
-        if (signUpError) {
-          throw signUpError;
-        }
+        if (signUpError) throw signUpError;
 
         if (user) {
-          // Create or update profile
           const { error: profileError } = await supabase
             .from('profiles')
             .upsert({
               id: user.id,
               first_name: formData.firstName.trim(),
               last_name: formData.lastName.trim(),
-              updated_at: new Date()
+              updated_at: new Date().toISOString()
             });
 
           if (profileError) throw profileError;
+
+          setInfo('Account created! Check your email to confirm your address.');
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during authentication');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred during authentication';
+      setError(message);
     } finally {
       setLoading(false);
     }
   };
 
+  const switchMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
+    setInfo('');
+    setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '' });
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-green-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-blue-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        {/* Logo */}
+        <div className="text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Camera className="w-10 h-10 text-blue-600" />
+            <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 text-transparent bg-clip-text">
+              Taleshot
+            </span>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900">
             {isLogin ? 'Welcome back!' : 'Create your account'}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-1 text-sm text-gray-600">
             {isLogin ? 'Sign in to your account' : 'Start your memory journey'}
           </p>
         </div>
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded text-sm">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
+          {info && (
+            <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm">
+              {info}
+            </div>
+          )}
 
-          <div className="rounded-md shadow-sm space-y-4">
+          <div className="space-y-4">
             {!isLogin && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -104,12 +122,12 @@ export function Auth() {
                   </label>
                   <input
                     id="firstName"
-                   name="firstName"
+                    name="firstName"
                     type="text"
                     required={!isLogin}
                     value={formData.firstName}
                     onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                    className="input-field"
                     placeholder="John"
                   />
                 </div>
@@ -119,12 +137,12 @@ export function Auth() {
                   </label>
                   <input
                     id="lastName"
-                   name="lastName"
+                    name="lastName"
                     type="text"
                     required={!isLogin}
                     value={formData.lastName}
                     onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                    className="input-field"
                     placeholder="Doe"
                   />
                 </div>
@@ -137,13 +155,13 @@ export function Auth() {
               </label>
               <input
                 id="email"
-               name="email"
+                name="email"
                 type="email"
                 autoComplete="email"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                className="input-field"
                 placeholder="you@example.com"
               />
             </div>
@@ -155,13 +173,13 @@ export function Auth() {
               <div className="relative">
                 <input
                   id="password"
-                 name="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  name="password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete={isLogin ? 'current-password' : 'new-password'}
                   required
                   value={formData.password}
                   onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
-                  className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                  className="input-field pr-10"
                   placeholder="••••••••"
                 />
                 <button
@@ -182,13 +200,13 @@ export function Auth() {
                 <div className="relative">
                   <input
                     id="confirmPassword"
-                   name="confirmPassword"
-                    type={showPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
                     autoComplete="new-password"
                     required={!isLogin}
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-green-500 focus:border-green-500 focus:z-10 sm:text-sm"
+                    className="input-field pr-10"
                     placeholder="••••••••"
                   />
                   <button
@@ -203,31 +221,19 @@ export function Auth() {
             )}
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Loading...' : (isLogin ? 'Sign in' : 'Sign up')}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full flex justify-center py-2.5 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? 'Loading...' : (isLogin ? 'Sign in' : 'Sign up')}
+          </button>
 
           <div className="text-center">
             <button
               type="button"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setFormData({
-                  email: '',
-                  password: '',
-                  confirmPassword: '',
-                  firstName: '',
-                  lastName: ''
-                });
-              }}
-              className="text-sm text-green-600 hover:text-green-500"
+              onClick={switchMode}
+              className="text-sm text-blue-600 hover:text-blue-500 font-medium"
             >
               {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
             </button>

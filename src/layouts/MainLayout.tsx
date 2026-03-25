@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Camera, Search, LogOut, ChevronDown, Grid, LayoutGrid, Filter } from 'lucide-react';
+import { Camera, Search, LogOut } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 
 interface MainLayoutProps {
@@ -9,25 +9,11 @@ interface MainLayoutProps {
 
 export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
-  const [showViewDropdown, setShowViewDropdown] = useState(false);
-  const viewDropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (viewDropdownRef.current && !viewDropdownRef.current.contains(event.target as Node)) {
-        setShowViewDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  const isSearchPage = location.pathname === '/search';
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
   };
-
-  const isHomePage = location.pathname === '/';
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -44,38 +30,11 @@ export function MainLayout({ children }: MainLayoutProps) {
             </Link>
 
             {/* Navigation */}
-            <div className="flex items-center gap-6">
-              {/* View Mode Toggle - Only on home page */}
-              {isHomePage && (
-                <div className="view-dropdown" ref={viewDropdownRef}>
-                  <button
-                    onClick={() => setShowViewDropdown(!showViewDropdown)}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <LayoutGrid className="w-4 h-4" />
-                    <span>View</span>
-                    <ChevronDown className={`w-4 h-4 transition-transform ${showViewDropdown ? 'rotate-180' : ''}`} />
-                  </button>
-
-                  {showViewDropdown && (
-                    <div className="dropdown-menu">
-                      <button className="flex items-center gap-2">
-                        <LayoutGrid className="w-4 h-4" />
-                        Flip Cards
-                      </button>
-                      <button className="flex items-center gap-2">
-                        <Grid className="w-4 h-4" />
-                        Card View
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
+            <div className="flex items-center gap-2">
               <Link
                 to="/search"
                 className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
-                  !isHomePage
+                  isSearchPage
                     ? 'bg-blue-100 text-blue-700 font-medium'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
@@ -112,7 +71,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               <span className="text-lg font-semibold text-gray-800">Taleshot</span>
             </div>
             <p className="text-gray-600 text-sm">
-              © 2025 Taleshot. Capturing memories, one story at a time.
+              © {new Date().getFullYear()} Taleshot. Capturing memories, one story at a time.
             </p>
           </div>
         </div>
