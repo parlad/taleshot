@@ -94,7 +94,7 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
           onClick={(e) => e.stopPropagation()}
         >
           {/* ── Header: title + meta + actions ── */}
-          <div className="px-6 pt-6 pb-4 border-b border-gray-100 dark:border-gray-700/50">
+          <div className="px-6 pt-6 pb-5">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
                 <motion.h2
@@ -105,12 +105,23 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
                 >
                   {currentPhoto.title}
                 </motion.h2>
-                <div className="flex flex-wrap items-center gap-3 mt-2">
-                  {currentPhoto.date_taken && (
-                    <span className="text-sm text-gray-500 dark:text-gray-400">{currentPhoto.date_taken}</span>
-                  )}
+
+                {/* Story — sits like a subtitle, right under title */}
+                {currentPhoto.reason && (
+                  <motion.p
+                    key={`reason-${currentIndex}`}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed"
+                  >
+                    {currentPhoto.reason}
+                  </motion.p>
+                )}
+
+                {/* Meta badges row */}
+                <div className="flex flex-wrap items-center gap-2 mt-3">
                   {currentPhoto.is_public !== undefined && (
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
                       currentPhoto.is_public
                         ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                         : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
@@ -120,10 +131,18 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
                     </span>
                   )}
                   {photos.length > 1 && (
-                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-medium tabular-nums">
                       {currentIndex + 1} / {photos.length}
                     </span>
                   )}
+                  {visibleTags.map((tag, i) => (
+                    <span
+                      key={i}
+                      className="px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
                 </div>
               </div>
 
@@ -150,36 +169,10 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
                 </button>
               </div>
             </div>
-
-            {/* Story */}
-            {currentPhoto.reason && (
-              <motion.p
-                key={`reason-${currentIndex}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="mt-3 text-sm text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2"
-              >
-                {currentPhoto.reason}
-              </motion.p>
-            )}
-
-            {/* Tags */}
-            {visibleTags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {visibleTags.map((tag, i) => (
-                  <span
-                    key={i}
-                    className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full font-medium border border-gray-200 dark:border-gray-700"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
 
-          {/* ── Image ── */}
-          <div className="relative bg-gray-50 dark:bg-gray-900/50 flex items-center justify-center min-h-[300px]">
+          {/* ── Image — no background, seamless with card ── */}
+          <div className="relative flex items-center justify-center min-h-[300px] rounded-b-2xl overflow-hidden">
             {/* Prev */}
             {photos.length > 1 && (
               <button

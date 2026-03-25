@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Tag as TagIcon, Edit3, Save, Trash2, ChevronLeft, ChevronRight, Lock, Unlock, Plus } from 'lucide-react';
+import { X, Tag as TagIcon, Edit3, Save, Trash2, ChevronLeft, ChevronRight, Lock, Unlock, Plus } from 'lucide-react';
 import { LazyImage } from './LazyImage';
 import type { Photo } from '../types';
 
@@ -100,7 +100,7 @@ export function PhotoDetailModal({
             onClick={(e) => e.stopPropagation()}
           >
             {/* ── Header: title + meta ── */}
-            <div className="px-8 pt-8 pb-5 border-b border-gray-100 dark:border-gray-700/50">
+            <div className="px-8 pt-8 pb-6">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   {isEditing ? (
@@ -115,9 +115,26 @@ export function PhotoDetailModal({
                     <h1 className="text-3xl font-bold gradient-text leading-snug">{photo.title}</h1>
                   )}
 
-                  {/* Meta row */}
-                  <div className="flex flex-wrap items-center gap-3 mt-3">
+                  {/* Story — sits like a subtitle right under title */}
+                  <div className="mt-1.5">
                     {isEditing ? (
+                      <textarea
+                        value={editData.reason}
+                        onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
+                        rows={2}
+                        placeholder="Add a story…"
+                        className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400/50 text-gray-700 dark:text-gray-300 placeholder-gray-400 resize-none"
+                      />
+                    ) : (
+                      photo.reason && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">{photo.reason}</p>
+                      )
+                    )}
+                  </div>
+
+                  {/* Meta badges row — no raw date text */}
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    {isEditing && (
                       <input
                         type="text"
                         value={editData.date_taken}
@@ -125,15 +142,8 @@ export function PhotoDetailModal({
                         placeholder="Date taken (e.g. Jan 2025)"
                         className="text-sm px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-400/50 text-gray-700 dark:text-gray-300 placeholder-gray-400"
                       />
-                    ) : (
-                      photo.date_taken && (
-                        <span className="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {photo.date_taken}
-                        </span>
-                      )
                     )}
-                    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
+                    <span className={`inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1 rounded-full ${
                       photo.is_public
                         ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
                         : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
@@ -161,30 +171,13 @@ export function PhotoDetailModal({
                     )}
                   </div>
 
-                  {/* Story */}
-                  <div className="mt-4">
-                    {isEditing ? (
-                      <textarea
-                        value={editData.reason}
-                        onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-                        rows={3}
-                        placeholder="Add a story…"
-                        className="w-full px-3 py-2 text-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-400/50 text-gray-700 dark:text-gray-300 placeholder-gray-400 resize-none"
-                      />
-                    ) : (
-                      photo.reason && (
-                        <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">{photo.reason}</p>
-                      )
-                    )}
-                  </div>
-
                   {/* Tags */}
                   <div className="mt-3">
                     <div className="flex flex-wrap gap-1.5">
                       {visibleTags.map((tag, i) => (
                         <span
                           key={i}
-                          className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full font-medium border border-gray-200 dark:border-gray-700"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-xs rounded-full font-medium"
                         >
                           {tag}
                           {isEditing && (
@@ -264,8 +257,8 @@ export function PhotoDetailModal({
               </div>
             </div>
 
-            {/* ── Image ── */}
-            <div className="bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl overflow-hidden">
+            {/* ── Image — seamless, no gray separator ── */}
+            <div className="rounded-b-2xl overflow-hidden">
               <LazyImage
                 src={photo.image_url || photo.imageUrl || ''}
                 alt={photo.title}

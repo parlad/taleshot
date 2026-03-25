@@ -431,7 +431,7 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             </div>
 
             {/* ── Image with prev/next ── */}
-            <div className="relative bg-gray-50 dark:bg-gray-900/50 rounded-b-2xl overflow-hidden">
+            <div className="relative rounded-b-2xl overflow-hidden">
               {photoCount > 1 && (
                 <button
                   onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
