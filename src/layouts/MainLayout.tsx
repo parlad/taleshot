@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Camera, Search, LogOut, Compass, Book } from 'lucide-react';
 import { supabase } from '../utils/supabase';
@@ -19,106 +19,78 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
   const handleLogoClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (location.pathname === '/') {
-      // If already on home page, trigger photo reload
       onLogoClick?.();
     } else {
-      // Navigate to home page
       navigate('/');
     }
   };
 
-  const isHomePage = location.pathname === '/';
+  const navLink = (to: string, icon: React.ReactNode, label: string) => {
+    const active = location.pathname === to;
+    return (
+      <Link
+        to={to}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+          active
+            ? 'bg-slate-900 text-white'
+            : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+        }`}
+      >
+        {icon}
+        {label}
+      </Link>
+    );
+  };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#f8fafc]">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-gray-100/50 shadow-sm">
-        <div className="max-w-7xl mx-auto px-10 lg:px-16 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <button onClick={handleLogoClick} className="flex items-center gap-2 hover:scale-105 transition-transform duration-300">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-teal-400 to-blue-500 rounded-xl blur-sm opacity-40"></div>
-                <div className="relative p-2 bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 rounded-xl shadow-lg">
-                  <Camera className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <span className="text-2xl font-bold gradient-text">
-                Taleshot
-              </span>
-            </button>
-
-            {/* Navigation */}
-            <div className="flex items-center gap-3">
-              <Link
-                to="/explore"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                  location.pathname === '/explore'
-                    ? 'bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 text-white shadow-lg shadow-teal-500/30'
-                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50 border border-gray-200 hover:border-teal-300'
-                }`}
-              >
-                <Compass className="w-4 h-4" />
-                Explore
-              </Link>
-
-              <Link
-                to="/stories"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                  location.pathname === '/stories'
-                    ? 'bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 text-white shadow-lg shadow-teal-500/30'
-                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50 border border-gray-200 hover:border-teal-300'
-                }`}
-              >
-                <Book className="w-4 h-4" />
-                Stories
-              </Link>
-
-              <Link
-                to="/search"
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                  location.pathname === '/search'
-                    ? 'bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 text-white shadow-lg shadow-teal-500/30'
-                    : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50 border border-gray-200 hover:border-teal-300'
-                }`}
-              >
-                <Search className="w-4 h-4" />
-                Search
-              </Link>
-
-              <button
-                onClick={handleSignOut}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-xl border border-gray-200 hover:border-red-200 font-medium transition-all duration-300"
-              >
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </button>
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 h-14 flex items-center justify-between">
+          {/* Logo */}
+          <button onClick={handleLogoClick} className="flex items-center gap-2 group">
+            <div className="p-1.5 bg-gradient-to-r from-teal-400 via-cyan-500 to-blue-500 rounded-lg shadow-sm group-hover:shadow-md transition-shadow">
+              <Camera className="w-4 h-4 text-white" />
             </div>
-          </div>
+            <span className="text-lg font-bold text-slate-900 tracking-tight">Taleshot</span>
+          </button>
+
+          {/* Navigation */}
+          <nav className="flex items-center gap-1">
+            {navLink('/explore', <Compass className="w-3.5 h-3.5" />, 'Explore')}
+            {navLink('/stories', <Book className="w-3.5 h-3.5" />, 'Stories')}
+            {navLink('/search', <Search className="w-3.5 h-3.5" />, 'Search')}
+
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-1.5 px-3 py-1.5 ml-2 rounded-lg text-sm font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all duration-200"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign out
+            </button>
+          </nav>
         </div>
       </header>
 
       {/* Main Content */}
       <main className="flex-1">
-        <div className="max-w-7xl mx-auto px-10 lg:px-16 py-8">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 py-8">
           {children}
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-white/90 backdrop-blur-xl border-t border-gray-100/50">
-        <div className="max-w-7xl mx-auto px-10 lg:px-16 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-gradient-to-r from-blue-600 to-cyan-600 rounded-lg">
-                <Camera className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-base font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">Taleshot</span>
+      <footer className="bg-white border-t border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 lg:px-10 h-12 flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <div className="p-1 bg-gradient-to-r from-teal-400 to-blue-500 rounded-md">
+              <Camera className="w-3 h-3 text-white" />
             </div>
-            <p className="text-gray-600 text-sm">
-              © {new Date().getFullYear()} Taleshot. Capturing memories, one story at a time.
-            </p>
+            <span className="text-sm font-semibold text-slate-700">Taleshot</span>
           </div>
+          <p className="text-xs text-gray-400">
+            © {new Date().getFullYear()} Taleshot. Capturing memories, one story at a time.
+          </p>
         </div>
       </footer>
     </div>

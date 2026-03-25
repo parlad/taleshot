@@ -1,5 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Tag, Search } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, X } from 'lucide-react';
 
 interface TagFilterProps {
   availableTags: string[];
@@ -9,104 +9,67 @@ interface TagFilterProps {
 }
 
 export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }: TagFilterProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filteredTags, setFilteredTags] = useState(availableTags);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setFilteredTags(availableTags);
-  }, [availableTags]);
-
-  useEffect(() => {
-    if (searchQuery) {
-      const filtered = availableTags.filter(tag =>
-        tag.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setFilteredTags(filtered);
-      onSearch?.(searchQuery);
-    } else {
-      setFilteredTags(availableTags);
-      onSearch?.('');
-    }
-  }, [searchQuery, availableTags, onSearch]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const displayText = selectedTag === 'all' ? 'All Tags' : selectedTag;
+    onSearch?.(searchQuery);
+  }, [searchQuery]);
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      {/* Search Input */}
-      <div className="relative flex-1 min-w-[250px]">
-        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+    <div className="space-y-3">
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         <input
           type="text"
-          placeholder="Search photos, tags, or stories..."
+          placeholder="Search photos, tags, or stories…"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-12 pr-4 py-3 border border-gray-200 rounded-full text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 w-full shadow-sm hover:shadow-md"
+          className="w-full pl-11 pr-10 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-all placeholder:text-gray-400 shadow-sm"
         />
-      </div>
-
-      {/* Tag Filter Dropdown */}
-      <div className="relative" ref={dropdownRef}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          className={`tag-button shadow-sm hover:shadow-md ${
-            selectedTag === 'all' ? 'tag-button-inactive' : 'tag-button-active'
-          }`}
-        >
-          <Tag className="w-4 h-4" />
-          <span className="font-medium">{displayText}</span>
-          <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
-        </button>
-
-        {isOpen && (
-          <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-[1000] py-2 overflow-hidden">
-            <div className="max-h-64 overflow-y-auto">
-              <button
-                onClick={() => {
-                  onTagChange('all');
-                  setIsOpen(false);
-                }}
-                className={`w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg mx-2 ${
-                  selectedTag === 'all'
-                    ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                    : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                }`}
-              >
-                All Tags
-              </button>
-              {filteredTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => {
-                    onTagChange(tag);
-                    setIsOpen(false);
-                  }}
-                  className={`w-full text-left px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg mx-2 ${
-                    selectedTag === tag
-                      ? 'bg-gradient-to-r from-blue-600 to-cyan-600 text-white'
-                      : 'text-gray-700 hover:bg-blue-50 hover:text-blue-600'
-                  }`}
-                >
-                  {tag}
-                </button>
-              ))}
-            </div>
-          </div>
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
         )}
       </div>
+
+      {/* Tag pill chips — horizontal scroll */}
+      {availableTags.length > 0 && (
+        <div
+          ref={scrollRef}
+          className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          <button
+            onClick={() => onTagChange('all')}
+            className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+              selectedTag === 'all'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            All
+          </button>
+          {availableTags.map(tag => (
+            <button
+              key={tag}
+              onClick={() => onTagChange(selectedTag === tag ? 'all' : tag)}
+              className={`flex-shrink-0 px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 ${
+                selectedTag === tag
+                  ? 'bg-teal-500 text-white shadow-sm'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              {tag}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
