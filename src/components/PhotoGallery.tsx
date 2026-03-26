@@ -45,7 +45,7 @@ export function PhotoGallery() {
             .from('photo_tags')
             .select('tag_name')
             .eq('photo_id', photo.id);
-          
+
           return {
             ...photo,
             tags: tags?.map(t => t.tag_name) || []
@@ -76,12 +76,10 @@ export function PhotoGallery() {
   const filterPhotos = useCallback(() => {
     let filtered: Photo[] = [];
 
-    // Group photos by gallery_ tags for gallery functionality
     const galleryGroups = new Map<string, Photo[]>();
     const individualPhotos: Photo[] = [];
 
     photos.forEach(photo => {
-      // Check if photo has a gallery_ tag
       const photoGalleryTag = photo.tags?.find(tag => tag.startsWith('gallery_'));
 
       if (photoGalleryTag) {
@@ -94,13 +92,10 @@ export function PhotoGallery() {
       }
     });
 
-    // Start with individual photos
     filtered = [...individualPhotos];
 
-    // Add gallery tiles for grouped photos
     galleryGroups.forEach((groupPhotos) => {
       if (groupPhotos.length > 1) {
-        // Create a gallery tile using the first photo as representative
         const representative: Photo = {
           ...groupPhotos[0],
           is_gallery_tile: true,
@@ -108,47 +103,41 @@ export function PhotoGallery() {
         };
         filtered.push(representative);
       } else if (groupPhotos.length === 1) {
-        // Single photo in group, treat as individual
         filtered.push(groupPhotos[0]);
       }
     });
 
-    // Apply tag and search filtering
     let finalFiltered = filtered;
 
-    // Filter by tag
     if (selectedTag !== 'all') {
       finalFiltered = finalFiltered.filter(photo => {
         if (photo.is_gallery_tile && photo.gallery_photos) {
-          // For gallery tiles, check if any photo in the gallery has the tag
           return photo.gallery_photos.some(p => p.tags?.includes(selectedTag));
         }
         return photo.tags?.includes(selectedTag);
       });
     }
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       finalFiltered = finalFiltered.filter(photo => {
         const matchesTitle = photo.title.toLowerCase().includes(query);
         const matchesReason = photo.reason.toLowerCase().includes(query);
         const matchesTags = photo.tags?.some(tag => tag.toLowerCase().includes(query));
-        
+
         if (photo.is_gallery_tile && photo.gallery_photos) {
-          const matchesGallery = photo.gallery_photos.some(p => 
+          const matchesGallery = photo.gallery_photos.some(p =>
             p.title.toLowerCase().includes(query) ||
             p.reason.toLowerCase().includes(query) ||
             p.tags?.some(tag => tag.toLowerCase().includes(query))
           );
           return matchesTitle || matchesReason || matchesTags || matchesGallery;
         }
-        
+
         return matchesTitle || matchesReason || matchesTags;
       });
     }
 
-    // Sort newest first by default
     const sorted = [...finalFiltered].sort((a, b) => {
       const dateA = new Date(a.created_at || 0).getTime();
       const dateB = new Date(b.created_at || 0).getTime();
@@ -187,7 +176,7 @@ export function PhotoGallery() {
   };
 
   const handleUpdate = (updatedPhoto: Photo) => {
-    setPhotos(prev => prev.map(photo => 
+    setPhotos(prev => prev.map(photo =>
       photo.id === updatedPhoto.id ? updatedPhoto : photo
     ));
     showToast('Photo updated successfully', 'success');
@@ -203,60 +192,71 @@ export function PhotoGallery() {
 
       if (error) throw error;
 
-      const updatedPhoto: Photo = {
-        ...photo,
-        is_public: newPublicState
-      };
-
+      const updatedPhoto: Photo = { ...photo, is_public: newPublicState };
       handleUpdate(updatedPhoto);
-      showToast(
-        `Photo made ${newPublicState ? 'public' : 'private'}`,
-        'success'
-      );
+      showToast(`Photo made ${newPublicState ? 'public' : 'private'}`, 'success');
     } catch (error) {
       console.error('Error updating photo visibility:', error);
       showToast('Failed to update photo visibility', 'error');
     }
   };
 
+  // ─── Empty state ───────────────────────────────────────────────────
   const EmptyState = () => (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
-      <div className="max-w-2xl w-full empty-state relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-          <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full opacity-30 floating"></div>
-          <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-full opacity-30 floating" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-1/2 right-20 w-16 h-16 bg-gradient-to-r from-sky-400 to-cyan-400 rounded-full opacity-30 floating" style={{animationDelay: '2s'}}></div>
+      <div className="max-w-lg w-full text-center relative">
+        {/* Ambient glows */}
+        <div
+          className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(45,212,191,0.12) 0%, transparent 70%)' }}
+        />
+
+        {/* Floating icon trio */}
+        <div className="flex items-end justify-center gap-4 mb-10">
+          {[
+            { icon: Camera, color: '#2dd4bf', delay: '0s', size: 'w-16 h-16' },
+            { icon: Heart,  color: '#f472b6', delay: '0.4s', size: 'w-12 h-12', extra: 'mb-2' },
+            { icon: Users,  color: '#818cf8', delay: '0.8s', size: 'w-14 h-14' },
+          ].map(({ icon: Icon, color, delay, size, extra = '' }) => (
+            <div
+              key={delay}
+              className={`${size} ${extra} rounded-2xl flex items-center justify-center floating`}
+              style={{
+                background: `rgba(0,0,0,0.3)`,
+                border: `1px solid ${color}30`,
+                boxShadow: `0 8px 32px ${color}25`,
+                animationDelay: delay,
+              }}
+            >
+              <Icon style={{ color, width: '55%', height: '55%' }} />
+            </div>
+          ))}
         </div>
 
-        <div className="relative z-10">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-600 p-4 shadow-lg floating">
-              <Camera className="w-full h-full text-white" />
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-600 p-4 shadow-lg floating" style={{animationDelay: '0.5s'}}>
-              <Heart className="w-full h-full text-white" />
-            </div>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-sky-500 to-cyan-600 p-4 shadow-lg floating" style={{animationDelay: '1s'}}>
-              <Users className="w-full h-full text-white" />
-            </div>
-          </div>
+        <h2 className="text-4xl font-extrabold gradient-text mb-4 leading-tight">
+          Your story starts here
+        </h2>
+        <p className="text-base mb-10 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+          Upload your first photo and begin preserving the moments that matter most.
+          Every image holds a story — what's yours?
+        </p>
 
-          <h2 className="text-4xl font-bold gradient-text mb-4" style={{lineHeight: '1.2'}}>
-            Upload your first story
-          </h2>
+        <button
+          onClick={() => setIsAddModalOpen(true)}
+          className="btn-primary btn-hover-effect inline-flex items-center gap-3 px-8 py-4 text-base font-bold"
+        >
+          <Plus className="w-5 h-5" />
+          Add Your First Photo
+        </button>
 
-          <p className="text-gray-600 text-base mb-8 leading-relaxed max-w-xl mx-auto" style={{lineHeight: '1.5'}}>
-            Start building your photo collection by adding your first memory. Each photo tells a story - what's yours?
-          </p>
-
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="btn-primary inline-flex items-center gap-3 px-8 py-4 text-lg btn-hover-effect"
-          >
-            <Plus className="w-6 h-6" />
-            Add Your First Photo
-          </button>
-        </div>
+        {/* Decorative dots grid */}
+        <div
+          className="absolute -bottom-8 left-0 right-0 h-8 pointer-events-none opacity-20"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(45,212,191,0.5) 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
       </div>
     </div>
   );
@@ -282,20 +282,29 @@ export function PhotoGallery() {
   }
 
   return (
-    <div className="space-y-3">
-      {/* Page Header */}
-      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+    <div className="space-y-6">
+      {/* ── Page header ── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">My Photos</h1>
-          <p className="text-sm text-gray-400 mt-0.5">
-            {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
+          <h1
+            className="text-3xl font-extrabold tracking-tight mb-1"
+            style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}
+          >
+            My Photos
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            <span
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold mr-2"
+              style={{ background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.2)' }}
+            >
+              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
+            </span>
+            stored in your library
           </p>
         </div>
-
-
       </div>
 
-      {/* Search and Filter */}
+      {/* ── Search & filter ── */}
       <TagFilter
         availableTags={availableTags}
         selectedTag={selectedTag}
@@ -303,22 +312,25 @@ export function PhotoGallery() {
         onSearch={setSearchQuery}
       />
 
-      {/* Photo Grid */}
+      {/* ── Photo grid ── */}
       {filteredPhotos.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-gray-400 text-sm mb-3">
+        <div className="text-center py-20 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+          <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
             {searchQuery ? `No photos found for "${searchQuery}"` : 'No photos match your filters'}
           </p>
           <button
             onClick={() => { setSelectedTag('all'); setSearchQuery(''); }}
-            className="text-teal-600 hover:text-teal-700 text-sm font-medium transition-colors"
+            className="text-sm font-semibold transition-colors"
+            style={{ color: '#2dd4bf' }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = '#5eead4'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = '#2dd4bf'}
           >
             Clear filters
           </button>
         </div>
       ) : (
         <motion.div
-          className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 p-2 relative"
+          className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
@@ -328,10 +340,10 @@ export function PhotoGallery() {
               photo.is_gallery_tile ? (
                 <motion.div
                   key={photo.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, delay: index * 0.04 }}
                   layout
                 >
                   <PhotoTile
@@ -352,13 +364,11 @@ export function PhotoGallery() {
                   key={photo.id}
                   onClick={() => handlePhotoClick(photo.id)}
                   className="cursor-pointer"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.3, delay: index * 0.04 }}
                   layout
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
                 >
                   <PhotoCard
                     photo={photo}
@@ -376,7 +386,7 @@ export function PhotoGallery() {
         </motion.div>
       )}
 
-      {/* Floating Add Button */}
+      {/* Floating add button */}
       <button
         onClick={() => setIsAddModalOpen(true)}
         className="floating-button"
@@ -394,7 +404,6 @@ export function PhotoGallery() {
         }}
       />
 
-      {/* Photo Viewer Modal */}
       <PhotoViewerModal
         photos={filteredPhotos}
         initialIndex={viewerPhotoIndex}

@@ -101,7 +101,8 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
 
         {/* Modal card */}
         <motion.div
-          className="relative w-full max-w-4xl card-glass overflow-hidden"
+          className="relative w-full max-w-4xl overflow-hidden rounded-2xl"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border-strong)', boxShadow: '0 32px 80px rgba(0,0,0,0.8)' }}
           initial={{ opacity: 0, scale: 0.95, y: 16 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 16 }}
@@ -126,7 +127,8 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
                     key={`reason-${currentIndex}`}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="mt-1.5 text-sm text-gray-500 dark:text-gray-400 leading-relaxed"
+                    className="mt-1.5 text-sm leading-relaxed"
+                    style={{ color: 'var(--text-secondary)' }}
                   >
                     {currentPhoto.reason}
                   </motion.p>
@@ -168,7 +170,10 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
                 </motion.button>
                 <button
                   onClick={onClose}
-                  className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded-xl hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2.5 rounded-xl transition-colors"
+                  style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-elevated)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)'; (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)'; }}
                   aria-label="Close"
                 >
                   <X className="w-4 h-4" />
@@ -176,19 +181,20 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
               </div>
             </div>
 
-            {/* ── Tabs — same style as AlbumDetailView ── */}
-            <div className="flex flex-wrap gap-0 border-b border-gray-200 dark:border-gray-700">
+            {/* ── Tabs ── */}
+            <div className="flex flex-wrap gap-0" style={{ borderBottom: '1px solid var(--border)' }}>
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-4 py-3 border-b-2 text-sm transition-colors ${
+                    className={`flex items-center gap-2 px-4 py-3 border-b-2 text-sm transition-colors font-medium ${
                       activeTab === tab.id
-                        ? 'border-teal-500 text-teal-600 dark:text-teal-400 font-semibold'
-                        : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                        ? 'border-[#2dd4bf] text-[#2dd4bf]'
+                        : 'border-transparent hover:text-[#c8d6f0]'
                     }`}
+                    style={{ color: activeTab === tab.id ? '#2dd4bf' : 'var(--text-muted)' }}
                   >
                     <Icon className="w-4 h-4" />
                     {tab.label}

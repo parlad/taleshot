@@ -18,8 +18,8 @@ export function SkeletonLoader({ count = 6, variant = 'masonry' }: SkeletonLoade
         {Array.from({ length: count }).map((_, index) => (
           <motion.div
             key={index}
-            className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-md"
-            style={{ height: getRandomHeight() }}
+            className="rounded-xl overflow-hidden"
+            style={{ height: getRandomHeight(), background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -36,7 +36,8 @@ export function SkeletonLoader({ count = 6, variant = 'masonry' }: SkeletonLoade
       {Array.from({ length: count }).map((_, index) => (
         <motion.div
           key={index}
-          className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden"
+          className="rounded-xl overflow-hidden"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}

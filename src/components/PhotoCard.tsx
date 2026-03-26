@@ -145,20 +145,34 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
     }
   };
 
-  // ─── Edit view ─────────────────────────────────────────────────────
+  // ─── Edit form ─────────────────────────────────────────────────────
   if (isEditing) {
     return (
       <div
-        className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden"
+        className="rounded-2xl overflow-hidden"
+        style={{
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--border-strong)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 space-y-4 max-h-[480px] overflow-y-auto">
+        <div className="p-5 space-y-4 max-h-[500px] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h3 className="font-semibold text-gray-900 text-sm">Edit photo</h3>
+            <h3 className="font-semibold text-sm" style={{ color: 'var(--text-primary)' }}>Edit photo</h3>
             <button
               onClick={handleCancel}
-              className="p-1.5 hover:bg-gray-100 rounded-full text-gray-400 hover:text-gray-600 transition-colors"
+              className="p-1.5 rounded-full transition-colors"
+              style={{ color: 'var(--text-muted)' }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)';
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
+              }}
             >
               <X className="w-4 h-4" />
             </button>
@@ -166,52 +180,82 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
 
           {/* Title */}
           <div>
-            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Title</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
+              Title
+            </label>
             <input
               type="text"
               value={editData.title}
               onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-500/30 focus:border-slate-400 outline-none transition-all"
+              className="w-full px-3 py-2.5 text-sm rounded-xl outline-none transition-all"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-primary)',
+              }}
+              onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(45,212,191,0.4)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(45,212,191,0.08)'; }}
+              onBlur={e =>  { (e.target as HTMLInputElement).style.borderColor = 'var(--border)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
             />
           </div>
 
           {/* Date */}
           <div>
-            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Date taken</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
+              Date taken
+            </label>
             <input
               type="text"
               value={editData.date_taken}
               onChange={(e) => setEditData(prev => ({ ...prev, date_taken: e.target.value }))}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-500/30 focus:border-slate-400 outline-none transition-all"
               placeholder="e.g. Jan 2025"
+              className="w-full px-3 py-2.5 text-sm rounded-xl outline-none transition-all"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-primary)',
+              }}
+              onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(45,212,191,0.4)'; (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(45,212,191,0.08)'; }}
+              onBlur={e =>  { (e.target as HTMLInputElement).style.borderColor = 'var(--border)'; (e.target as HTMLInputElement).style.boxShadow = 'none'; }}
             />
           </div>
 
           {/* Story */}
           <div>
-            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Story</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-muted)' }}>
+              Story
+            </label>
             <textarea
               value={editData.reason}
               onChange={(e) => setEditData(prev => ({ ...prev, reason: e.target.value }))}
-              className="w-full px-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-slate-500/30 focus:border-slate-400 outline-none transition-all resize-none"
+              className="w-full px-3 py-2.5 text-sm rounded-xl outline-none transition-all resize-none"
               rows={3}
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border)',
+                color: 'var(--text-primary)',
+              }}
+              onFocus={e => { (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(45,212,191,0.4)'; (e.target as HTMLTextAreaElement).style.boxShadow = '0 0 0 3px rgba(45,212,191,0.08)'; }}
+              onBlur={e =>  { (e.target as HTMLTextAreaElement).style.borderColor = 'var(--border)'; (e.target as HTMLTextAreaElement).style.boxShadow = 'none'; }}
             />
           </div>
 
           {/* Tags */}
           <div>
-            <label className="block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5">Tags</label>
+            <label className="block text-[11px] font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--text-muted)' }}>
+              Tags
+            </label>
             <div className="flex flex-wrap gap-1.5">
               {availableTags.map(tag => (
                 <button
                   key={tag}
                   type="button"
                   onClick={() => handleTagToggle(tag)}
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                  className="px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150"
+                  style={
                     editData.tags.includes(tag)
-                      ? 'bg-slate-800 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
+                      ? { background: 'rgba(45,212,191,0.15)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.3)' }
+                      : { background: 'var(--bg-elevated)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }
+                  }
                 >
                   {tag}
                 </button>
@@ -219,7 +263,8 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
               <button
                 type="button"
                 onClick={() => setShowNewTag(true)}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors flex items-center gap-1"
+                className="px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 flex items-center gap-1"
+                style={{ background: 'rgba(45,212,191,0.08)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.2)' }}
               >
                 <Plus className="w-3 h-3" /> New
               </button>
@@ -231,20 +276,29 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddNewTag()}
-                  className="flex-1 px-2.5 py-1.5 text-xs bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-400"
                   placeholder="Tag name"
+                  className="flex-1 px-2.5 py-1.5 text-xs rounded-lg outline-none transition-all"
+                  style={{
+                    background: 'var(--bg-elevated)',
+                    border: '1px solid var(--border)',
+                    color: 'var(--text-primary)',
+                  }}
+                  onFocus={e => { (e.target as HTMLInputElement).style.borderColor = 'rgba(45,212,191,0.4)'; }}
+                  onBlur={e =>  { (e.target as HTMLInputElement).style.borderColor = 'var(--border)'; }}
                 />
                 <button
                   type="button"
                   onClick={handleAddNewTag}
-                  className="px-2.5 py-1.5 text-xs bg-slate-700 text-white rounded-lg hover:bg-slate-800 transition-colors"
+                  className="px-2.5 py-1.5 text-xs rounded-lg transition-colors"
+                  style={{ background: 'rgba(45,212,191,0.15)', color: '#2dd4bf' }}
                 >
                   Add
                 </button>
                 <button
                   type="button"
                   onClick={() => { setShowNewTag(false); setNewTag(''); }}
-                  className="px-2.5 py-1.5 text-xs bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-colors"
+                  className="px-2.5 py-1.5 text-xs rounded-lg transition-colors"
+                  style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
                 >
                   Cancel
                 </button>
@@ -258,25 +312,33 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
               type="checkbox"
               checked={editData.is_public}
               onChange={(e) => setEditData(prev => ({ ...prev, is_public: e.target.checked }))}
-              className="w-4 h-4 rounded text-slate-700 border-gray-300 focus:ring-slate-500"
+              className="w-4 h-4 rounded"
+              style={{ accentColor: '#2dd4bf' }}
             />
-            <span className="text-sm text-gray-700">Make this photo public</span>
+            <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>Make this photo public</span>
           </label>
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3.5 bg-gray-50 border-t border-gray-100 flex gap-2">
+        <div
+          className="px-5 py-3.5 flex gap-2"
+          style={{ background: 'var(--bg-elevated)', borderTop: '1px solid var(--border)' }}
+        >
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg,#2dd4bf,#06b6d4)', color: '#090d18', boxShadow: '0 4px 16px rgba(45,212,191,0.3)' }}
           >
             <Save className="w-3.5 h-3.5" />
             {saving ? 'Saving…' : 'Save'}
           </button>
           <button
             onClick={handleCancel}
-            className="px-4 py-2 text-sm text-gray-600 font-medium rounded-lg hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 text-sm font-medium rounded-xl transition-colors"
+            style={{ color: 'var(--text-secondary)', background: 'transparent' }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'transparent'}
           >
             Cancel
           </button>
@@ -289,25 +351,50 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
   const visibleTags = photo.tags?.filter(t => !t.startsWith('gallery_')) ?? [];
 
   return (
-    <div className="group relative rounded-2xl overflow-hidden shadow-md bg-gray-900 aspect-[4/3]">
+    <div
+      className="group relative rounded-2xl overflow-hidden aspect-[4/3] transition-all duration-400"
+      style={{
+        background: '#0a0e1a',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.5)',
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(45,212,191,0.15)';
+        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-3px)';
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 24px rgba(0,0,0,0.5)';
+        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
+      }}
+    >
       <LazyImage
         src={photo.image_url ?? ''}
         alt={photo.title}
-        className="w-full h-full transition-transform duration-500 group-hover:scale-[1.04]"
+        className="w-full h-full transition-transform duration-600 group-hover:scale-[1.05]"
       />
 
-      {/* Gradient overlay for text readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
+      {/* Multi-layer gradient overlay for depth */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.25) 40%, rgba(0,0,0,0) 70%)',
+        }}
+      />
+      {/* Top fade for controls readability */}
+      <div
+        className="absolute inset-x-0 top-0 h-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, transparent 100%)' }}
+      />
 
       {/* Top-right actions — revealed on hover */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+      <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
         <button
           onClick={(e) => { e.stopPropagation(); onTogglePublic?.(); }}
-          className={`p-2 rounded-full backdrop-blur-sm text-white transition-all ${
+          className="p-2 rounded-full backdrop-blur-sm transition-all"
+          style={
             photo.is_public
-              ? 'bg-blue-500/90 hover:bg-blue-600'
-              : 'bg-black/50 border border-white/20 hover:bg-black/70'
-          }`}
+              ? { background: 'rgba(45,212,191,0.85)', color: '#090d18' }
+              : { background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }
+          }
           title={photo.is_public ? 'Public' : 'Private'}
         >
           {photo.is_public ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
@@ -315,7 +402,10 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
 
         <button
           onClick={(e) => { e.stopPropagation(); setIsEditing(true); setConfirmingDelete(false); }}
-          className="p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all"
+          className="p-2 rounded-full backdrop-blur-sm transition-all"
+          style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
+          onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.15)'}
+          onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.55)'}
           title="Edit"
         >
           <Pencil className="w-3.5 h-3.5" />
@@ -323,11 +413,12 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
 
         {confirmingDelete ? (
           <div
-            className="flex items-center gap-1 bg-black/75 backdrop-blur-sm rounded-full px-3 py-1.5 border border-white/20"
+            className="flex items-center gap-1 rounded-full px-3 py-1.5 backdrop-blur-sm"
+            style={{ background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.15)' }}
             onClick={(e) => e.stopPropagation()}
           >
             <span className="text-white/90 text-xs font-medium">Delete?</span>
-            <button onClick={handleDelete} className="text-xs text-red-400 hover:text-red-300 font-bold ml-1">
+            <button onClick={handleDelete} className="text-xs font-bold ml-1" style={{ color: '#f87171' }}>
               Yes
             </button>
             <span className="text-white/30 mx-0.5">·</span>
@@ -341,7 +432,10 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
         ) : (
           <button
             onClick={(e) => { e.stopPropagation(); setConfirmingDelete(true); }}
-            className="p-2 rounded-full bg-black/50 backdrop-blur-sm border border-white/20 text-white hover:bg-red-500/80 hover:border-red-400 transition-all"
+            className="p-2 rounded-full backdrop-blur-sm transition-all"
+            style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.8)' }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(248,113,113,0.8)'; (e.currentTarget as HTMLButtonElement).style.color = 'white'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(248,113,113,0.6)'; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.55)'; (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.8)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.15)'; }}
             title="Delete"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -349,15 +443,15 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
         )}
       </div>
 
-      {/* Bottom info — always visible */}
+      {/* Bottom info bar — always visible */}
       <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
-        <h3 className="text-white font-semibold text-sm leading-snug truncate drop-shadow">
+        <h3 className="text-white font-semibold text-sm leading-snug truncate drop-shadow-md">
           {photo.title}
         </h3>
         {photo.date_taken && (
           <div className="flex items-center gap-1.5 mt-0.5">
-            <Calendar className="w-3 h-3 text-white/50 flex-shrink-0" />
-            <span className="text-white/60 text-xs">{photo.date_taken}</span>
+            <Calendar className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(45,212,191,0.6)' }} />
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.5)' }}>{photo.date_taken}</span>
           </div>
         )}
         {visibleTags.length > 0 && (
@@ -365,13 +459,21 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
             {visibleTags.slice(0, 2).map((tag, i) => (
               <span
                 key={i}
-                className="px-1.5 py-0.5 bg-white/15 backdrop-blur-sm text-white/85 text-[10px] rounded-full font-medium border border-white/10"
+                className="px-2 py-0.5 text-[10px] rounded-full font-medium backdrop-blur-sm"
+                style={{
+                  background: 'rgba(45,212,191,0.12)',
+                  color: 'rgba(45,212,191,0.9)',
+                  border: '1px solid rgba(45,212,191,0.18)',
+                }}
               >
                 {tag}
               </span>
             ))}
             {visibleTags.length > 2 && (
-              <span className="px-1.5 py-0.5 bg-white/15 text-white/55 text-[10px] rounded-full">
+              <span
+                className="px-2 py-0.5 text-[10px] rounded-full backdrop-blur-sm"
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)' }}
+              >
                 +{visibleTags.length - 2}
               </span>
             )}
@@ -381,4 +483,3 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
     </div>
   );
 }
-
