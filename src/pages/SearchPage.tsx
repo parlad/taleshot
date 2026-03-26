@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Sparkles, Loader, Camera } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -26,7 +26,7 @@ export function SearchPage() {
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchMetadata, setSearchMetadata] = useState<any>(null);
+  const [searchMetadata, setSearchMetadata] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     fetchAvailableTags();
@@ -49,47 +49,7 @@ export function SearchPage() {
     }
   };
 
-  const handleAISearch = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-
-    setLoading(true);
-    try {
-      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-      const apiUrl = `${supabaseUrl}/functions/v1/ai-search`;
-
-      const headers: Record<string, string> = {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json',
-      };
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          query: searchQuery,
-          filters,
-          userId: user?.id
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Search failed');
-      }
-
-      const data = await response.json();
-      setSearchResults(data.photos || []);
-      setSearchMetadata(data.metadata);
-    } catch (error) {
-      console.error('AI search error:', error);
-      await fallbackSearch();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fallbackSearch = async () => {
+  const fallbackSearch = useCallback(async () => {
     try {
       let query = supabase
         .from('photos')
@@ -158,7 +118,47 @@ export function SearchPage() {
     } catch (error) {
       console.error('Fallback search error:', error);
     }
-  };
+  }, [searchQuery, filters, user]);
+
+  const handleAISearch = useCallback(async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+
+    setLoading(true);
+    try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      const apiUrl = `${supabaseUrl}/functions/v1/ai-search`;
+
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json',
+      };
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          query: searchQuery,
+          filters,
+          userId: user?.id
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Search failed');
+      }
+
+      const data = await response.json();
+      setSearchResults(data.photos || []);
+      setSearchMetadata(data.metadata);
+    } catch (error) {
+      console.error('AI search error:', error);
+      await fallbackSearch();
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, filters, user, fallbackSearch]);
 
   const handlePhotoClick = (photo: Photo) => {
     setSelectedPhoto(photo);
@@ -219,10 +219,10 @@ export function SearchPage() {
   };
 
   useEffect(() => {
-    if (Object.keys(filters).length > 0 || searchQuery.trim()) {
+    if (Object.keys(filters).length > 0) {
       handleAISearch();
     }
-  }, [filters]);
+  }, [filters, handleAISearch]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8">

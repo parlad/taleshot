@@ -34,8 +34,7 @@ const COLOR_TONES = [
 export function AdvancedSearchFilters({
   filters,
   onFiltersChange,
-  availableTags,
-  availableStories = []
+  availableTags
 }: AdvancedSearchFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>(filters.tags || []);

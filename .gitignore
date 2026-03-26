@@ -8,7 +8,8 @@ yarn-error.log*
 dist/
 build/
 
-# Environment variables
+# Environment variables - NEVER commit real credentials
+.env
 .env.local
 .env.development.local
 .env.test.local

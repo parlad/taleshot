@@ -13,7 +13,6 @@ export function AlbumExportOptions({ albumName, photos }: AlbumExportOptionsProp
   const exportAsZip = async () => {
     setExporting('zip');
     try {
-      const urls = photos.map(p => p.image_url || p.imageUrl);
       const message = `Preparing to download ${photos.length} photos as ZIP.\n\nNote: ZIP download requires a server-side implementation. This demo creates a download manifest.`;
 
       const manifest = {

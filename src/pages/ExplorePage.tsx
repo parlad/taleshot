@@ -41,125 +41,99 @@ export function ExplorePage() {
 
   const ITEMS_PER_PAGE = 12;
 
-  useEffect(() => {
-    loadInitialData();
-  }, []);
-
-  useEffect(() => {
-    loadExplorePhotos(true);
-  }, [selectedCategory]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries[0].isIntersecting && hasMore && !loadingMore) {
-          loadMorePhotos();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, page, selectedCategory]);
-
-  const loadInitialData = async () => {
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     try {
+      const trendingPromise = (async () => {
+        try {
+          const { data, error } = await supabase
+            .from('photos')
+            .select('*')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false })
+            .limit(8);
+
+          if (error) throw error;
+
+          const photosWithTags = await Promise.all(
+            (data || []).map(async (photo) => {
+              const { data: tags } = await supabase
+                .from('photo_tags')
+                .select('tag_name')
+                .eq('photo_id', photo.id);
+
+              return {
+                ...photo,
+                tags: tags?.map(t => t.tag_name) || []
+              };
+            })
+          );
+
+          setTrendingPhotos(photosWithTags);
+        } catch (error) {
+          console.error('Error fetching trending photos:', error);
+        }
+      })();
+
+      const featuredPromise = (async () => {
+        try {
+          const { data: collections, error } = await supabase
+            .from('collections')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(4);
+
+          if (error) throw error;
+
+          const collectionsWithDetails = await Promise.all(
+            (collections || []).map(async (collection) => {
+              const { data: photos } = await supabase
+                .from('collection_photos')
+                .select('photo_id')
+                .eq('collection_id', collection.id);
+
+              let coverPhoto = '';
+              if (photos && photos.length > 0) {
+                const { data: photoData } = await supabase
+                  .from('photos')
+                  .select('image_url')
+                  .eq('id', photos[0].photo_id)
+                  .eq('is_public', true)
+                  .single();
+
+                coverPhoto = photoData?.image_url || '';
+              }
+
+              return {
+                ...collection,
+                photo_count: photos?.length || 0,
+                cover_photo: coverPhoto
+              };
+            })
+          );
+
+          setFeaturedStories(collectionsWithDetails.filter(c => c.cover_photo));
+        } catch (error) {
+          console.error('Error fetching featured stories:', error);
+        }
+      })();
+
       await Promise.all([
-        fetchTrendingPhotos(),
-        fetchFeaturedStories(),
-        loadExplorePhotos(true)
+        trendingPromise,
+        featuredPromise
       ]);
     } catch (error) {
       console.error('Error loading initial data:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchTrendingPhotos = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('photos')
-        .select('*')
-        .eq('is_public', true)
-        .order('created_at', { ascending: false })
-        .limit(8);
-
-      if (error) throw error;
-
-      const photosWithTags = await Promise.all(
-        (data || []).map(async (photo) => {
-          const { data: tags } = await supabase
-            .from('photo_tags')
-            .select('tag_name')
-            .eq('photo_id', photo.id);
-
-          return {
-            ...photo,
-            tags: tags?.map(t => t.tag_name) || []
-          };
-        })
-      );
-
-      setTrendingPhotos(photosWithTags);
-    } catch (error) {
-      console.error('Error fetching trending photos:', error);
-    }
-  };
-
-  const fetchFeaturedStories = async () => {
-    try {
-      const { data: collections, error } = await supabase
-        .from('collections')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(4);
-
-      if (error) throw error;
-
-      const collectionsWithDetails = await Promise.all(
-        (collections || []).map(async (collection) => {
-          const { data: photos } = await supabase
-            .from('collection_photos')
-            .select('photo_id')
-            .eq('collection_id', collection.id);
-
-          let coverPhoto = '';
-          if (photos && photos.length > 0) {
-            const { data: photoData } = await supabase
-              .from('photos')
-              .select('image_url')
-              .eq('id', photos[0].photo_id)
-              .eq('is_public', true)
-              .single();
-
-            coverPhoto = photoData?.image_url || '';
-          }
-
-          return {
-            ...collection,
-            photo_count: photos?.length || 0,
-            cover_photo: coverPhoto
-          };
-        })
-      );
-
-      setFeaturedStories(collectionsWithDetails.filter(c => c.cover_photo));
-    } catch (error) {
-      console.error('Error fetching featured stories:', error);
-    }
-  };
-
-  const loadExplorePhotos = async (reset = false) => {
+  const loadExplorePhotos = useCallback(async (reset = false) => {
     const currentPage = reset ? 0 : page;
 
     try {
-      let query = supabase
+      const query = supabase
         .from('photos')
         .select('*')
         .eq('is_public', true)
@@ -201,7 +175,7 @@ export function ExplorePage() {
     } catch (error) {
       console.error('Error loading explore photos:', error);
     }
-  };
+  }, [page, selectedCategory]);
 
   const loadMorePhotos = useCallback(async () => {
     if (loadingMore || !hasMore) return;
@@ -211,7 +185,7 @@ export function ExplorePage() {
     setPage(nextPage);
 
     try {
-      let query = supabase
+      const query = supabase
         .from('photos')
         .select('*')
         .eq('is_public', true)
@@ -250,6 +224,31 @@ export function ExplorePage() {
       setLoadingMore(false);
     }
   }, [page, loadingMore, hasMore, selectedCategory]);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    loadExplorePhotos(true);
+  }, [selectedCategory, loadExplorePhotos]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0].isIntersecting && hasMore && !loadingMore) {
+          loadMorePhotos();
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (observerTarget.current) {
+      observer.observe(observerTarget.current);
+    }
+
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loadMorePhotos]);
 
   const handlePhotoClick = (photo: Photo) => {
     setSelectedPhoto(photo);

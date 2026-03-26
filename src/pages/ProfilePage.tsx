@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Camera, MapPin, Calendar, Lock, Unlock } from 'lucide-react';
+import { Camera } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { LazyImage } from '../components/LazyImage';
 import { PhotoViewerModal } from '../components/PhotoViewerModal';
@@ -21,18 +21,11 @@ export function ProfilePage() {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
 
-  useEffect(() => {
-    fetchUserProfile();
-  }, [username]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     if (!username) return;
 
     setLoading(true);
     try {
-      // Get current user to check if viewing own profile
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-
       // For now, we'll use email as username (you can add a username field later)
       // Fetch user's public photos
       const { data: photosData, error: photosError } = await supabase
@@ -73,7 +66,11 @@ export function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [username]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, [username, fetchUserProfile]);
 
   const handlePhotoClick = (photoId: string) => {
     const index = photos.findIndex(p => p.id === photoId);

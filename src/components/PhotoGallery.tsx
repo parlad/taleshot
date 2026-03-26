@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Camera, Heart, Users, Gift, Lock, Unlock } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Plus, Camera, Heart, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
@@ -10,51 +10,22 @@ import { AddPhotoModal } from './AddPhotoModal';
 import { TagFilter } from './TagFilter';
 import { SkeletonLoader } from './SkeletonLoader';
 import { PhotoViewerModal } from './PhotoViewerModal';
-import type { Photo, ViewMode } from '../types';
+import type { Photo } from '../types';
 
-interface PhotoGalleryProps {
-  onReload?: () => void;
-}
-
-export function PhotoGallery({ onReload }: PhotoGalleryProps) {
+export function PhotoGallery() {
   const { user } = useSupabaseAuth();
   const { showToast } = useToast();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [filteredPhotos, setFilteredPhotos] = useState<Photo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('slide');
-  const [sortBy, setSortBy] = useState<'date' | 'tag' | 'privacy'>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [viewerOpen, setViewerOpen] = useState(false);
   const [viewerPhotoIndex, setViewerPhotoIndex] = useState(0);
 
-  // Expose reload function to parent
-  React.useEffect(() => {
-    if (onReload) {
-      const originalOnReload = onReload;
-      onReload = () => {
-        setFlippedCards(new Set());
-        fetchPhotos();
-      };
-    }
-  }, [onReload]);
-
-  useEffect(() => {
-    if (user) {
-      fetchPhotos();
-    }
-  }, [user]);
-
-  useEffect(() => {
-    filterPhotos();
-  }, [photos, selectedTag, searchQuery, sortBy, sortOrder]);
-
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -100,9 +71,9 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, showToast]);
 
-  const filterPhotos = () => {
+  const filterPhotos = useCallback(() => {
     let filtered: Photo[] = [];
 
     // Group photos by gallery_ tags for gallery functionality
@@ -111,13 +82,13 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
 
     photos.forEach(photo => {
       // Check if photo has a gallery_ tag
-      const galleryTag = photo.tags?.find(tag => tag.startsWith('gallery_'));
+      const photoGalleryTag = photo.tags?.find(tag => tag.startsWith('gallery_'));
 
-      if (galleryTag) {
-        if (!galleryGroups.has(galleryTag)) {
-          galleryGroups.set(galleryTag, []);
+      if (photoGalleryTag) {
+        if (!galleryGroups.has(photoGalleryTag)) {
+          galleryGroups.set(photoGalleryTag, []);
         }
-        galleryGroups.get(galleryTag)!.push(photo);
+        galleryGroups.get(photoGalleryTag)!.push(photo);
       } else {
         individualPhotos.push(photo);
       }
@@ -127,7 +98,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
     filtered = [...individualPhotos];
 
     // Add gallery tiles for grouped photos
-    galleryGroups.forEach((groupPhotos, galleryTag) => {
+    galleryGroups.forEach((groupPhotos) => {
       if (groupPhotos.length > 1) {
         // Create a gallery tile using the first photo as representative
         const representative: Photo = {
@@ -177,43 +148,25 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
       });
     }
 
-    // Apply sorting
-    let sorted = [...finalFiltered];
-
-    if (sortBy === 'date') {
-      sorted.sort((a, b) => {
-        const dateA = new Date(a.created_at || 0).getTime();
-        const dateB = new Date(b.created_at || 0).getTime();
-        return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-      });
-    } else if (sortBy === 'tag') {
-      sorted.sort((a, b) => {
-        const tagA = (a.tags?.[0] || '').toLowerCase();
-        const tagB = (b.tags?.[0] || '').toLowerCase();
-        return sortOrder === 'asc' ? tagA.localeCompare(tagB) : tagB.localeCompare(tagA);
-      });
-    } else if (sortBy === 'privacy') {
-      sorted.sort((a, b) => {
-        const privacyA = a.is_public ? 1 : 0;
-        const privacyB = b.is_public ? 1 : 0;
-        return sortOrder === 'asc' ? privacyA - privacyB : privacyB - privacyA;
-      });
-    }
+    // Sort newest first by default
+    const sorted = [...finalFiltered].sort((a, b) => {
+      const dateA = new Date(a.created_at || 0).getTime();
+      const dateB = new Date(b.created_at || 0).getTime();
+      return dateB - dateA;
+    });
 
     setFilteredPhotos(sorted);
-  };
+  }, [photos, selectedTag, searchQuery]);
 
-  const handleFlip = (photoId: string) => {
-    setFlippedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(photoId)) {
-        newSet.delete(photoId);
-      } else {
-        newSet.add(photoId);
-      }
-      return newSet;
-    });
-  };
+  useEffect(() => {
+    if (user) {
+      fetchPhotos();
+    }
+  }, [user, fetchPhotos]);
+
+  useEffect(() => {
+    filterPhotos();
+  }, [filterPhotos]);
 
   const handlePhotoClick = (photoId: string) => {
     const index = filteredPhotos.findIndex(p => p.id === photoId);
@@ -226,11 +179,6 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
   const handleDelete = async (photoId: string) => {
     try {
       setPhotos(prev => prev.filter(photo => photo.id !== photoId));
-      setFlippedCards(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(photoId);
-        return newSet;
-      });
       showToast('Photo deleted successfully', 'success');
     } catch (error) {
       console.error('Error deleting photo:', error);
@@ -344,25 +292,7 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
           </p>
         </div>
 
-        {/* Sort Controls */}
-        <div className="flex items-center gap-2">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as 'date' | 'tag' | 'privacy')}
-            className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500/30 focus:border-teal-400 transition-all"
-          >
-            <option value="date">Date</option>
-            <option value="tag">Tag</option>
-            <option value="privacy">Privacy</option>
-          </select>
-          <button
-            onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
-            className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:bg-gray-50 transition-all"
-            title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
-          >
-            {sortOrder === 'asc' ? '↑ Asc' : '↓ Desc'}
-          </button>
-        </div>
+
       </div>
 
       {/* Search and Filter */}
@@ -406,11 +336,11 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
                 >
                   <PhotoTile
                     photo={photo}
-                    isFlipped={flippedCards.has(photo.id)}
-                    onFlip={() => handleFlip(photo.id)}
+                    isFlipped={false}
+                    onFlip={() => {}}
                     onDelete={handleDelete}
                     onUpdate={handleUpdate}
-                    viewMode={viewMode}
+                    viewMode="slide"
                     onPhotoAdded={() => {
                       fetchPhotos();
                       showToast('Photo added to gallery!', 'success');
@@ -432,11 +362,11 @@ export function PhotoGallery({ onReload }: PhotoGalleryProps) {
                 >
                   <PhotoCard
                     photo={photo}
-                    isFlipped={flippedCards.has(photo.id)}
-                    onFlip={() => handleFlip(photo.id)}
+                    isFlipped={false}
+                    onFlip={() => {}}
                     onDelete={handleDelete}
                     onUpdate={handleUpdate}
-                    viewMode={viewMode}
+                    viewMode="slide"
                     onTogglePublic={() => togglePhotoPublic(photo)}
                   />
                 </motion.div>

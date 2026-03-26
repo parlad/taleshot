@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { X, Upload, Camera, Plus } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { useToast } from '../context/ToastContext';

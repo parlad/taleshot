@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Book, Plus, MapPin, Calendar, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '../utils/supabase';
@@ -28,13 +28,7 @@ export function StoriesPage() {
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      fetchAlbums();
-    }
-  }, [user]);
-
-  const fetchAlbums = async () => {
+  const fetchAlbums = useCallback(async () => {
     if (!user) return;
 
     setLoading(true);
@@ -92,7 +86,13 @@ export function StoriesPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchAlbums();
+    }
+  }, [user, fetchAlbums]);
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return '';

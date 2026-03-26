@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Images, Calendar, Tag, X, Edit3, Trash2, Eye, EyeOff, Save, Plus, Maximize2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Images, Calendar, X, Edit3, Trash2, EyeOff, Save, Plus, Maximize2 } from 'lucide-react';
 import { PhotoCard } from './PhotoCard';
-import { PhotoGalleryModal } from './PhotoGalleryModal';
 import { AddPhotoModal } from './AddPhotoModal';
 import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
@@ -13,11 +12,10 @@ interface PhotoTileProps {
   onDelete: (id: string) => void;
   onUpdate: (updatedPhoto: Photo) => void;
   viewMode: 'flip' | 'slide';
-  onGroupSelect?: (groupId: string) => void;
   onPhotoAdded?: () => void;
 }
 
-export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onGroupSelect, onPhotoAdded }: PhotoTileProps) {
+export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMode, onPhotoAdded }: PhotoTileProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -33,7 +31,19 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     'Family', 'Vacation', 'Celebration', 'Nature', 'Food', 'Pets', 'Travel', 'Japan', 'Village'
   ]);
   const [newTag, setNewTag] = useState('');
-  const [showNewTag, setShowNewTag] = useState(false);
+
+  // Update edit data when current photo changes
+  useEffect(() => {
+    if (currentPhoto && !isEditing) {
+      setEditData({
+        title: currentPhoto.title,
+        date_taken: currentPhoto.date_taken || '',
+        reason: currentPhoto.reason,
+        is_public: currentPhoto.is_public || false,
+        tags: [...(currentPhoto.tags || [])]
+      });
+    }
+  }, [currentPhotoIndex, currentPhoto, isEditing]);
 
   // If it's not a gallery tile, render as regular PhotoCard
   if (!photo.is_gallery_tile) {
@@ -147,30 +157,20 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     setIsEditing(false);
   };
 
-  const handleTagToggle = (tagName: string) => {
-    setEditData(prev => ({
-      ...prev,
-      tags: prev.tags.includes(tagName)
-        ? prev.tags.filter(t => t !== tagName)
-        : [...prev.tags, tagName]
-    }));
-  };
-
   const handleAddNewTag = () => {
     if (!newTag.trim()) return;
-    
+
     const trimmedTag = newTag.trim();
     if (!availableTags.includes(trimmedTag)) {
       setAvailableTags(prev => [...prev, trimmedTag].sort());
     }
-    
+
     setEditData(prev => ({
       ...prev,
       tags: prev.tags.includes(trimmedTag) ? prev.tags : [...prev.tags, trimmedTag]
     }));
-    
+
     setNewTag('');
-    setShowNewTag(false);
   };
 
   const togglePublic = async () => {
@@ -240,19 +240,6 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
       console.error('Error deleting photo:', error);
     }
   };
-
-  // Update edit data when current photo changes
-  React.useEffect(() => {
-    if (currentPhoto && !isEditing) {
-      setEditData({
-        title: currentPhoto.title,
-        date_taken: currentPhoto.date_taken || '',
-        reason: currentPhoto.reason,
-        is_public: currentPhoto.is_public || false,
-        tags: [...(currentPhoto.tags || [])]
-      });
-    }
-  }, [currentPhotoIndex, currentPhoto, isEditing]);
 
   // ─── Gallery lightbox view ──────────────────────────────────────────
   if (isExpanded) {

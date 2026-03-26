@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { MapPin, Image as ImageIcon } from 'lucide-react';
+import { MapPin } from 'lucide-react';
 import type { Photo } from '../types';
 
 interface AlbumMapViewProps {

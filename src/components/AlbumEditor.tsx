@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowUp, ArrowDown, X, Edit2, Save, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import type { Photo } from '../types';
@@ -19,11 +19,7 @@ export function AlbumEditor({ albumId, onUpdate }: AlbumEditorProps) {
   const [editForm, setEditForm] = useState({ title: '', reason: '' });
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    fetchAlbumPhotos();
-  }, [albumId]);
-
-  const fetchAlbumPhotos = async () => {
+  const fetchAlbumPhotos = useCallback(async () => {
     try {
       const { data: collectionPhotos, error } = await supabase
         .from('collection_photos')
@@ -61,7 +57,11 @@ export function AlbumEditor({ albumId, onUpdate }: AlbumEditorProps) {
     } catch (error) {
       console.error('Error fetching album photos:', error);
     }
-  };
+  }, [albumId]);
+
+  useEffect(() => {
+    fetchAlbumPhotos();
+  }, [albumId, fetchAlbumPhotos]);
 
   const movePhoto = async (index: number, direction: 'up' | 'down') => {
     if (

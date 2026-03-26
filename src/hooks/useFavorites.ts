@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from './useSupabaseAuth';
 
@@ -7,13 +7,7 @@ export function useFavorites(photoId?: string) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (user && photoId) {
-      checkIfFavorite();
-    }
-  }, [user, photoId]);
-
-  const checkIfFavorite = async () => {
+  const checkIfFavorite = useCallback(async () => {
     if (!user || !photoId) return;
 
     try {
@@ -29,7 +23,13 @@ export function useFavorites(photoId?: string) {
     } catch (error) {
       console.error('Error checking favorite:', error);
     }
-  };
+  }, [user, photoId]);
+
+  useEffect(() => {
+    if (user && photoId) {
+      checkIfFavorite();
+    }
+  }, [user, photoId, checkIfFavorite]);
 
   const toggleFavorite = async () => {
     if (!user || !photoId || loading) return;

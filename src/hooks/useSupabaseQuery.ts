@@ -16,7 +16,7 @@ export function useSupabaseQuery<T>(
       try {
         setIsLoading(true);
         const result = await queryFn();
-        
+
         if (isMounted) {
           if (result.error) {
             setError(result.error);
@@ -43,6 +43,7 @@ export function useSupabaseQuery<T>(
     return () => {
       isMounted = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 
   return { data, error, isLoading };

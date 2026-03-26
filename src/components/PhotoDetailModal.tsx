@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Tag as TagIcon, Edit3, Save, Trash2, ChevronLeft, ChevronRight, Lock, Unlock, Plus } from 'lucide-react';
+import { X, Edit3, Save, Trash2, ChevronLeft, ChevronRight, Lock, Unlock, Plus } from 'lucide-react';
 import { LazyImage } from './LazyImage';
 import type { Photo } from '../types';
 

@@ -14,7 +14,7 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
 
   useEffect(() => {
     onSearch?.(searchQuery);
-  }, [searchQuery]);
+  }, [searchQuery, onSearch]);
 
   return (
     <div className="space-y-3">

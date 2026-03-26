@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { X, ChevronLeft, ChevronRight, Lock, Unlock, Heart, Calendar, MapPin, Tag, Image as ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useFavorites } from '../hooks/useFavorites';
@@ -28,6 +28,16 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
     setActiveTab('photo');
   }, [initialIndex]);
 
+  const handlePrevious = useCallback(() => {
+    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
+    setActiveTab('photo');
+  }, [photos.length]);
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
+    setActiveTab('photo');
+  }, [photos.length]);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -39,17 +49,7 @@ export function PhotoViewerModal({ photos, initialIndex, isOpen, onClose }: Phot
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, currentIndex, photos.length]);
-
-  const handlePrevious = () => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : photos.length - 1));
-    setActiveTab('photo');
-  };
-
-  const handleNext = () => {
-    setCurrentIndex((prev) => (prev < photos.length - 1 ? prev + 1 : 0));
-    setActiveTab('photo');
-  };
+  }, [isOpen, currentIndex, photos.length, handleNext, handlePrevious, onClose]);
 
   const onTouchStart = (e: React.TouchEvent) => {
     setTouchEnd(null);

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { X, MapPin, Calendar, Users, Edit2, Trash2, Eye, Share2, LayoutGrid, Music } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { X, MapPin, Calendar, Users, Edit2, Trash2, Eye, Share2, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { AlbumEditor } from './AlbumEditor';
-import { PhotoGridItem } from './PhotoGridItem';
 import { PhotoDetailModal } from './PhotoDetailModal';
 import { AlbumTimeline } from './AlbumTimeline';
 import { AlbumMapView } from './AlbumMapView';
@@ -55,14 +54,7 @@ export function AlbumDetailView({
   const [activeView, setActiveView] = useState<'photos' | 'timeline' | 'map' | 'stats' | 'export'>('photos');
   const [currentTheme, setCurrentTheme] = useState<AlbumTheme>('grid');
 
-  useEffect(() => {
-    if (isOpen && albumId) {
-      fetchAlbumDetails();
-      incrementViewCount();
-    }
-  }, [isOpen, albumId]);
-
-  const fetchAlbumDetails = async () => {
+  const fetchAlbumDetails = useCallback(async () => {
     setLoading(true);
     try {
       const { data: albumData, error: albumError } = await supabase
@@ -111,9 +103,9 @@ export function AlbumDetailView({
     } finally {
       setLoading(false);
     }
-  };
+  }, [albumId]);
 
-  const incrementViewCount = async () => {
+  const incrementViewCount = useCallback(async () => {
     try {
       await supabase
         .from('collections')
@@ -125,7 +117,14 @@ export function AlbumDetailView({
     } catch (error) {
       console.error('Error incrementing view count:', error);
     }
-  };
+  }, [albumId, album?.view_count]);
+
+  useEffect(() => {
+    if (isOpen && albumId) {
+      fetchAlbumDetails();
+      incrementViewCount();
+    }
+  }, [isOpen, albumId, fetchAlbumDetails, incrementViewCount]);
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this album? Photos will not be deleted.')) return;
