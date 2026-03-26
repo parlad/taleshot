@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Pencil, Trash2, Save, Plus, Lock, Unlock, X } from 'lucide-react';
 import { supabase } from '../utils/supabase';
 import { LazyImage } from './LazyImage';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useToast';
 import type { Photo, ViewMode } from '../types';
 
 interface PhotoCardProps {

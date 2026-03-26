@@ -3,7 +3,7 @@ import { Plus, Camera, Heart, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../utils/supabase';
 import { useSupabaseAuth } from '../hooks/useSupabaseAuth';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../hooks/useToast';
 import { PhotoCard } from './PhotoCard';
 import { PhotoTile } from './PhotoTile';
 import { AddPhotoModal } from './AddPhotoModal';
