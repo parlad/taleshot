@@ -527,71 +527,83 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
     );
   }
 
-  // ─── Gallery tile card (collapsed) ───────────────────────────────────
+  // ─── Gallery tile card (collapsed) — matches PhotoCard light style ───
   return (
     <div
-      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+      className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white"
       style={{
-        background: '#07090f',
-        aspectRatio: '4 / 3',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
-        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.06)',
+        transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s cubic-bezier(0.4,0,0.2,1)',
       }}
       onClick={handleExpand}
       onMouseEnter={e => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 20px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(45,212,191,0.12)';
+        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)';
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 20px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.07)';
       }}
       onMouseLeave={e => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.5)';
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 1px 4px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.06)';
       }}
     >
-      <img
-        src={photo.image_url ?? ''}
-        alt={photo.title}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
-      />
+      {/* ── Image section ── */}
+      <div className="relative overflow-hidden" style={{ aspectRatio: '4 / 3' }}>
+        <img
+          src={photo.image_url ?? ''}
+          alt={photo.title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]"
+        />
 
-      {/* Gradient overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ background: 'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.15) 55%,transparent 100%)' }}
-      />
-
-      {/* Gallery count badge */}
-      <div
-        className="absolute top-3 left-3 flex items-center gap-1.5 text-white text-[11px] font-semibold px-2.5 py-1.5 rounded-full backdrop-blur-sm"
-        style={{ background: 'rgba(0,0,0,0.55)', border: '1px solid rgba(255,255,255,0.15)' }}
-      >
-        <Images className="w-3 h-3" />
-        {photoCount} photos
-      </div>
-
-      {/* Hover expand hint */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        {/* Top gradient for badge/button legibility */}
         <div
-          className="p-3 rounded-full backdrop-blur-sm"
-          style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+          className="absolute inset-x-0 top-0 h-16 pointer-events-none"
+          style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.28) 0%, transparent 100%)' }}
+        />
+
+        {/* Gallery count badge — top left, always visible */}
+        <div
+          className="absolute top-2.5 left-2.5 flex items-center gap-1 text-white text-[11px] font-semibold px-2 py-1 rounded-full backdrop-blur-sm"
+          style={{ background: 'rgba(0,0,0,0.42)' }}
         >
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-          </svg>
+          <Images className="w-3 h-3" />
+          {photoCount} photos
+        </div>
+
+        {/* Expand hint — center, fades in on hover */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+          <div
+            className="p-2.5 rounded-full backdrop-blur-sm"
+            style={{ background: 'rgba(255,255,255,0.22)', border: '1px solid rgba(255,255,255,0.35)' }}
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          </div>
         </div>
       </div>
 
-      {/* Bottom info */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 pointer-events-none">
+      {/* ── Info section — below image ── */}
+      <div style={{ padding: '14px 16px 16px', background: '#ffffff' }}>
         <h3
-          className="text-white font-semibold text-[15px] leading-snug truncate"
-          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
+          style={{
+            color: 'var(--text-primary)',
+            fontWeight: 600,
+            fontSize: '15px',
+            lineHeight: 1.35,
+            letterSpacing: '-0.01em',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
         >
           {photo.title}
         </h3>
+
         {photo.date_taken && (
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <Calendar className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(45,212,191,0.55)' }} />
-            <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.45)' }}>{photo.date_taken}</span>
+          <div className="flex items-center gap-1.5 mt-1">
+            <Calendar className="w-3 h-3 flex-shrink-0" style={{ color: 'var(--text-muted)' }} />
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}>
+              {photo.date_taken}
+            </span>
           </div>
         )}
       </div>
