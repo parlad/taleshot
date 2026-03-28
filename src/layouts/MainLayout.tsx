@@ -30,32 +30,30 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
     return (
       <Link
         to={to}
-        className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150 group"
+        className="relative flex items-center gap-2 px-3.5 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150"
         style={{
-          color: active ? '#e8f4f3' : 'var(--text-muted)',
-          background: active ? 'rgba(45,212,191,0.07)' : 'transparent',
+          color: active ? '#7c3aed' : 'var(--text-secondary)',
+          background: active ? 'rgba(124,58,237,0.07)' : 'transparent',
         }}
         onMouseEnter={(e) => {
           if (!active) {
-            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-secondary)';
-            (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)';
+            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-primary)';
+            (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(0,0,0,0.04)';
           }
         }}
         onMouseLeave={(e) => {
           if (!active) {
-            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-muted)';
+            (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-secondary)';
             (e.currentTarget as HTMLAnchorElement).style.background = 'transparent';
           }
         }}
       >
-        <span style={{ color: active ? '#2dd4bf' : 'inherit', opacity: active ? 1 : 0.5 }}>
-          {icon}
-        </span>
+        <span style={{ opacity: active ? 1 : 0.6 }}>{icon}</span>
         {label}
         {active && (
           <span
             className="absolute inset-x-3 bottom-0.5 h-px rounded-full"
-            style={{ background: 'linear-gradient(90deg,rgba(45,212,191,0.8),rgba(6,182,212,0.4))' }}
+            style={{ background: 'linear-gradient(90deg,rgba(124,58,237,0.8),rgba(168,85,247,0.4))' }}
           />
         )}
       </Link>
@@ -68,22 +66,13 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
       <header
         className="sticky top-0 z-50"
         style={{
-          height: '56px',
-          background: 'rgba(8,11,20,0.92)',
-          backdropFilter: 'blur(28px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(28px) saturate(180%)',
-          borderBottom: '1px solid rgba(255,255,255,0.05)',
+          height: '58px',
+          background: 'rgba(237,233,224,0.88)',
+          backdropFilter: 'blur(28px) saturate(160%)',
+          WebkitBackdropFilter: 'blur(28px) saturate(160%)',
+          borderBottom: '1px solid rgba(0,0,0,0.07)',
         }}
       >
-        {/* Top accent hairline */}
-        <div
-          className="absolute top-0 left-0 right-0 h-px"
-          style={{
-            background:
-              'linear-gradient(90deg,transparent 0%,rgba(45,212,191,0.45) 35%,rgba(99,102,241,0.35) 65%,transparent 100%)',
-          }}
-        />
-
         <div className="max-w-7xl mx-auto px-5 lg:px-8 h-full flex items-center justify-between">
           {/* Logo */}
           <button
@@ -92,13 +81,13 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
           >
             <div className="relative">
               <div
-                className="absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-50 transition-opacity duration-300"
-                style={{ background: 'linear-gradient(135deg,#2dd4bf,#6366f1)' }}
+                className="absolute inset-0 rounded-xl blur-lg opacity-0 group-hover:opacity-40 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
               />
               <div
                 className="relative p-1.5 rounded-xl transition-transform duration-200 group-hover:scale-[1.06]"
                 style={{
-                  background: 'linear-gradient(135deg,#2dd4bf 0%,#06b6d4 55%,#6366f1 100%)',
+                  background: 'linear-gradient(135deg,#7c3aed 0%,#6d28d9 55%,#4f46e5 100%)',
                 }}
               >
                 <Camera className="w-3.5 h-3.5 text-white" strokeWidth={2.5} />
@@ -106,7 +95,7 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
             </div>
             <span
               className="text-[15px] font-bold tracking-tight"
-              style={{ color: '#eef2ff', letterSpacing: '-0.025em' }}
+              style={{ color: 'var(--text-primary)', letterSpacing: '-0.025em' }}
             >
               Taleshot
             </span>
@@ -120,7 +109,7 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
 
             <div
               className="w-px h-4 mx-2"
-              style={{ background: 'rgba(255,255,255,0.07)' }}
+              style={{ background: 'rgba(0,0,0,0.1)' }}
             />
 
             <button
@@ -128,8 +117,8 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold transition-all duration-150"
               style={{ color: 'var(--text-muted)' }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.color = '#fca5a5';
-                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.07)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#dc2626';
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(220,38,38,0.06)';
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
@@ -151,7 +140,7 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
       </main>
 
       {/* ── Footer ── */}
-      <footer style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+      <footer style={{ borderTop: '1px solid rgba(0,0,0,0.07)' }}>
         <div
           className="max-w-7xl mx-auto px-5 lg:px-8 h-11 flex items-center justify-between"
           style={{ background: 'transparent' }}
@@ -159,7 +148,7 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
           <div className="flex items-center gap-2">
             <div
               className="p-1 rounded-md"
-              style={{ background: 'linear-gradient(135deg,#2dd4bf,#06b6d4)' }}
+              style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
             >
               <Camera className="w-2.5 h-2.5 text-white" strokeWidth={2.5} />
             </div>
@@ -167,7 +156,7 @@ export function MainLayout({ children, onLogoClick }: MainLayoutProps) {
               Taleshot
             </span>
           </div>
-          <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.15)' }}>
+          <p className="text-[11px]" style={{ color: 'rgba(0,0,0,0.22)' }}>
             © {new Date().getFullYear()} · Capturing memories, one story at a time.
           </p>
         </div>

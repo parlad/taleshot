@@ -205,35 +205,32 @@ export function PhotoGallery() {
   const EmptyState = () => (
     <div className="min-h-[70vh] flex items-center justify-center px-4">
       <div className="max-w-lg w-full text-center relative">
-        {/* Ambient glows */}
-        <div
-          className="absolute -top-20 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full blur-3xl pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(45,212,191,0.12) 0%, transparent 70%)' }}
-        />
-
         {/* Floating icon trio */}
         <div className="flex items-end justify-center gap-4 mb-10">
           {[
-            { icon: Camera, color: '#2dd4bf', delay: '0s', size: 'w-16 h-16' },
-            { icon: Heart,  color: '#f472b6', delay: '0.4s', size: 'w-12 h-12', extra: 'mb-2' },
-            { icon: Users,  color: '#818cf8', delay: '0.8s', size: 'w-14 h-14' },
-          ].map(({ icon: Icon, color, delay, size, extra = '' }) => (
+            { icon: Camera, bg: 'rgba(124,58,237,0.1)', color: '#7c3aed', border: 'rgba(124,58,237,0.2)', delay: '0s', size: 'w-16 h-16' },
+            { icon: Heart,  bg: 'rgba(236,72,153,0.08)', color: '#ec4899', border: 'rgba(236,72,153,0.18)', delay: '0.4s', size: 'w-12 h-12', extra: 'mb-2' },
+            { icon: Users,  bg: 'rgba(245,158,11,0.08)', color: '#d97706', border: 'rgba(245,158,11,0.18)', delay: '0.8s', size: 'w-14 h-14' },
+          ].map(({ icon: Icon, bg, color, border, delay, size, extra = '' }) => (
             <div
               key={delay}
               className={`${size} ${extra} rounded-2xl flex items-center justify-center floating`}
               style={{
-                background: `rgba(0,0,0,0.3)`,
-                border: `1px solid ${color}30`,
-                boxShadow: `0 8px 32px ${color}25`,
+                background: bg,
+                border: `1px solid ${border}`,
+                boxShadow: `0 8px 32px ${color}18`,
                 animationDelay: delay,
               }}
             >
-              <Icon style={{ color, width: '55%', height: '55%' }} />
+              <Icon style={{ color, width: '50%', height: '50%' }} />
             </div>
           ))}
         </div>
 
-        <h2 className="text-4xl font-extrabold gradient-text mb-4 leading-tight">
+        <h2
+          className="text-4xl font-extrabold mb-4 leading-tight"
+          style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}
+        >
           Your story starts here
         </h2>
         <p className="text-base mb-10 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
@@ -248,15 +245,6 @@ export function PhotoGallery() {
           <Plus className="w-5 h-5" />
           Add Your First Photo
         </button>
-
-        {/* Decorative dots grid */}
-        <div
-          className="absolute -bottom-8 left-0 right-0 h-8 pointer-events-none opacity-20"
-          style={{
-            backgroundImage: 'radial-gradient(circle, rgba(45,212,191,0.5) 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
-          }}
-        />
       </div>
     </div>
   );
@@ -284,23 +272,29 @@ export function PhotoGallery() {
   return (
     <div className="space-y-8">
       {/* ── Page header ── */}
-      <div>
-        <h1
-          className="text-4xl font-extrabold tracking-tight"
-          style={{ color: '#f0f4ff', letterSpacing: '-0.04em' }}
-        >
-          My Photos
-        </h1>
-        {/* Accent rule */}
-        <div className="flex items-center gap-3 mt-3">
-          <div
-            className="h-px flex-1 max-w-[48px]"
-            style={{ background: 'linear-gradient(90deg,#2dd4bf,transparent)' }}
-          />
-          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
-            {photos.length} {photos.length === 1 ? 'memory' : 'memories'} in your library
+      <div className="flex items-end justify-between gap-4 flex-wrap">
+        <div>
+          <p
+            className="text-[11px] font-bold uppercase tracking-[0.15em] mb-2"
+            style={{ color: 'var(--accent)' }}
+          >
+            Memory Library
+          </p>
+          <h1
+            className="text-5xl font-extrabold tracking-tight"
+            style={{ color: 'var(--text-primary)', letterSpacing: '-0.04em', lineHeight: 1 }}
+          >
+            My Photos
+          </h1>
+          <p className="text-[13px] mt-2" style={{ color: 'var(--text-muted)' }}>
+            {photos.length} {photos.length === 1 ? 'memory' : 'memories'} in your collection
           </p>
         </div>
+        {/* Decorative accent mark */}
+        <div
+          className="hidden sm:block w-16 h-1 rounded-full mb-1"
+          style={{ background: 'linear-gradient(90deg,#7c3aed,#a855f7,transparent)' }}
+        />
       </div>
 
       {/* ── Search & filter ── */}
@@ -313,23 +307,26 @@ export function PhotoGallery() {
 
       {/* ── Photo grid ── */}
       {filteredPhotos.length === 0 ? (
-        <div className="text-center py-20 rounded-2xl" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
+        <div
+          className="text-center py-20 rounded-2xl"
+          style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}
+        >
           <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
             {searchQuery ? `No photos found for "${searchQuery}"` : 'No photos match your filters'}
           </p>
           <button
             onClick={() => { setSelectedTag('all'); setSearchQuery(''); }}
             className="text-sm font-semibold transition-colors"
-            style={{ color: '#2dd4bf' }}
-            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = '#5eead4'}
-            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = '#2dd4bf'}
+            style={{ color: '#7c3aed' }}
+            onMouseEnter={e => (e.currentTarget as HTMLButtonElement).style.color = '#6d28d9'}
+            onMouseLeave={e => (e.currentTarget as HTMLButtonElement).style.color = '#7c3aed'}
           >
             Clear filters
           </button>
         </div>
       ) : (
         <motion.div
-          className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}

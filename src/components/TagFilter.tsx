@@ -22,7 +22,7 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
       <div className="relative">
         <Search
           className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none transition-colors duration-200"
-          style={{ color: focused ? 'rgba(45,212,191,0.7)' : 'var(--text-muted)' }}
+          style={{ color: focused ? '#7c3aed' : 'var(--text-muted)' }}
         />
         <input
           type="text"
@@ -31,25 +31,27 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          className="w-full pl-11 pr-10 py-3 rounded-2xl text-sm outline-none transition-all duration-200"
+          className="w-full pl-11 pr-10 py-2.5 rounded-2xl text-sm outline-none transition-all duration-200"
           style={{
-            background: focused ? 'var(--bg-overlay)' : 'var(--bg-elevated)',
-            border: `1px solid ${focused ? 'rgba(45,212,191,0.35)' : 'var(--border)'}`,
+            background: '#ffffff',
+            border: `1px solid ${focused ? 'rgba(124,58,237,0.3)' : 'rgba(0,0,0,0.1)'}`,
             color: 'var(--text-primary)',
-            boxShadow: focused ? '0 0 0 3px rgba(45,212,191,0.07)' : 'none',
+            boxShadow: focused
+              ? '0 0 0 3px rgba(124,58,237,0.07), 0 2px 8px rgba(0,0,0,0.06)'
+              : '0 1px 3px rgba(0,0,0,0.05)',
           }}
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
             className="absolute right-3.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-150"
-            style={{ background: 'var(--bg-overlay)', color: 'var(--text-muted)' }}
+            style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}
             onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'var(--border-strong)';
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)';
               (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
             }}
             onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)';
+              (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-elevated)';
               (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-muted)';
             }}
           >
@@ -71,26 +73,26 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
             style={
               selectedTag === 'all'
                 ? {
-                    background: 'rgba(45,212,191,0.14)',
-                    color: '#2dd4bf',
-                    border: '1px solid rgba(45,212,191,0.28)',
-                    boxShadow: '0 0 10px rgba(45,212,191,0.08)',
+                    background: '#7c3aed',
+                    color: '#ffffff',
+                    boxShadow: '0 2px 10px rgba(124,58,237,0.28)',
                   }
                 : {
-                    background: 'var(--bg-elevated)',
+                    background: '#ffffff',
                     color: 'var(--text-secondary)',
-                    border: '1px solid var(--border)',
+                    border: '1px solid rgba(0,0,0,0.1)',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   }
             }
             onMouseEnter={(e) => {
               if (selectedTag !== 'all') {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border-strong)';
-                (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(124,58,237,0.3)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#7c3aed';
               }
             }}
             onMouseLeave={(e) => {
               if (selectedTag !== 'all') {
-                (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)';
+                (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(0,0,0,0.1)';
                 (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
               }
             }}
@@ -108,30 +110,27 @@ export function TagFilter({ availableTags, selectedTag, onTagChange, onSearch }:
                 style={
                   active
                     ? {
-                        background: 'rgba(45,212,191,0.14)',
-                        color: '#2dd4bf',
-                        border: '1px solid rgba(45,212,191,0.28)',
-                        boxShadow: '0 0 10px rgba(45,212,191,0.08)',
+                        background: '#7c3aed',
+                        color: '#ffffff',
+                        boxShadow: '0 2px 10px rgba(124,58,237,0.28)',
                       }
                     : {
-                        background: 'var(--bg-elevated)',
+                        background: '#ffffff',
                         color: 'var(--text-secondary)',
-                        border: '1px solid var(--border)',
+                        border: '1px solid rgba(0,0,0,0.1)',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                       }
                 }
                 onMouseEnter={(e) => {
                   if (!active) {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor =
-                      'var(--border-strong)';
-                    (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-primary)';
-                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(124,58,237,0.3)';
+                    (e.currentTarget as HTMLButtonElement).style.color = '#7c3aed';
                   }
                 }}
                 onMouseLeave={(e) => {
                   if (!active) {
-                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'var(--border)';
+                    (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(0,0,0,0.1)';
                     (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
-                    (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-elevated)';
                   }
                 }}
               >

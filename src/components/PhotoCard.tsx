@@ -136,8 +136,8 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
         className="rounded-2xl overflow-hidden"
         style={{
           background: 'var(--bg-surface)',
-          border: '1px solid var(--border-strong)',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+          border: '1px solid var(--border)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -152,7 +152,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
               className="p-1.5 rounded-full transition-colors"
               style={{ color: 'var(--text-muted)' }}
               onMouseEnter={(e) => {
-                (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)';
+                (e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-elevated)';
                 (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-secondary)';
               }}
               onMouseLeave={(e) => {
@@ -183,8 +183,8 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                 color: 'var(--text-primary)',
               }}
               onFocus={(e) => {
-                (e.target as HTMLInputElement).style.borderColor = 'rgba(45,212,191,0.4)';
-                (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(45,212,191,0.08)';
+                (e.target as HTMLInputElement).style.borderColor = 'rgba(124,58,237,0.35)';
+                (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(124,58,237,0.07)';
               }}
               onBlur={(e) => {
                 (e.target as HTMLInputElement).style.borderColor = 'var(--border)';
@@ -213,8 +213,8 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                 color: 'var(--text-primary)',
               }}
               onFocus={(e) => {
-                (e.target as HTMLInputElement).style.borderColor = 'rgba(45,212,191,0.4)';
-                (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(45,212,191,0.08)';
+                (e.target as HTMLInputElement).style.borderColor = 'rgba(124,58,237,0.35)';
+                (e.target as HTMLInputElement).style.boxShadow = '0 0 0 3px rgba(124,58,237,0.07)';
               }}
               onBlur={(e) => {
                 (e.target as HTMLInputElement).style.borderColor = 'var(--border)';
@@ -242,9 +242,8 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                 color: 'var(--text-primary)',
               }}
               onFocus={(e) => {
-                (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(45,212,191,0.4)';
-                (e.target as HTMLTextAreaElement).style.boxShadow =
-                  '0 0 0 3px rgba(45,212,191,0.08)';
+                (e.target as HTMLTextAreaElement).style.borderColor = 'rgba(124,58,237,0.35)';
+                (e.target as HTMLTextAreaElement).style.boxShadow = '0 0 0 3px rgba(124,58,237,0.07)';
               }}
               onBlur={(e) => {
                 (e.target as HTMLTextAreaElement).style.borderColor = 'var(--border)';
@@ -271,9 +270,9 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                   style={
                     editData.tags.includes(tag)
                       ? {
-                          background: 'rgba(45,212,191,0.15)',
-                          color: '#2dd4bf',
-                          border: '1px solid rgba(45,212,191,0.3)',
+                          background: 'rgba(124,58,237,0.1)',
+                          color: '#7c3aed',
+                          border: '1px solid rgba(124,58,237,0.25)',
                         }
                       : {
                           background: 'var(--bg-elevated)',
@@ -290,9 +289,9 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                 onClick={() => setShowNewTag(true)}
                 className="px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-150 flex items-center gap-1"
                 style={{
-                  background: 'rgba(45,212,191,0.08)',
-                  color: '#2dd4bf',
-                  border: '1px solid rgba(45,212,191,0.2)',
+                  background: 'rgba(124,58,237,0.07)',
+                  color: '#7c3aed',
+                  border: '1px solid rgba(124,58,237,0.18)',
                 }}
               >
                 <Plus className="w-3 h-3" /> New
@@ -314,7 +313,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                     color: 'var(--text-primary)',
                   }}
                   onFocus={(e) => {
-                    (e.target as HTMLInputElement).style.borderColor = 'rgba(45,212,191,0.4)';
+                    (e.target as HTMLInputElement).style.borderColor = 'rgba(124,58,237,0.35)';
                   }}
                   onBlur={(e) => {
                     (e.target as HTMLInputElement).style.borderColor = 'var(--border)';
@@ -324,7 +323,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                   type="button"
                   onClick={handleAddNewTag}
                   className="px-2.5 py-1.5 text-xs rounded-lg transition-colors"
-                  style={{ background: 'rgba(45,212,191,0.15)', color: '#2dd4bf' }}
+                  style={{ background: 'rgba(124,58,237,0.1)', color: '#7c3aed' }}
                 >
                   Add
                 </button>
@@ -335,7 +334,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                     setNewTag('');
                   }}
                   className="px-2.5 py-1.5 text-xs rounded-lg transition-colors"
-                  style={{ background: 'var(--bg-overlay)', color: 'var(--text-secondary)' }}
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-secondary)' }}
                 >
                   Cancel
                 </button>
@@ -352,7 +351,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
                 setEditData((prev) => ({ ...prev, is_public: e.target.checked }))
               }
               className="w-4 h-4 rounded"
-              style={{ accentColor: '#2dd4bf' }}
+              style={{ accentColor: '#7c3aed' }}
             />
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               Make this photo public
@@ -370,9 +369,9 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
             disabled={saving}
             className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-200 disabled:opacity-50"
             style={{
-              background: 'linear-gradient(135deg,#2dd4bf,#06b6d4)',
-              color: '#060a14',
-              boxShadow: '0 4px 16px rgba(45,212,191,0.3)',
+              background: 'linear-gradient(135deg,#7c3aed,#6d28d9)',
+              color: '#ffffff',
+              boxShadow: '0 4px 16px rgba(124,58,237,0.28)',
             }}
           >
             <Save className="w-3.5 h-3.5" />
@@ -383,7 +382,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
             className="px-4 py-2 text-sm font-medium rounded-xl transition-colors"
             style={{ color: 'var(--text-secondary)', background: 'transparent' }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-overlay)')
+              ((e.currentTarget as HTMLButtonElement).style.background = 'var(--bg-elevated)')
             }
             onMouseLeave={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.background = 'transparent')
@@ -401,200 +400,219 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured 
 
   return (
     <div
-      className="group relative rounded-2xl overflow-hidden cursor-pointer"
+      className="group relative rounded-2xl overflow-hidden cursor-pointer bg-white"
       style={{
-        background: '#0d1525',
-        aspectRatio: featured ? '16 / 9' : '4 / 3',
-        border: '1px solid rgba(255,255,255,0.07)',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
-        transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.06)',
+        transition: 'transform 0.32s cubic-bezier(0.4,0,0.2,1), box-shadow 0.32s cubic-bezier(0.4,0,0.2,1)',
       }}
       onMouseEnter={(e) => {
-        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
+        (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-6px)';
         (e.currentTarget as HTMLDivElement).style.boxShadow =
-          '0 24px 56px rgba(0,0,0,0.7), 0 0 0 1px rgba(45,212,191,0.18)';
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(45,212,191,0.15)';
+          '0 20px 48px rgba(0,0,0,0.13), 0 4px 12px rgba(0,0,0,0.07)';
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.4)';
-        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)';
+        (e.currentTarget as HTMLDivElement).style.boxShadow =
+          '0 1px 4px rgba(0,0,0,0.07), 0 8px 24px rgba(0,0,0,0.06)';
       }}
     >
-      {/* Photo */}
-      <LazyImage
-        src={photo.image_url ?? ''}
-        alt={photo.title}
-        className="w-full h-full transition-transform duration-500 group-hover:scale-[1.06]"
-        style={{ objectFit: 'cover', filter: 'saturate(1.12) brightness(1.02)' }}
-      />
-
-      {/* Gradient layers */}
+      {/* ── Image section ── */}
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.18) 50%, rgba(0,0,0,0) 100%)',
-        }}
-      />
-      {/* Top fade (for action buttons readability) */}
-      <div
-        className="absolute inset-x-0 top-0 h-24 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, transparent 100%)' }}
-      />
+        className="relative overflow-hidden"
+        style={{ aspectRatio: featured ? '16 / 9' : '4 / 3' }}
+      >
+        <LazyImage
+          src={photo.image_url ?? ''}
+          alt={photo.title}
+          className="w-full h-full transition-transform duration-500 group-hover:scale-[1.05]"
+          style={{ objectFit: 'cover' }}
+        />
 
-      {/* Action buttons — fade in on hover */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
-        {/* Public toggle */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onTogglePublic?.();
-          }}
-          className="w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all"
-          style={
-            photo.is_public
-              ? { background: 'rgba(45,212,191,0.8)', color: '#060a14' }
-              : {
-                  background: 'rgba(0,0,0,0.55)',
-                  color: 'rgba(255,255,255,0.75)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                }
-          }
-          title={photo.is_public ? 'Public — click to make private' : 'Private — click to make public'}
-        >
-          {photo.is_public ? (
-            <Unlock className="w-3.5 h-3.5" />
-          ) : (
-            <Lock className="w-3.5 h-3.5" />
-          )}
-        </button>
+        {/* Top gradient for button legibility */}
+        <div
+          className="absolute inset-x-0 top-0 h-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{ background: 'linear-gradient(to bottom, rgba(0,0,0,0.42) 0%, transparent 100%)' }}
+        />
 
-        {/* Edit */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsEditing(true);
-            setConfirmingDelete(false);
-          }}
-          className="w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all"
-          style={{
-            background: 'rgba(0,0,0,0.55)',
-            color: 'rgba(255,255,255,0.75)',
-            border: '1px solid rgba(255,255,255,0.15)',
-          }}
-          onMouseEnter={(e) =>
-            ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.18)')
-          }
-          onMouseLeave={(e) =>
-            ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.55)')
-          }
-          title="Edit"
-        >
-          <Pencil className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Delete / confirm */}
-        {confirmingDelete ? (
+        {/* Public badge — top left */}
+        {photo.is_public && (
           <div
-            className="flex items-center gap-1 rounded-full px-2.5 py-1.5 backdrop-blur-sm"
+            className="absolute top-2.5 left-2.5 px-2 py-1 rounded-full text-[10px] font-semibold backdrop-blur-sm flex items-center gap-1"
             style={{
-              background: 'rgba(0,0,0,0.82)',
-              border: '1px solid rgba(255,255,255,0.12)',
+              background: 'rgba(124,58,237,0.85)',
+              color: '#fff',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <span className="text-white/80 text-[11px] font-medium">Delete?</span>
-            <button
-              onClick={handleDelete}
-              className="text-[11px] font-bold ml-1"
-              style={{ color: '#f87171' }}
-            >
-              Yes
-            </button>
-            <span className="text-white/25 mx-0.5">·</span>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setConfirmingDelete(false);
-              }}
-              className="text-[11px] text-white/55 hover:text-white transition-colors"
-            >
-              No
-            </button>
+            <Unlock className="w-2.5 h-2.5" />
+            Public
           </div>
-        ) : (
+        )}
+
+        {/* Action buttons — top right, fade in on hover */}
+        <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
+          {/* Public toggle */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setConfirmingDelete(true);
+              onTogglePublic?.();
             }}
-            className="w-8 h-8 rounded-full flex items-center justify-center backdrop-blur-sm transition-all"
+            className="w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-sm transition-all"
             style={{
-              background: 'rgba(0,0,0,0.55)',
-              color: 'rgba(255,255,255,0.75)',
-              border: '1px solid rgba(255,255,255,0.15)',
+              background: photo.is_public ? 'rgba(124,58,237,0.85)' : 'rgba(255,255,255,0.82)',
+              color: photo.is_public ? '#fff' : '#1a1714',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
             }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(239,68,68,0.75)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'white';
-              (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(239,68,68,0.5)';
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.background = 'rgba(0,0,0,0.55)';
-              (e.currentTarget as HTMLButtonElement).style.color = 'rgba(255,255,255,0.75)';
-              (e.currentTarget as HTMLButtonElement).style.borderColor =
-                'rgba(255,255,255,0.15)';
-            }}
-            title="Delete"
+            title={photo.is_public ? 'Public — click to make private' : 'Private — click to make public'}
           >
-            <Trash2 className="w-3.5 h-3.5" />
+            {photo.is_public ? (
+              <Unlock className="w-3 h-3" />
+            ) : (
+              <Lock className="w-3 h-3" />
+            )}
           </button>
-        )}
+
+          {/* Edit */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsEditing(true);
+              setConfirmingDelete(false);
+            }}
+            className="w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-sm transition-all"
+            style={{
+              background: 'rgba(255,255,255,0.82)',
+              color: '#1a1714',
+              boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,1)')
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.82)')
+            }
+            title="Edit"
+          >
+            <Pencil className="w-3 h-3" />
+          </button>
+
+          {/* Delete / confirm */}
+          {confirmingDelete ? (
+            <div
+              className="flex items-center gap-1 rounded-full px-2.5 py-1.5 backdrop-blur-sm"
+              style={{
+                background: 'rgba(255,255,255,0.9)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="text-[11px] font-medium" style={{ color: '#1a1714' }}>Delete?</span>
+              <button
+                onClick={handleDelete}
+                className="text-[11px] font-bold ml-1"
+                style={{ color: '#dc2626' }}
+              >
+                Yes
+              </button>
+              <span className="text-[11px] mx-0.5" style={{ color: '#a09890' }}>·</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setConfirmingDelete(false);
+                }}
+                className="text-[11px] transition-colors"
+                style={{ color: '#5c5550' }}
+              >
+                No
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setConfirmingDelete(true);
+              }}
+              className="w-7 h-7 rounded-full flex items-center justify-center backdrop-blur-sm transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.82)',
+                color: '#1a1714',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.15)',
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(220,38,38,0.9)';
+                (e.currentTarget as HTMLButtonElement).style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.82)';
+                (e.currentTarget as HTMLButtonElement).style.color = '#1a1714';
+              }}
+              title="Delete"
+            >
+              <Trash2 className="w-3 h-3" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Bottom info — always visible */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
+      {/* ── Info section — below image ── */}
+      <div
+        style={{
+          padding: featured ? '18px 20px 20px' : '14px 16px 16px',
+          background: '#ffffff',
+        }}
+      >
         <h3
-          className="text-white font-semibold text-[15px] leading-snug truncate"
-          style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}
+          style={{
+            color: 'var(--text-primary)',
+            fontWeight: 600,
+            fontSize: featured ? '18px' : '15px',
+            lineHeight: 1.35,
+            letterSpacing: '-0.01em',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
         >
           {photo.title}
         </h3>
 
         {photo.date_taken && (
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <Calendar className="w-3 h-3 flex-shrink-0" style={{ color: 'rgba(45,212,191,0.55)' }} />
-            <span className="text-[12px]" style={{ color: 'rgba(255,255,255,0.45)' }}>
+          <div className="flex items-center gap-1.5 mt-1">
+            <Calendar
+              className="w-3 h-3 flex-shrink-0"
+              style={{ color: 'var(--text-muted)' }}
+            />
+            <span
+              style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500 }}
+            >
               {photo.date_taken}
             </span>
           </div>
         )}
 
         {visibleTags.length > 0 && (
-          <div className="flex flex-wrap gap-1 mt-2">
-            {visibleTags.slice(0, 3).map((tag, i) => (
+          <div className="flex flex-wrap gap-1 mt-2.5">
+            {visibleTags.slice(0, featured ? 5 : 3).map((tag, i) => (
               <span
                 key={i}
-                className="px-2 py-0.5 text-[10px] font-medium rounded-full backdrop-blur-sm"
+                className="px-2 py-0.5 text-[11px] font-medium rounded-full"
                 style={{
-                  background: 'rgba(45,212,191,0.1)',
-                  color: 'rgba(45,212,191,0.85)',
-                  border: '1px solid rgba(45,212,191,0.15)',
+                  background: 'rgba(124,58,237,0.07)',
+                  color: '#7c3aed',
+                  border: '1px solid rgba(124,58,237,0.14)',
                 }}
               >
                 {tag}
               </span>
             ))}
-            {visibleTags.length > 3 && (
+            {visibleTags.length > (featured ? 5 : 3) && (
               <span
-                className="px-2 py-0.5 text-[10px] rounded-full backdrop-blur-sm"
+                className="px-2 py-0.5 text-[11px] rounded-full"
                 style={{
-                  background: 'rgba(255,255,255,0.07)',
-                  color: 'rgba(255,255,255,0.35)',
+                  background: 'var(--bg-elevated)',
+                  color: 'var(--text-muted)',
                 }}
               >
-                +{visibleTags.length - 3}
+                +{visibleTags.length - (featured ? 5 : 3)}
               </span>
             )}
           </div>
