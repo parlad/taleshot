@@ -335,10 +335,12 @@ export function PhotoGallery() {
           transition={{ duration: 0.3 }}
         >
           <AnimatePresence mode="popLayout">
-            {filteredPhotos.map((photo, index) =>
-              photo.is_gallery_tile ? (
+            {filteredPhotos.map((photo, index) => {
+              const isFeatured = index === 0 && filteredPhotos.length > 2;
+              return photo.is_gallery_tile ? (
                 <motion.div
                   key={photo.id}
+                  className={isFeatured ? 'lg:col-span-2' : ''}
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -361,8 +363,8 @@ export function PhotoGallery() {
               ) : (
                 <motion.div
                   key={photo.id}
+                  className={isFeatured ? 'lg:col-span-2 cursor-pointer' : 'cursor-pointer'}
                   onClick={() => handlePhotoClick(photo.id)}
-                  className="cursor-pointer"
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
@@ -377,10 +379,11 @@ export function PhotoGallery() {
                     onUpdate={handleUpdate}
                     viewMode="slide"
                     onTogglePublic={() => togglePhotoPublic(photo)}
+                    featured={isFeatured}
                   />
                 </motion.div>
-              )
-            )}
+              );
+            })}
           </AnimatePresence>
         </motion.div>
       )}

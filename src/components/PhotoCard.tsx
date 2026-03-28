@@ -13,9 +13,10 @@ interface PhotoCardProps {
   onUpdate: (updatedPhoto: Photo) => void;
   viewMode: ViewMode;
   onTogglePublic?: () => void;
+  featured?: boolean;
 }
 
-export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCardProps) {
+export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic, featured }: PhotoCardProps) {
   const { showToast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -402,19 +403,22 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
     <div
       className="group relative rounded-2xl overflow-hidden cursor-pointer"
       style={{
-        background: '#07090f',
-        aspectRatio: '4 / 3',
-        boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+        background: '#0d1525',
+        aspectRatio: featured ? '16 / 9' : '4 / 3',
+        border: '1px solid rgba(255,255,255,0.07)',
+        boxShadow: '0 2px 12px rgba(0,0,0,0.4)',
         transition: 'transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)',
       }}
       onMouseEnter={(e) => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-4px)';
         (e.currentTarget as HTMLDivElement).style.boxShadow =
-          '0 20px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(45,212,191,0.12)';
+          '0 24px 56px rgba(0,0,0,0.7), 0 0 0 1px rgba(45,212,191,0.18)';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(45,212,191,0.15)';
       }}
       onMouseLeave={(e) => {
         (e.currentTarget as HTMLDivElement).style.transform = 'translateY(0)';
-        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.5)';
+        (e.currentTarget as HTMLDivElement).style.boxShadow = '0 2px 12px rgba(0,0,0,0.4)';
+        (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.07)';
       }}
     >
       {/* Photo */}
@@ -422,7 +426,7 @@ export function PhotoCard({ photo, onDelete, onUpdate, onTogglePublic }: PhotoCa
         src={photo.image_url ?? ''}
         alt={photo.title}
         className="w-full h-full transition-transform duration-500 group-hover:scale-[1.06]"
-        style={{ objectFit: 'cover' }}
+        style={{ objectFit: 'cover', filter: 'saturate(1.12) brightness(1.02)' }}
       />
 
       {/* Gradient layers */}
