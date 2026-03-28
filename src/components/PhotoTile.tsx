@@ -606,6 +606,35 @@ export function PhotoTile({ photo, isFlipped, onFlip, onDelete, onUpdate, viewMo
             </span>
           </div>
         )}
+
+        {(() => {
+          const visibleTags = photo.tags?.filter(t => !t.startsWith('gallery_')) ?? [];
+          return visibleTags.length > 0 ? (
+            <div className="flex flex-wrap gap-1 mt-2.5">
+              {visibleTags.slice(0, 3).map((tag, i) => (
+                <span
+                  key={i}
+                  className="px-2 py-0.5 text-[11px] font-medium rounded-full"
+                  style={{
+                    background: 'rgba(124,58,237,0.07)',
+                    color: '#7c3aed',
+                    border: '1px solid rgba(124,58,237,0.14)',
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
+              {visibleTags.length > 3 && (
+                <span
+                  className="px-2 py-0.5 text-[11px] rounded-full"
+                  style={{ background: 'var(--bg-elevated)', color: 'var(--text-muted)' }}
+                >
+                  +{visibleTags.length - 3}
+                </span>
+              )}
+            </div>
+          ) : null;
+        })()}
       </div>
     </div>
   );
