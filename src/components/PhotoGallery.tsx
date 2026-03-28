@@ -282,24 +282,23 @@ export function PhotoGallery() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* ── Page header ── */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1
-            className="text-3xl font-extrabold tracking-tight mb-1"
-            style={{ color: 'var(--text-primary)', letterSpacing: '-0.03em' }}
-          >
-            My Photos
-          </h1>
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-            <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold mr-2"
-              style={{ background: 'rgba(45,212,191,0.1)', color: '#2dd4bf', border: '1px solid rgba(45,212,191,0.2)' }}
-            >
-              {photos.length} {photos.length === 1 ? 'photo' : 'photos'}
-            </span>
-            stored in your library
+      <div>
+        <h1
+          className="text-4xl font-extrabold tracking-tight"
+          style={{ color: '#f0f4ff', letterSpacing: '-0.04em' }}
+        >
+          My Photos
+        </h1>
+        {/* Accent rule */}
+        <div className="flex items-center gap-3 mt-3">
+          <div
+            className="h-px flex-1 max-w-[48px]"
+            style={{ background: 'linear-gradient(90deg,#2dd4bf,transparent)' }}
+          />
+          <p className="text-[13px]" style={{ color: 'var(--text-muted)' }}>
+            {photos.length} {photos.length === 1 ? 'memory' : 'memories'} in your library
           </p>
         </div>
       </div>
@@ -330,7 +329,7 @@ export function PhotoGallery() {
         </div>
       ) : (
         <motion.div
-          className="grid gap-5 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.3 }}
